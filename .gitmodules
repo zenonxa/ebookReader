@@ -1,0 +1,3 @@
+[submodule "Middlewares/LVGL/GUI/lvgl"]
+	path = Middlewares/LVGL/GUI/lvgl
+	url = git@github.com:kimkey-aurora/lvgl.git

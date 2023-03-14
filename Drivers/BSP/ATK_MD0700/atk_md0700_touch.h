@@ -25,6 +25,9 @@
 
 #if (ATK_MD0700_USING_TOUCH != 0)
 
+/* ATK-MD0700模块最大触摸点数量 */
+#define ATK_MD0700_TOUCH_TP_MAX                 5
+
 /* 引脚定义 */
 #define ATK_MD0700_TOUCH_PEN_GPIO_PORT          GPIOF
 #define ATK_MD0700_TOUCH_PEN_GPIO_PIN           GPIO_PIN_10

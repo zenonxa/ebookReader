@@ -546,7 +546,7 @@ atk_md0700_lcd_disp_dir_t atk_md0700_get_disp_dir(void)
  *              color: ÇøÓòÌî³äÑÕÉ«
  * @retval      ÎŞ
  */
-void atk_md0700_fill(uint16_t xs, uint16_t ys, uint16_t xe, uint16_t ye, uint16_t color)
+void atk_md0700_fill(uint16_t xs, uint16_t ys, uint16_t xe, uint16_t ye, uint16_t* color, atk_md0700_lcd_fill_mode_t fill_mode)
 {
     uint16_t x_index;
     uint16_t y_index;
@@ -558,7 +558,10 @@ void atk_md0700_fill(uint16_t xs, uint16_t ys, uint16_t xe, uint16_t ye, uint16_
     {
         for (x_index=xs; x_index<= xe; x_index++)
         {
-            atk_md0700_fsmc_write_dat(color);
+            atk_md0700_fsmc_write_dat(*color);
+			if (fill_mode == MULTI_COLOR_BLOCK) {
+				color++;
+			}
         }
     }
 }
@@ -570,7 +573,7 @@ void atk_md0700_fill(uint16_t xs, uint16_t ys, uint16_t xe, uint16_t ye, uint16_
  */
 void atk_md0700_clear(uint16_t color)
 {
-    atk_md0700_fill(0, 0, g_atk_md0700_sta.width - 1, g_atk_md0700_sta.height - 1, color);
+    atk_md0700_fill(0, 0, g_atk_md0700_sta.width - 1, g_atk_md0700_sta.height - 1, &color, SINGLE_COLOR_BLOCK);
 }
 
 /**

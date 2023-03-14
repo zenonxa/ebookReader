@@ -98,6 +98,11 @@ typedef enum
     ATK_MD0700_NUM_SHOW_ZERO,           /* 数字高位0显示 */
 } atk_md0700_num_mode_t;
 
+typedef enum {
+	SINGLE_COLOR_BLOCK,
+	MULTI_COLOR_BLOCK,
+} atk_md0700_lcd_fill_mode_t;
+
 /* 常用颜色定义（RGB565） */
 #define ATK_MD0700_WHITE        0xFFFF
 #define ATK_MD0700_BLACK        0x0000
@@ -130,7 +135,7 @@ uint8_t atk_md0700_set_scan_dir(atk_md0700_lcd_scan_dir_t scan_dir);            
 uint8_t atk_md0700_set_disp_dir(atk_md0700_lcd_disp_dir_t disp_dir);                                                                                    /* 设置ATK-MD0700模块LCD显示方向 */
 atk_md0700_lcd_scan_dir_t atk_md0700_get_scan_dir(void);                                                                                                /* 获取ATK-MD0700模块LCD扫描方向 */
 atk_md0700_lcd_disp_dir_t atk_md0700_get_disp_dir(void);                                                                                                /* 获取ATK-MD0700模块LCD显示方向 */
-void atk_md0700_fill(uint16_t xs, uint16_t ys, uint16_t xe, uint16_t ye, uint16_t color);                                                               /* ATK-MD0700模块LCD区域填充 */
+void atk_md0700_fill(uint16_t xs, uint16_t ys, uint16_t xe, uint16_t ye, uint16_t* color, atk_md0700_lcd_fill_mode_t fill_mode);                        /* ATK-MD0700模块LCD区域填充 */
 void atk_md0700_clear(uint16_t color);                                                                                                                  /* ATK-MD0700模块LCD清屏 */
 void atk_md0700_draw_point(uint16_t x, uint16_t y, uint16_t color);                                                                                     /* ATK-MD0700模块LCD画点 */
 uint16_t atk_md0700_read_point(uint16_t x, uint16_t y);                                                                                                 /* ATK-MD0700模块LCD读点 */

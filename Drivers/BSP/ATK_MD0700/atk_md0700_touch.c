@@ -26,9 +26,6 @@
 
 #if (ATK_MD0700_USING_TOUCH != 0)
 
-/* ATK-MD0700模块最大触摸点数量 */
-#define ATK_MD0700_TOUCH_TP_MAX                 5
-
 /* ATK-MD0700模块触摸部分寄存器定义 */
 #define ATK_MD0700_TOUCH_REG_DEVIDE_MODE        0x00    /* 设备模式控制寄存器 */
 #define ATK_MD0700_TOUCH_REG_ID_G_MODE          0xA4    /* 中断模式控制寄存器 */

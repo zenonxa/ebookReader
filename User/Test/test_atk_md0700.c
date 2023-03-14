@@ -53,7 +53,7 @@ void test_atk_md0700(void) {
 				color = ATK_MD0700_BLACK;
 				
 		}
-		atk_md0700_fill(x1, y1, x2, y2, color);
+		atk_md0700_fill(x1, y1, x2, y2, &color, SINGLE_COLOR_BLOCK);
 		x1 += 160 - 1;
 		x2 += 160 - 1;
 	}
