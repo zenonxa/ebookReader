@@ -6,6 +6,7 @@
 #include "BSP/TIMER/timer.h"
 #include "BSP/SRAM/sram.h"
 #include "lvgl.h"
+#include "examples/lv_examples.h"
 #include "examples/porting/lv_port_disp.h"
 #include "examples/porting/lv_port_indev.h"
 #include "Test/test_atk_md0700.h"
@@ -64,9 +65,12 @@ int main(void)
 	lv_port_disp_init();
 	lv_port_indev_init();
 	
-	lv_obj_t* switch_obj = lv_switch_create(lv_scr_act());
-	lv_obj_set_size(switch_obj, 120, 60);
-	lv_obj_align(switch_obj, LV_ALIGN_CENTER, 0, 0);
+#if 0
+	lv_example_tileview_1();
+#else
+	lv_example_dropdown_1();
+#endif
+	
 	
 	while (1) {
 		delay_ms(5);
