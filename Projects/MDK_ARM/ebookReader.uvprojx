@@ -347,7 +347,7 @@
           </ArmAdsMisc>
           <Cads>
             <interw>1</interw>
-            <Optim>1</Optim>
+            <Optim>4</Optim>
             <oTime>0</oTime>
             <SplitLS>0</SplitLS>
             <OneElfS>1</OneElfS>
@@ -488,6 +488,11 @@
               <FileType>1</FileType>
               <FilePath>..\..\Drivers\STM32F1xx_HAL_Driver\Src\stm32f1xx_ll_fsmc.c</FilePath>
             </File>
+            <File>
+              <FileName>stm32f1xx_hal_sd.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\Drivers\STM32F1xx_HAL_Driver\Src\stm32f1xx_hal_sd.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -553,7 +558,20 @@
               <FileType>1</FileType>
               <FilePath>..\..\Drivers\BSP\SRAM\sram.c</FilePath>
             </File>
+            <File>
+              <FileName>sdio_sdcard.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\Drivers\BSP\SDIO\sdio_sdcard.c</FilePath>
+            </File>
+            <File>
+              <FileName>stm32f1xx_ll_sdmmc.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\Drivers\STM32F1xx_HAL_Driver\Src\stm32f1xx_ll_sdmmc.c</FilePath>
+            </File>
           </Files>
+        </Group>
+        <Group>
+          <GroupName>Middlewares/FATFS/src</GroupName>
         </Group>
         <Group>
           <GroupName>Middlewares/lvgl/examples/porting</GroupName>
@@ -1462,6 +1480,21 @@
               <FileName>lv_textarea.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\..\Middlewares\LVGL\GUI\lvgl\src\widgets\lv_textarea.c</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>Middlewares/lvgl/examples</GroupName>
+          <Files>
+            <File>
+              <FileName>lv_example_tileview_1.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\Middlewares\LVGL\GUI\lvgl\examples\widgets\tileview\lv_example_tileview_1.c</FilePath>
+            </File>
+            <File>
+              <FileName>lv_example_dropdown_1.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\Middlewares\LVGL\GUI\lvgl\examples\widgets\dropdown\lv_example_dropdown_1.c</FilePath>
             </File>
           </Files>
         </Group>
