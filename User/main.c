@@ -51,7 +51,7 @@ int main(void)
     led_init();                         /* 初始化LED */
     key_init();                         /* 初始化按键 */
     show_mesg();                        /* 显示实验信息 */
-#if 0
+#if 1
 	test_atk_md0700();
 	while(1) {
 		printf("Running normally...\r\n");
@@ -65,8 +65,9 @@ int main(void)
 	lv_port_disp_init();
 	lv_port_indev_init();
 	
-#if 0
-	lv_example_tileview_1();
+#if 1
+	//lv_obj_t img;
+	//lv_img_set_src(&img, "0:PICTURE/example.jpg");
 #else
 	lv_example_dropdown_1();
 #endif

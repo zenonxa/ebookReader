@@ -36,6 +36,10 @@
 #define ATK_MD0700_SCAN_DIR_D2U_L2R (0x00A0)
 #define ATK_MD0700_SCAN_DIR_D2U_R2L (0x00E0)
 
+//LCD的画笔颜色和背景色
+u16 POINT_COLOR=0x0000;         //画笔颜色
+u16 BACK_COLOR=0xFFFF;          //背景色 
+
 /* ATK-MD0700模块状态数据结构体 */
 static struct
 {
@@ -45,6 +49,27 @@ static struct
     atk_md0700_lcd_scan_dir_t scan_dir; /* LCD扫描方向 */
     atk_md0700_lcd_disp_dir_t disp_dir; /* LCD显示方向 */
 } g_atk_md0700_sta = {0};
+
+
+// 转换u8类型为内部atk_md0700_lcd_font_t类型，表示字体大小
+// 允许值:[12, 16, 24, 32]. 非法大小会解释为 12
+atk_md0700_lcd_font_t mapping_font_size(uint8_t size) {
+	atk_md0700_lcd_font_t lcd_font_size;
+	switch(size) {
+		case 16: 
+			lcd_font_size = ATK_MD0700_LCD_FONT_16;
+			break;
+		case 24: 
+			lcd_font_size = ATK_MD0700_LCD_FONT_24; 
+			break;
+		case 32: 
+			lcd_font_size = ATK_MD0700_LCD_FONT_32; 
+			break;
+		default:
+			lcd_font_size = ATK_MD0700_LCD_FONT_12;
+	}
+	return lcd_font_size;
+}
 
 /**
  * @brief       获取ATK-MD0700模块LCD驱动器PID

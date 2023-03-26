@@ -78,16 +78,16 @@ typedef enum
 typedef enum
 {
 #if (ATK_MD0700_FONT_12 != 0)
-    ATK_MD0700_LCD_FONT_12,             /* 12号字体 */
+    ATK_MD0700_LCD_FONT_12 = 12,             /* 12号字体 */
 #endif
 #if (ATK_MD0700_FONT_16 != 0)
-    ATK_MD0700_LCD_FONT_16,             /* 16号字体 */
+    ATK_MD0700_LCD_FONT_16 = 16,             /* 16号字体 */
 #endif
 #if (ATK_MD0700_FONT_24 != 0)
-    ATK_MD0700_LCD_FONT_24,             /* 24号字体 */
+    ATK_MD0700_LCD_FONT_24 = 24,             /* 24号字体 */
 #endif
 #if (ATK_MD0700_FONT_32 != 0)
-    ATK_MD0700_LCD_FONT_32,             /* 32号字体 */
+    ATK_MD0700_LCD_FONT_32 = 32,             /* 32号字体 */
 #endif
 } atk_md0700_lcd_font_t;
 
@@ -147,5 +147,6 @@ void atk_md0700_show_string(uint16_t x, uint16_t y, uint16_t width, uint16_t hei
 void atk_md0700_show_xnum(uint16_t x, uint16_t y, uint32_t num, uint8_t len, atk_md0700_num_mode_t mode, atk_md0700_lcd_font_t font, uint16_t color);   /* ATK-MD0700模块LCD显示数字，可控制显示高位0 */
 void atk_md0700_show_num(uint16_t x, uint16_t y, uint32_t num, uint8_t len, atk_md0700_lcd_font_t font, uint16_t color);                                /* ATK-MD0700模块LCD显示数字，不显示高位0 */
 void atk_md0700_show_pic(uint16_t x, uint16_t y, uint16_t width, uint16_t height, uint8_t *pic);                                                        /* ATK-MD0700模块LCD图片 */
+atk_md0700_lcd_font_t mapping_font_size(uint8_t size);		// 转换u8类型为内部atk_md0700_lcd_font_t类型，表示字体大小
 
 #endif
