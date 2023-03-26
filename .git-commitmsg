@@ -1,0 +1,24 @@
+Description: 
+
+[RootReason]
+
+
+[Solution]
+
+
+[OtherOperation]
+
+
+[TestResult]
+
+# ===================================================================
+#                        Notes for the tags
+# ===================================================================
+# Description:		brief description for your commit.
+# RootReason:		the reason why you submit the commit.
+# Solution:		the method you take to resolve the problem.
+# OtherOperation:	Other things you do in the commit.
+# TestResult:		PASS or FAIL.
+# ===================================================================
+#                               End
+# ===================================================================
