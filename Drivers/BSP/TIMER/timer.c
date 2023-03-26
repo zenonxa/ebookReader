@@ -1,6 +1,5 @@
 #include "BSP/TIMER/timer.h"
 #include "BSP/LED/led.h"
-#include "lvgl.h"
 //////////////////////////////////////////////////////////////////////////////////	 
 //本程序只供学习使用，未经作者许可，不得用于其它任何用途
 //ALIENTEK STM32F103开发板
@@ -57,6 +56,6 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
     if(htim==(&TIM3_Handler))
     {
-        lv_tick_inc(1);
+        /* To Do */
     }
 }
