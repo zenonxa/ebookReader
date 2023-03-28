@@ -608,10 +608,15 @@
               <FileType>1</FileType>
               <FilePath>..\..\Middlewares\TEXT\text.c</FilePath>
             </File>
+            <File>
+              <FileName>font.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\Middlewares\TEXT\font.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
-          <GroupName>Middlewares/FATFS/src</GroupName>
+          <GroupName>Middlewares/FATFS</GroupName>
           <Files>
             <File>
               <FileName>ff.c</FileName>

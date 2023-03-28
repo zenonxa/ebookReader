@@ -24,6 +24,7 @@
 
 
 #include "ff.h"
+//#include "font.h"
 #include "fontupd.h"
 #include "BSP/W25QXX/w25qxx.h"
 
@@ -15297,12 +15298,12 @@ WCHAR ff_oem2uni (	/* Returns Unicode character in UTF-16, zero on error */
 		} else {			/* Non-ASCII */
 			if (uni < 0x10000 && cp == FF_CODE_PAGE) {	/* Is it in BMP and valid code page? */
 				uc = (WCHAR)uni;
-				hi = ftinfo.ugbksize/2;//对半开.
+				hi = UNIGBK_SIZE/2;//对半开.
 				hi = hi / 4 - 1;
 				li = 0;
 				for (n = 16; n; n--) {
 					i = li + (hi - li) / 2;
-					W25QXX_Read((uint8_t*)&t, ftinfo.ugbkaddr+i*4, 4);//读出4个字节
+					W25QXX_Read((uint8_t*)&t, UNIGBK_ADDR+i*4, 4);//读出4个字节
 					if (uc == t[0]) break;
 					if (uc > t[0]) {
 						li = i;  
@@ -15335,12 +15336,12 @@ WCHAR ff_oem2uni (	/* Returns Unicode character in UTF-16, zero on error */
 		} else {			/* Extended char */
 			if (cp == FF_CODE_PAGE) {	/* Is it valid code page? */
 				
-				hi = ftinfo.ugbksize/2;//对半开.
+				hi = UNIGBK_SIZE/2;//对半开.
 				hi = hi / 4 - 1;
 				li = 0;
 				for (n = 16; n; n--) {
 					i = li + (hi - li) / 2;
-					W25QXX_Read((uint8_t*)&t, ftinfo.ugbkaddr+gbk2uni_offset+i*4, 4);//读出4个字节
+					W25QXX_Read((uint8_t*)&t, UNIGBK_SIZE+gbk2uni_offset+i*4, 4);//读出4个字节
 					if (oem == t[0]) break;
 					if (oem > t[0]) {
 						li = i;  
