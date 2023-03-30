@@ -35,6 +35,7 @@
 #include "font.h"
 #include "fontupd.h"
 #include "text.h"
+#include "log.h"
 /********************************************************/
 
 
@@ -49,12 +50,22 @@
 /*					Action command						*/
 /********************************************************/
 #define ACTION_ONCE	0
-#define ACTION_COMMAND	SingleTest
+#define ACTION_COMMAND	EraseFontHeader
 typedef enum {
 	WriteFontHeader = 1,	/* write FontHeader to Flash */
 	EraseFontHeader,		/* write OK flags of FontHeader in Flash */
 	SingleTest,				/* Set for a single test */
 } ActionCommand;
+/********************************************************/
+
+
+
+/********************************************************/
+/*						Value							*/
+/********************************************************/
+typedef enum {
+	FAT_DRV_SDCARD = 0,
+} FatfsLogicDriverNumber;
 /********************************************************/
 
 
@@ -66,6 +77,7 @@ typedef enum {
 
 #define SRAMEX_USER_BASE_ADDR	(0x68000000+(MY_DISP_HOR_RES)*(MY_DISP_VER_RES)*2)
 
+#if 0
 #define ERROR_LED_FLASH_SPAN_MS	500
 #define ERROR_THROW(msg)						\
 do {											\
@@ -75,11 +87,7 @@ do {											\
 		delay_ms(ERROR_LED_FLASH_SPAN_MS);		\
 	}											\
 }while(0)
-
-#define PRINT_MSG(MSG)		\
-do {						\
-	printf("%s\r\n", MSG);	\
-}while(0)
+#endif
 
 #define ACTION_ONCE_DONE_MSG	"Action once done. Now in LED flashing infinite loop."
 /********************************************************************************************/
