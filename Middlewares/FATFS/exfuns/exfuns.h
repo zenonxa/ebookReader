@@ -2,6 +2,7 @@
 #define __EXFUNS_H 					   
 #include "SYSTEM/sys/sys.h"
 #include "FATFS/src/ff.h"
+#include "log.h"
 //////////////////////////////////////////////////////////////////////////////////	 
 //本程序只供学习使用，未经作者许可，不得用于其它任何用途
 //ALIENTEK STM32开发板
@@ -19,15 +20,21 @@
 //修正exf_copy函数,文件进度显示错误的bug
 ////////////////////////////////////////////////////////////////////////////////// 	
 
+#define FLASH_BUFFER_SIZE	4096
+//#define MSG_CACHE_SIZE      100
+
 extern FATFS *fs[FF_VOLUMES];  
-extern FIL *file;
+extern FIL *main_file;
 extern FIL *vice_file;
-extern FIL *ftemp;
+extern FIL *temp_file;
 extern UINT br,bw;
 extern FILINFO fileinfo;
 extern DIR dir;
 extern u8 *fatbuf;//SD卡数据缓存区
-
+/* Cache for flash when do reading or writing operation */
+extern u8* flash_buffer;
+/* Cache for message to throw */
+//extern u8* msg_cache;
 
 
 //f_typetell返回的类型定义
@@ -63,6 +70,7 @@ u8* exf_get_src_dname(u8* dpfn);
 u8 exf_copy(u8(*fcpymsg)(u8*pname,u8 pct,u8 mode),u8 *psrc,u8 *pdst,u32 totsize,u32 cpdsize,u8 fwmode);	   //文件复制
 u8 exf_fdcopy(u8(*fcpymsg)(u8*pname,u8 pct,u8 mode),u8 *psrc,u8 *pdst,u32 *totsize,u32 *cpdsize,u8 fwmode);//文件夹复制
 uint8_t load_file_to_flash(char* fname, uint32_t flash_addr);												// 使用FATFS将文件加载到Flash中
+//void print_loading_log(char*  fileName, uint32_t offset, uint32_t fileSize);
 #endif
 
 

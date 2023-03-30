@@ -33,25 +33,6 @@ extern FontHeader fontHeader;	//字库信息结构体
 uint32_t fupd_prog(uint16_t x,uint16_t y,uint8_t size,uint32_t fsize,uint32_t pos);	//显示更新进度
 uint8_t updata_fontx(FontName fontName, FontSize fontSize);						//更新指定字库
 uint8_t update_font(void);														//更新全部字库
+uint8_t update_mapping_table(void);
+
 #endif
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

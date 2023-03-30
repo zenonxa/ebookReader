@@ -2,13 +2,14 @@
 #include "FATFS/src/ff.h"
 #include "BSP/W25QXX/w25qxx.h"
 #include "BSP/ATK_MD0700/atk_md0700.h"
+#include "FATFS/exfuns/exfuns.h"
 //#include "lcd.h"
 #include "string.h"
 #include "malloc.h"
 #include "SYSTEM/delay/delay.h"
 #include "SYSTEM/usart/usart.h"
 #include "font.h"
-#include "main.h"
+#include "log.h"
 //////////////////////////////////////////////////////////////////////////////////
 //本程序只供学习使用，未经作者许可，不得用于其它任何用途
 //ALIENTEK STM32F103开发板
@@ -78,94 +79,104 @@ uint32_t fupd_prog(uint16_t x,uint16_t y,uint8_t size,uint32_t fsize,uint32_t po
 */
 uint8_t updata_fontx(FontName fontName, FontSize fontSize)
 {
-	uint32_t fontAddr = 0;						    
+#if 0
 	FIL * fftemp;
 	uint8_t *tempbuf;
- 	uint8_t res;
 	uint16_t bread;
 	uint32_t offx = 0;
-	char fontPath[32];
-	char font_update_log_buf[100];
+#endif
+	uint8_t res = 0;
+	uint32_t fontAddr = 0;
+	char* fontPath = mymalloc(SRAMIN, 100);
+#if 0
+//	char font_update_log_buf[100];
 	uint8_t pos;
 	fftemp = (FIL*)mymalloc(SRAMIN,sizeof(FIL));	//分配内存
 	if(fftemp==NULL) {
-// Test
+// Test start
 		ERROR_THROW("fftemp == NULL : updata_fontx()");
+// Test end
 		res = 1;
 	}
 	
 	tempbuf = mymalloc(SRAMIN,4096);					//分配4096个字节空间
 	if(tempbuf==NULL) {
-// Test
+// Test start
 		ERROR_THROW("tempbuf == NULL : updata_fontx()");
+// Test end
 		res = 1;
 	}
-	getFontPath(fontPath, fontName, fontSize);
- 	res=f_open(fftemp,(const TCHAR*)fontPath, FA_READ);
-// Test
-	if (res != FR_OK) {
-		ERROR_THROW("updata_fontx() ==> Fail to open file corresponding to the fontPath.");
-	}
- 	if(res == FR_OK)
-	{
-#if 0
-		switch(fx)
-		{
-			case 0:												//更新UNIGBK.BIN
-				ftinfo.ugbkaddr=FONTINFOADDR+sizeof(ftinfo);	//信息头之后，紧跟UNIGBK转换码表
-				ftinfo.ugbksize=fftemp->obj.objsize;			//UNIGBK大小
-				flashaddr=ftinfo.ugbkaddr;
-				break;
-			case 1:
-				ftinfo.f12addr=ftinfo.ugbkaddr+ftinfo.ugbksize;	//UNIGBK之后，紧跟GBK12字库
-				ftinfo.gbk12size=fftemp->obj.objsize;			//GBK12字库大小
-				flashaddr=ftinfo.f12addr;						//GBK12的起始地址
-				break;
-			case 2:
-				ftinfo.f16addr=ftinfo.f12addr+ftinfo.gbk12size;	//GBK12之后，紧跟GBK16字库
-				ftinfo.gbk16size=fftemp->obj.objsize;			//GBK16字库大小
-				flashaddr=ftinfo.f16addr;						//GBK16的起始地址
-				break;
-			case 3:
-				ftinfo.f24addr=ftinfo.f16addr+ftinfo.gbk16size;	//GBK16之后，紧跟GBK24字库
-				ftinfo.gkb24size=fftemp->obj.objsize;					//GBK24字库大小
-				flashaddr=ftinfo.f24addr;						//GBK24的起始地址
-				break;
-		}
 #endif
+	getFontPath(fontPath, fontName, fontSize);
+ 	res = f_open(temp_file,(const TCHAR*)fontPath, FA_READ);
+	if (res != FR_OK) {
+		infinite_throw("updata_fontx() ==> Fail to open file corresponding to the fontPath.");
+	} else {
+		f_close(temp_file);
+	}
+// 	if(res == FR_OK)
+//	{
 		fontAddr = getFontAddr(fontName, fontSize);
-		if ((fontName == Font_None) && (fontSize == Font_Size_None)) {
-			strcpy(font_update_log_buf, "Update UNIGBK.bin ==> ");
-		} else {
-			strcpy(font_update_log_buf, "Update font ==> ");
-		}
-		pos = strlen (font_update_log_buf);
+//		if ((fontName == Font_Name_None) && (fontSize == Font_Size_None)) {
+//			strcpy(font_update_log_buf, "Update UNIGBK.bin ==> ");
+//		} else {
+//			strcpy(font_update_log_buf, "Update font ==> ");
+//		}
+//		pos = strlen (font_update_log_buf);
+		res = load_file_to_flash(fontPath, fontAddr);
+#if 0
 		while(res == FR_OK)//死循环执行
 		{
 	 		res = f_read(fftemp, tempbuf, 4096, (UINT*)&bread);			//读取数据	 
-			if(res!=FR_OK)
+			if(res!=FR_OK) {
+// Test start
+				while (1) {
+					printf("Fail to read from file: %s\r\n", fontPath);
+					delay_ms(10);
+				}
+// Test end
 				break;									//执行错误
+			}
 			W25QXX_Write(tempbuf, fontAddr+offx, 4096);	//从0开始写入4096个数据
 	  		offx += bread;
-			if ((offx+1)%50 == 0) {
-				sprintf(font_update_log_buf+pos, "%s%s%s%s%7d%s%7d", FontNameStr[fontName], ":", FontSizeStr[fontSize], " || ", offx+1, "/", fftemp->obj.objsize);
-//				sprintf(font_update_log_buf+pos + strlen(font_update_log_buf+pos), "%s:%s || %d/%d||", FontNameStr[fontName], FontSizeStr[fontSize], offx+1, fftemp->obj.objsize);
-//				printf("%s:%s || %d/%d||\r\n", FontNameStr[fontName], FontSizeStr[fontSize], offx+1, fftemp->obj.objsize);
-				printf("%s\r\n", font_update_log_buf);
-				delay_ms(20);
+/* !! Maybe need a function to refactor the code ==> Start */
+			if (offx%(5*4096) == 0) {
+				sprintf(font_update_log_buf+pos, "%s%s%s%s%7d%s%7d", 
+					FontNameStr[fontName], ":", FontSizeStr[fontSize], " || ", offx+1, "/", fftemp->obj.objsize);
+				PRINTLN_MSG(font_update_log_buf);
 			}
+/* !! Maybe need a function to refactor the code ==> End */
 			
 //			fupd_prog(x,y,size,fftemp->obj.objsize,offx);	 	//进度显示
-			if(bread!=4096)
+			if(bread!=4096) {
+// Test start
+//				while (1) {
+//					printf("Finish writing file to flash: %s\r\n", fontPath);
+//					delay_ms(10);
+//				}
+// Test end
+/* !! Maybe need a function to refactor the code ==> Start */
+				if (offx%(5*4096) != 0) {
+					sprintf(font_update_log_buf+pos, "%s%s%s%s%7d%s%7d", 
+						FontNameStr[fontName], ":", FontSizeStr[fontSize], " || ", offx+1, "/", fftemp->obj.objsize);
+					PRINTLN_MSG(font_update_log_buf);
+				}
+/* !! Maybe need a function to refactor the code ==> End */
 				break;								//读完了.
-// Test			
+			}
+// Test	start	
 			printf("In infinite loop of updata_fontx...\r\n");
 			delay_ms(20);
+// Test end
 	 	}
-		f_close(fftemp);		
-	} 
+		f_close(fftemp);
+#endif
+//	}
+#if 0
 	myfree(SRAMIN,fftemp);	//释放内存
 	myfree(SRAMIN,tempbuf);	//释放内存
+#endif
+	myfree(SRAMIN, fontPath);
 	return res;
 } 
 //更新字体文件,UNIGBK,GBK12,GBK16,GBK24一起更新
@@ -190,17 +201,18 @@ uint8_t updata_fontx(FontName fontName, FontSize fontSize)
 */
 uint8_t update_font(void)
 {	
-	uint8_t *pname;
-	uint32_t *buf;
-	uint8_t res=0;		   
+	uint8_t pname[100];
+	uint8_t res = 0;		   
  	uint16_t i,j;
-	FIL *fftemp;
+//	uint32_t *buf;
+//	FIL *temp_file;
 	
 	res = 0xff;
-	pname=mymalloc(SRAMIN,100);	//申请100字节内存  
-	buf=mymalloc(SRAMIN,4096);	//申请4K字节内存  
-	fftemp=(FIL*)mymalloc(SRAMIN,sizeof(FIL));	//分配内存
-	if(buf==NULL||pname==NULL||fftemp==NULL)
+#if 0
+//	pname = mymalloc(SRAMIN,100);	//申请100字节内存  
+//	buf = mymalloc(SRAMIN,4096);	//申请4K字节内存
+//	fftemp = (FIL*)mymalloc(SRAMIN, sizeof(FIL));	//分配内存
+	if(buf==NULL || pname==NULL || fftemp==NULL)
 	{
 		myfree(SRAMIN,fftemp);
 		myfree(SRAMIN,pname);
@@ -208,87 +220,71 @@ uint8_t update_font(void)
 //		ERROR_THROW("Fail to malloc for buf, pname, fftemp.");
 		return 5;	//内存申请失败
 	}
+#endif
 	/* Check all the font file */
-	for (i = Font_Min_Value; i <= Font_Max_Value; ++i) {
-		for (j = Font_Min_Size; j <= Font_Max_Size; ++j) {
-			getFontPath((char*)pname, i, j);
-			res = f_open(fftemp, (TCHAR*)pname, FA_READ);
+	for (i = Font_Name_Min; i <= Font_Name_Max; ++i) {
+		for (j = Font_Size_Min; j <= Font_Size_Max; ++j) {
+			getFontPath((char*)pname, (FontName)i, (FontSize)j);
+			res = f_open(temp_file, (TCHAR*)pname, FA_READ);
 			if (res != FR_OK) {
 				break;
 			}
+			f_close(temp_file);
 		}
 	}
-//	if (res != FR_OK) {
-//		ERROR_THROW("Fail to check all font file.");
-//	}
-	f_close(fftemp);
-#if 0
-	//先查找文件是否正常 
-	strcpy((char*)pname,(char*)src);	//copy src内容到pname
-	strcat((char*)pname,(char*)UNIGBK_PATH); 
- 	res=f_open(fftemp,(const TCHAR*)pname,FA_READ); 
- 	if(res)
-		rval|=1<<4;//打开文件失败  
-	strcpy((char*)pname,(char*)src);	//copy src内容到pname
-	strcat((char*)pname,(char*)GBK12_PATH); 
- 	res=f_open(fftemp,(const TCHAR*)pname,FA_READ); 
- 	if(res)
-		rval|=1<<5;//打开文件失败  
-	strcpy((char*)pname,(char*)src);	//copy src内容到pname
-	strcat((char*)pname,(char*)GBK16_PATH); 
- 	res=f_open(fftemp,(const TCHAR*)pname,FA_READ); 
- 	if(res)
-		rval|=1<<6;//打开文件失败  
-	strcpy((char*)pname,(char*)src);	//copy src内容到pname
-	strcat((char*)pname,(char*)GBK24_PATH); 
- 	res=f_open(fftemp,(const TCHAR*)pname,FA_READ); 
- 	if(res)
-		rval|=1<<7;//打开文件失败
-#endif
-	
-	myfree(SRAMIN,fftemp);//释放内存
+	if (res != FR_OK) {
+		infinite_throw("Fail to check all font file.");
+	}
+//	myfree(SRAMIN,fftemp);//释放内存
 	
 	if(res == FR_OK)//字库文件都存在.
 	{
-		for (i = 0; i < 10; ++i) {
-			printf("Erasing sectors...\r\n");
-			delay_ms(10);
-		}
+		log_n("%sErasing sectors...", ARROW_STRING);
 
 //		atk_md0700_show_string(x, y, 240, 320, "Erasing sectors... ", mapping_font_size(size), ATK_MD0700_BLACK);//提示正在擦除扇区	
-		for(i=0;i<FONTSECSIZE;i++)	//先擦除字库区域,提高写入速度
+//		printf("Erasing flash sector: %4d/%4d\r\n", 0, FONTSECSIZE);
+		Progress_Init(&logParam.progress, 0, FONTSECSIZE);
+		for(i=0; i<FONTSECSIZE; i++)	//先擦除字库区域,提高写入速度
 		{
-			//fupd_prog(x+20*size/2,y,size,FONTSECSIZE,i);//进度显示
-			W25QXX_Read((uint8_t*)buf,((FONT_OCCUPY_ALL/4096)+i)*4096,4096);//读出整个扇区的内容
-			for(j=0;j<1024;j++)//校验数据
+			Progress_Update(&logParam.progress, i);
+			print_log(Flash_Erase_Log, &logParam);
+//			fupd_prog(x+20*size/2,y,size,FONTSECSIZE,i);//进度显示
+			W25QXX_Read((uint8_t*)flash_buffer, ((FONT_OCCUPY_ALL/4096)+i)*4096, FLASH_BUFFER_SIZE);//读出整个扇区的内容
+			for(j=0; j<1024; j++)//校验数据
 			{
-				if(buf[j]!=0XFFFFFFFF)break;//需要擦除
+				if(*((uint32_t*)flash_buffer+j) != 0XFFFFFFFF) {
+					break;//需要擦除
+				}
 			}
-			if(j!=1024)
+			if(j!=1024) {
 				W25QXX_Erase_Sector((FONT_OCCUPY_ALL/4096)+i);	//需要擦除的扇区
-			/* Print erasing flash log */
-			if ((i+1)%50 == 0) {
-				printf("Erasing flash sector: %d/%d\r\n", i+1, FONTSECSIZE);
-				delay_ms(10);
 			}
+//			/* Print erasing flash log */
+//			if ((i+1)%50 == 0) {
+//				printf("Erasing flash sector: %4d/%4d\r\n", i+1, FONTSECSIZE);
+////				delay_ms(10);
+//			}
 		}
-		/* The log of the operation for the last sector */
-		if ((FONTSECSIZE)%50 != 0) {
-			printf("Erasing flash sector: %d/%d\r\n", i+1, FONTSECSIZE);
-		}
-		myfree(SRAMIN, buf);
+		/* The log of the erasing operation for the last sector */
+//		if ((FONTSECSIZE)%50 != 0) {
+//			printf("Erasing flash sector: %4d/%4d\r\n", i+1, FONTSECSIZE);
+//		}
+		log_n("%sErasing flash finished!", ARROW_STRING);
+//		myfree(SRAMIN, buf);
 //		buf = NULL;
 		
-		
-		res = updata_fontx(Font_None, Font_Size_None);
-// Test
+//		/* Loading mapping table [UNIGBK.BIN] to flash */
+		res = update_mapping_table();
+// Test start
 		if (res) {
-			ERROR_THROW("Fail to load UNIGBK.bin to flash.");
+			infinite_throw("Fail to load UNIGBK.bin to flash.");
 		}
+// Test end
 		if (res == 0) {
-			for (i = Font_Min_Value; i <= Font_Max_Value; ++i) {
-				for (j = Font_Min_Size; j <= Font_Max_Size; ++j) {
-					res = updata_fontx(i, j);
+			/* Loading font library with all kinds of size to flash */
+			for (i = Font_Name_Min; i <= Font_Name_Max; ++i) {
+				for (j = Font_Size_Min; j <= Font_Size_Max; ++j) {
+					res = updata_fontx((FontName)i, (FontSize)j);
 					if (res) {
 						break;
 					}
@@ -297,37 +293,14 @@ uint8_t update_font(void)
 		}
 // Test
 		if (res) {
-			while (1) {
-				printf("Fail to load font library[%s:%s] to flash.\r\n", FontNameStr[i], FontSizeStr[j]);
-				delay_ms(20);
-			}
-		}
-		
-#if 0
-		atk_md0700_show_string(x, y, 240, 320, "Updating UNIGBK.BIN", mapping_font_size(size), ATK_MD0700_BLACK);		
-		strcpy((char*)pname,(char*)src);				//copy src内容到pname
-		strcat((char*)pname,(char*)UNIGBK_PATH); 
-		res=updata_fontx(x+20*size/2,y,size,pname,0);	//更新UNIGBK.BIN
-		if(res){myfree(SRAMIN,pname);return 1;}
-		atk_md0700_show_string(x, y, 240, 320, "Updating GBK12.BIN  ", mapping_font_size(size), ATK_MD0700_BLACK);
-		strcpy((char*)pname,(char*)src);				//copy src内容到pname
-		strcat((char*)pname,(char*)GBK12_PATH); 
-		res=updata_fontx(x+20*size/2,y,size,pname,1);	//更新GBK12.FON
-		if(res){myfree(SRAMIN,pname);return 2;}
-		atk_md0700_show_string(x,y,240,320,"Updating GBK16.BIN  ", mapping_font_size(size), ATK_MD0700_BLACK);
-		strcpy((char*)pname,(char*)src);				//copy src内容到pname
-		strcat((char*)pname,(char*)GBK16_PATH); 
-		res=updata_fontx(x+20*size/2,y,size,pname,2);	//更新GBK16.FON
-		if(res){myfree(SRAMIN,pname);return 3;}
-		atk_md0700_show_string(x, y, 240, 320, "Updating GBK24.BIN  ", mapping_font_size(size), ATK_MD0700_BLACK);
-		strcpy((char*)pname,(char*)src);				//copy src内容到pname
-		strcat((char*)pname,(char*)GBK24_PATH); 
-		res=updata_fontx(x+20*size/2,y,size,pname,3);	//更新GBK24.FON
-#endif		
+			infinite_throw("Fail to load font library[%s:%s] to flash.\r\n", 
+								FontNameStr[i], FontSizeStr[j]);
+		}	
 		if(res){
-			myfree(SRAMIN,pname);
-// Test			
-			ERROR_THROW("updata_fontx() ==> pname free error\r\n");
+//			myfree(SRAMIN, pname);
+// Test	start	
+			infinite_throw("updata_fontx() ==> pname free error\r\n");
+// Test end
 			return 4;
 		}
 		//全部更新好了
@@ -336,14 +309,21 @@ uint8_t update_font(void)
 		fontHeader.ugbkok = FLAG_OK;
 		
 		W25QXX_Write((uint8_t*)&fontHeader, FONT_HEADER_ADDR, sizeof(fontHeader));	//保存字库信息
-		for (i = 0; i < 10; ++i) {
-			printf("Write fontHeader to flash ==> \r\n\
-			\b fontHeader.fontok = FLAG_OK, fontHeader.ugbkok = FLAG_OK");
-		}
+		log_n("Write fontHeader to flash ==> \r\n\
+		fontHeader.fontok = FLAG_OK, \r\n\b\
+		fontHeader.ugbkok = FLAG_OK");
 	}
-	myfree(SRAMIN,pname);//释放内存 
-	myfree(SRAMIN,buf);
+//	myfree(SRAMIN,pname);//释放内存 
+//	myfree(SRAMIN,buf);
 	return res;//无错误.			 
 }
 
 
+uint8_t update_mapping_table(void) {
+	uint8_t res = 0;
+	char fname[100];
+	uint32_t fileAddr = getMappingTableAddr();
+	getMappingTablePath((uint8_t*)fname);
+	res = load_file_to_flash(fname, fileAddr);
+	return res;
+}

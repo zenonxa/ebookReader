@@ -6,7 +6,7 @@
 #include "SYSTEM/delay/delay.h"
 #include "FATFS/src/ff.h"
 #include "BSP/W25QXX/w25qxx.h"
-#include "main.h"
+#include "log.h"
 //////////////////////////////////////////////////////////////////////////////////	 
 //本程序只供学习使用，未经作者许可，不得用于其它任何用途
 //ALIENTEK STM32开发板
@@ -41,36 +41,52 @@ u8*const FILE_TYPE_TBL[FILE_MAX_TYPE_NUM][FILE_MAX_SUBT_NUM]=
 	{"AVI"},							//视频文件
 };
 ///////////////////////////////公共文件区,使用malloc的时候////////////////////////////////////////////
-FATFS *fs[FF_VOLUMES];//逻辑磁盘工作区.	 
-FIL *file;	  		// 文件1
-FIL *vice_file;		// 副文件
-FIL *ftemp;	  		// 临时文件
-UINT br,bw;			// 读写变量
+/* Array of logic drivers for FATFS */
+FATFS *fs[FF_VOLUMES]= {NULL};//逻辑磁盘工作区.
+/* Buffer for FATFS */
+u8 *fatbuf = NULL;			//SD卡数据缓存区
+/* A main and a vice file to be used, and a temperary file */
+FIL *main_file = NULL;
+FIL *vice_file = NULL;
+FIL *temp_file = NULL;
+/* the number of byte be read or writen */
+UINT br,bw;
+/* File and directory infomation structure */
 FILINFO fileinfo;	// 文件信息
 DIR dir;  			// 目录
-
-u8 *fatbuf;			//SD卡数据缓存区
+/* Cache for flash when do reading or writing operation */
+u8* flash_buffer = NULL;
 ///////////////////////////////////////////////////////////////////////////////////////
 //为exfuns申请内存
 //返回值:0,成功
 //1,失败
 u8 exfuns_init(void)
 {
-	u8 i;
-	for(i=0;i<FF_VOLUMES;i++)
+	u8 i, res = 0;
+	for(i=0; i<FF_VOLUMES; i++)
 	{
-		fs[i]=(FATFS*)mymalloc(SRAMEX,sizeof(FATFS));	//为磁盘i工作区申请内存	
-		if(!fs[i])break;
+		fs[i] = (FATFS*)mymalloc(SRAMIN,sizeof(FATFS));	//为磁盘i工作区申请内存
+		if(!fs[i]) {
+			printf("Fail to malloc for FATFS fs[%d]\r\n", i);
+			break;
+		}
 	}
-	file = (FIL*)mymalloc(SRAMIN, sizeof(FIL));		//为file申请内存
-	vice_file = (FIL*)mymalloc(SRAMIN, sizeof(FIL));		//为file申请内存
-	ftemp = (FIL*)mymalloc(SRAMIN, sizeof(FIL));		//为ftemp申请内存
-	fatbuf = (u8*)mymalloc(SRAMEX, 512);				//为fatbuf申请内存
-	if((i==FF_VOLUMES) && file && ftemp && fatbuf) {
-		return 0;  //申请有一个失败,即失败.
+	/* malloc for FIL type */
+	main_file		= (FIL*)mymalloc(SRAMIN, sizeof(FIL));
+	vice_file 		= (FIL*)mymalloc(SRAMIN, sizeof(FIL));
+	temp_file		= (FIL*)mymalloc(SRAMIN, sizeof(FIL));
+	/* nakkic fir FATFS buffer */
+	fatbuf 			= (u8*)	mymalloc(SRAMIN, 512);
+	
+	flash_buffer	= (u8*) mymalloc(SRAMIN, FLASH_BUFFER_SIZE);
+	log_buffer		= (u8*) mymalloc(SRAMIN, LOG_BUFFER_SIZE);
+	if((i==FF_VOLUMES) && main_file && vice_file && temp_file && 
+			fatbuf && flash_buffer && log_buffer) {
+		res = 0;		/* All succeed. */
+	} else {
+		res = 1;		/* Failure occur. */
 	}
-	else
-		return 1;	
+	return res;
 }
 
 //将小写字母转为大写字母,如果是数字,则保持不变.
@@ -120,7 +136,7 @@ u8 f_typetell(u8 *fname)
 		}
 	}
 	return 0XFF;//没找到		 			   
-}	 
+}
 
 //得到磁盘剩余容量
 //drv:磁盘编号("0:"/"1:")
@@ -398,40 +414,76 @@ u8 exf_fdcopy(u8(*fcpymsg)(u8*pname,u8 pct,u8 mode),u8 *psrc,u8 *pdst,u32 *totsi
 }
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-// 加载文件到flash中
+/* Loading file from SD Card to ex-flash */
 uint8_t load_file_to_flash(char* fname, uint32_t flash_addr) {
-	FRESULT f_res;
+	uint8_t res = 0;
 	UINT br;
-	//uint8_t* tempbuf = NULL;
-	uint8_t tempbuf[4096];
+//	uint8_t* tempbuf = NULL;
 	uint32_t offset = 0;
-	FIL my_file;
-	ftemp = &my_file;
-	f_res = f_open(ftemp, fname, FA_READ);
-	if (f_res != FR_OK) {
-		ERROR_THROW("fail to open font file");
-		return f_res;
+	if (temp_file == NULL) {
+		infinite_throw("temp_file is NULL");
+	}
+	res = f_open(temp_file, fname, FA_READ);
+	if (res != FR_OK) {
+		infinite_throw("Fail to open file: %s", fname);
 	}
 //	tempbuf = mymalloc(SRAMEX, 4096);
 //	if (tempbuf == NULL) {
 //		ERROR_THROW("open and malloc succeed?");
 //		return 1;
 //	}
+	ProgressWithInfo_Init(&logParam.progressWithInfo, offset, f_size(temp_file), 
+							fname, "SD Card", "Flash");
+	print_log(Flash_Write_Log, &logParam);
 	//死循环执行
-	while(f_res == FR_OK) {
-		f_res = f_read(ftemp, tempbuf, 4096, &br); //读取数据
-		if(f_res != FR_OK)
+	while(res == FR_OK) {
+		res = f_read(temp_file, flash_buffer, FLASH_BUFFER_SIZE, &br); //读取数据
+		if(res != FR_OK) {
 			break; //执行错误
-		W25QXX_Write(tempbuf, flash_addr+offset, 4096); //从 0 开始写 4096 个数据
+		}
+//		if (offset/(5*FLASH_BUFFER_SIZE) == 0) {
+//			/* Show the progress of the update */
+//			//print_loading_log(fname, offset, f_size(temp_file));
+//		}
+		W25QXX_Write(flash_buffer, flash_addr+offset, FLASH_BUFFER_SIZE); //从 0 开始写 4096 个数据
 		offset += br;
-		//fupd_prog(x,y,size,fftemp->fsize,offx); //进度显示
-		printf("Loading %s to flash: %d/%d\r\n", fname, offset, f_size(ftemp));
-		if(br != 4096)
-			break; //读完了.
+		/* Show the update progress */
+		ProgressWithInfo_Update(&logParam.progressWithInfo, offset);
+		print_log(Flash_Write_Log, &logParam);
+		if(br != FLASH_BUFFER_SIZE) {
+			break;		/* Finish loading */
+		}
 		delay_ms(10);
 	}
-	printf("Load finished.\r\n");
+	
+//	print_loading_log(fname, offset, f_size(temp_file));
+	log_n("%sLoading [%s] finished.", ARROW_STRING, fname);
 	delay_ms(10);
-	f_close(ftemp);
+	f_close(temp_file);
 	return 0;
 }
+
+
+#if 0
+void print_loading_log(char* fileName, uint32_t offset, uint32_t fileSize) {
+	static float percent_record = 0;
+	float percent = 100.0 * offset / fileSize;
+	"Loading file [%s] to flash || ";
+	if ((percent == 0) || (percent == 100) || ((percent - percent_record) > 5.0)) {
+		sprintf((char*)log_buffer, "%7d/%7d || %.2f%%", 
+						fileName, offset, fileSize, percent);
+		log_n(log_buffer);
+		delay_ms(10);
+		if (percent != 0) {
+			percent_record = percent;
+		}
+	}
+	if (percent == 100) {
+		percent_record = 0;
+	}
+}
+
+void print_progress_log(uint32_t cur_val, uint32_t end_val) {
+	"Loading ";
+}
+#endif
