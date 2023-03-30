@@ -71,7 +71,7 @@ void Get_HzMat(unsigned char *code, unsigned char *mat, FontName fontName, FontS
 //font:汉字GBK码
 //size:字体大小
 //mode:0,正常显示,1,叠加显示	   
-void Show_Font(uint16_t x,uint16_t y,uint8_t *font,uint8_t fontName, FontSize fontSize, uint8_t mode)
+void Show_Font(uint16_t x,uint16_t y,uint8_t *font, FontName fontName, FontSize fontSize, uint8_t mode)
 {
 	uint8_t temp,t,t1;
 	uint16_t y0=y;

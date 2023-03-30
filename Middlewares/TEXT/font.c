@@ -36,7 +36,7 @@ const char* const suffixStr[Suffix_Cnt] = {
 	"DZK"
 };
 
-void getFontPath(char* dest, FontName fontName, FontSize fontSize) {
+char* getFontPath(char* dest, FontName fontName, FontSize fontSize) {
 	uint8_t condition;
 	
 	strcpy(dest, path_prefixStr);
@@ -44,7 +44,7 @@ void getFontPath(char* dest, FontName fontName, FontSize fontSize) {
 		true:	UNIGBK.bin
 		false:	$FontName_$FontSize.DZK
 	*/
-	condition = ((fontName == Font_None) && (fontSize == Font_Size_None));
+	condition = ((fontName == Font_Name_None) && (fontSize == Font_Size_None));
 	strcat(dest, (condition ? prefixStr[UNIGBK] : prefixStr[GBK]));
 	if (!condition) {
 		strcat(dest, underlineStr);
@@ -58,7 +58,7 @@ void getFontPath(char* dest, FontName fontName, FontSize fontSize) {
 
 
 uint32_t getFontAddr(FontName fontName, FontSize fontSize) {
-	if ((fontName == Font_None) && (fontSize == Font_Size_None)) {
+	if ((fontName == Font_Name_None) && (fontSize == Font_Size_None)) {
 		return UNIGBK_ADDR;
 	}
 	uint32_t addr = FONT_LIB_BASE_ADDR + fontName * FONT_SIZE_ALL;
@@ -72,6 +72,20 @@ uint32_t getFontAddr(FontName fontName, FontSize fontSize) {
 		addr += FONT_SIZE_PX24;
 	}
 	return addr;
+}
+
+
+uint32_t getMappingTableAddr(void) {
+	return UNIGBK_ADDR;
+}
+
+
+/* Get path of [UNIGBK.BIN] */
+void getMappingTablePath(uint8_t* pathBuf) {
+	strcpy((char*)pathBuf, path_prefixStr);
+	strcat((char*)pathBuf, prefixStr[UNIGBK]);
+	strcat((char*)pathBuf, dotStr);
+	strcat((char*)pathBuf, suffixStr[BIN]);
 }
 
 
@@ -123,14 +137,16 @@ uint8_t check_font_header(uint8_t tryTimes)
 	while(t < tryTimes)
 	{
 		t++;
-		check_font_header_once();
+		res = check_font_header_once();
+		if(!res) {
+			break;
+		}
 		delay_ms(20);
 	}
-	/* Check font flag error! */
-	if(!(fontHeader.fontok == FLAG_OK) || !(fontHeader.ugbkok == FLAG_OK)) {
-		res = 1;
-	}
-	return res;    
+	/* Check font flag result:
+	 * 	0: success
+	 *	1: fail					*/
+	return res;
 }
 
 uint8_t write_font_header(FontHeader* pFontHeader, uint8_t tryTimes) {
@@ -154,4 +170,18 @@ uint8_t write_font_header(FontHeader* pFontHeader, uint8_t tryTimes) {
 		}
 	}
 	return res;
+}
+
+
+uint8_t getFontFileType(FontName fontName, FontSize fontSize) {
+	uint8_t fontFileType = Font_File_Type_Default;
+	if ((fontName == Font_Name_None) && (fontSize == Font_Size_None)) {
+		fontFileType = MAPPING_TABLE;					/* Unicode to GBK mapping table */
+	} else if (!((fontName >= Font_Name_Min) && (fontName <= Font_Name_Max) && 
+				 (fontSize >= Font_Size_Min) && (fontSize <= Font_Size_Max))) {
+		fontFileType = FONT;					/* Font file */
+	} else {
+		fontFileType = Font_File_Type_None;		/* Invalid type */
+	}
+	return fontFileType;
 }

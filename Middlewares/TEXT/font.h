@@ -8,11 +8,11 @@ typedef enum {
 	Font_SimSun = 0,
 	Font_KaiTi,
 	Font_SimHei,
-	Font_Min_Value = Font_SimSun,		/* Min */
-	Font_Max_Value = Font_SimHei,		/* Max */
-	Font_Default = Font_Min_Value,		/* Default */
-	Font_Cnt = Font_Max_Value + 1,		/* The number of all */
-	Font_None = 0xff,					/* Invalid value */
+	Font_Name_Min 		= Font_SimSun,			/* Min */
+	Font_Name_Max 		= Font_SimHei,			/* Max */
+	Font_Name_Default 	= Font_Name_Min,		/* Default */
+	Font_Cnt 			= Font_Name_Max + 1,	/* The number of all */
+	Font_Name_None 		= Font_Cnt,				/* Invalid value */
 } FontName;
 
 typedef enum {
@@ -20,22 +20,45 @@ typedef enum {
 	PX16,
 	PX24,
 	PX32,
-	Font_Min_Size = PX12,					/* Min */
-	Font_Max_Size = PX32,					/* Max */
-	FONT_Default_size = Font_Min_Size,		/* Default */
-	Font_Size_Cnt = Font_Max_Size + 1,		/* The number of all size */
-	Font_Size_None = 0xff,					/* Invalid value */
+	Font_Size_Min 		= PX12,					/* Min */
+	Font_Size_Max 		= PX32,					/* Max */
+	FONT_size_Default 	= Font_Size_Min,		/* Default */
+	Font_Size_Cnt 		= Font_Size_Max + 1,	/* The number of all size */
+	Font_Size_None 		= Font_Size_Cnt,		/* Invalid value */
 } FontSize;
 
 
 typedef enum {
-	UNIGBK = 0,
+	MAPPING_TABLE = 0,
+	FONT,
+	Font_File_Type_Min 		= MAPPING_TABLE,				/* Min */
+	Font_File_Type_Max		= FONT,							/* Max */
+	Font_File_Type_Default 	= Font_File_Type_Min,			/* Default */
+	Font_File_Type_Cnt 		= Font_File_Type_Max + 1,		/* The number of all */
+	Font_File_Type_None 	= Font_File_Type_Cnt,			/* Invalid value */
+} FontFileType;
+
+
+typedef struct {
+	FontName fontName;
+	FontSize fontSize;
+} FontInfo;
+
+
+typedef struct {
+	FontFileType fontFileType;
+	FontInfo fontInfo;
+} FontFileInfo;
+
+
+typedef enum {
+	UNIGBK 			= 0,
 	GBK,
-	Prefix_Min_Value = UNIGBK,
-	Prefix_Max_Value = GBK,
-	Prefix_Default_Value = Prefix_Min_Value,
-	Prefix_Cnt = Prefix_Max_Value + 1,
-	Prefix_None = 0xff,
+	Prefix_Min 		= UNIGBK,
+	Prefix_Max 		= GBK,
+	Prefix_Default 	= Prefix_Min,
+	Prefix_Cnt 		= Prefix_Max + 1,
+	Prefix_None		= 0xff,
 } Prefix;
 
 
@@ -48,6 +71,7 @@ typedef enum {
 	Suffix_Cnt = Suffix_Max_Value + 1,
 	Suffix_None = 0xff,
 } Suffix;
+
 
 __packed typedef struct 
 {
@@ -103,8 +127,10 @@ extern const char* const dotStr;
 extern const char* const suffixStr[];
 
 /* Function Declaration */
-void getFontPath(char* buffer, FontName fontName, FontSize fontSize);
+char* getFontPath(char* buffer, FontName fontName, FontSize fontSize);
 uint32_t getFontAddr(FontName fontName, FontSize fontSize);
+uint32_t getMappingTableAddr(void);
+void getMappingTablePath(uint8_t* pathBuf);
 uint8_t getSize(FontSize fontSize);
 uint8_t check_font_header_once(void);
 uint8_t check_font_header(uint8_t tryTimes);

@@ -18,7 +18,7 @@
 //得到汉字的点阵码
 void Get_HzMat(unsigned char *code, unsigned char *mat, FontName fontName, FontSize fontSize);
 //在指定位置显示一个汉字
-void Show_Font(uint16_t x,uint16_t y,uint8_t *font,uint8_t fontName, FontSize fontSize, uint8_t mode);
+void Show_Font(uint16_t x,uint16_t y,uint8_t *font, FontName fontName, FontSize fontSize, uint8_t mode);
 //在指定位置显示一个字符串 
 void Show_Str(uint16_t x,uint16_t y,uint16_t width,uint16_t height,uint8_t*str, 
 	FontName fontName, FontSize fontSize,uint8_t mode);
