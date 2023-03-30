@@ -1,19 +1,19 @@
 /**
  ****************************************************************************************************
  * @file        atk_md0700_touch_iic.c
- * @author      ÕıµãÔ­×ÓÍÅ¶Ó(ALIENTEK)
+ * @author      æ­£ç‚¹åŸå­å›¢é˜Ÿ(ALIENTEK)
  * @version     V1.0
  * @date        2022-06-21
- * @brief       ATK-MD0700Ä£¿é´¥ÃşIIC½Ó¿ÚÇı¶¯´úÂë
- * @license     Copyright (c) 2020-2032, ¹ãÖİÊĞĞÇÒíµç×Ó¿Æ¼¼ÓĞÏŞ¹«Ë¾
+ * @brief       ATK-MD0700æ¨¡å—è§¦æ‘¸IICæ¥å£é©±åŠ¨ä»£ç 
+ * @license     Copyright (c) 2020-2032, å¹¿å·å¸‚æ˜Ÿç¿¼ç”µå­ç§‘æŠ€æœ‰é™å…¬å¸
  ****************************************************************************************************
  * @attention
  *
- * ÊµÑéÆ½Ì¨:ÕıµãÔ­×Ó STM32F103¿ª·¢°å
- * ÔÚÏßÊÓÆµ:www.yuanzige.com
- * ¼¼ÊõÂÛÌ³:www.openedv.com
- * ¹«Ë¾ÍøÖ·:www.alientek.com
- * ¹ºÂòµØÖ·:openedv.taobao.com
+ * å®éªŒå¹³å°:æ­£ç‚¹åŸå­ STM32F103å¼€å‘æ¿
+ * åœ¨çº¿è§†é¢‘:www.yuanzige.com
+ * æŠ€æœ¯è®ºå›:www.openedv.com
+ * å…¬å¸ç½‘å€:www.alientek.com
+ * è´­ä¹°åœ°å€:openedv.taobao.com
  *
  ****************************************************************************************************
  */
@@ -23,14 +23,14 @@
 
 #if (ATK_MD0700_USING_TOUCH != 0)
 
-/* ¿ØÖÆIICÍ¨Ñ¶ÊÇ¶Á²Ù×÷»¹ÊÇĞ´²Ù×÷ */
+/* æ§åˆ¶IICé€šè®¯æ˜¯è¯»æ“ä½œè¿˜æ˜¯å†™æ“ä½œ */
 #define ATK_MD0700_TOUCH_IIC_WRITE  0
 #define ATK_MD0700_TOUCH_IIC_READ   1
 
 /**
- * @brief       IIC½Ó¿ÚÑÓÊ±º¯Êı£¬ÓÃÓÚ¿ØÖÆIIC¶ÁĞ´ËÙ¶È
- * @param       ÎŞ
- * @retval      ÎŞ
+ * @brief       IICæ¥å£å»¶æ—¶å‡½æ•°ï¼Œç”¨äºæ§åˆ¶IICè¯»å†™é€Ÿåº¦
+ * @param       æ— 
+ * @retval      æ— 
  */
 static inline void atk_md0700_touch_iic_delay(void)
 {
@@ -38,9 +38,9 @@ static inline void atk_md0700_touch_iic_delay(void)
 }
 
 /**
- * @brief       ²úÉúIICÆğÊ¼ĞÅºÅ
- * @param       ÎŞ
- * @retval      ÎŞ
+ * @brief       äº§ç”ŸIICèµ·å§‹ä¿¡å·
+ * @param       æ— 
+ * @retval      æ— 
  */
 static void atk_md0700_touch_iic_start(void)
 {
@@ -54,9 +54,9 @@ static void atk_md0700_touch_iic_start(void)
 }
 
 /**
- * @brief       ²úÉúIICÍ£Ö¹ĞÅºÅ
- * @param       ÎŞ
- * @retval      ÎŞ
+ * @brief       äº§ç”ŸIICåœæ­¢ä¿¡å·
+ * @param       æ— 
+ * @retval      æ— 
  */
 static void atk_md0700_touch_iic_stop(void)
 {
@@ -69,10 +69,10 @@ static void atk_md0700_touch_iic_stop(void)
 }
 
 /**
- * @brief       µÈ´ıIICÓ¦´ğĞÅºÅ
- * @param       ÎŞ
- * @retval      0: Ó¦´ğĞÅºÅ½ÓÊÕ³É¹¦
- *              1: Ó¦´ğĞÅºÅ½ÓÊÕÊ§°Ü
+ * @brief       ç­‰å¾…IICåº”ç­”ä¿¡å·
+ * @param       æ— 
+ * @retval      0: åº”ç­”ä¿¡å·æ¥æ”¶æˆåŠŸ
+ *              1: åº”ç­”ä¿¡å·æ¥æ”¶å¤±è´¥
  */
 static uint8_t atk_md0700_touch_iic_wait_ack(void)
 {
@@ -103,9 +103,9 @@ static uint8_t atk_md0700_touch_iic_wait_ack(void)
 }
 
 /**
- * @brief       ²úÉúACKÓ¦´ğĞÅºÅ
- * @param       ÎŞ
- * @retval      ÎŞ
+ * @brief       äº§ç”ŸACKåº”ç­”ä¿¡å·
+ * @param       æ— 
+ * @retval      æ— 
  */
 static void atk_md0700_touch_iic_ack(void)
 {
@@ -120,9 +120,9 @@ static void atk_md0700_touch_iic_ack(void)
 }
 
 /**
- * @brief       ²»²úÉúACKÓ¦´ğĞÅºÅ
- * @param       ÎŞ
- * @retval      ÎŞ
+ * @brief       ä¸äº§ç”ŸACKåº”ç­”ä¿¡å·
+ * @param       æ— 
+ * @retval      æ— 
  */
 static void atk_md0700_touch_iic_nack(void)
 {
@@ -135,9 +135,9 @@ static void atk_md0700_touch_iic_nack(void)
 }
 
 /**
- * @brief       IIC·¢ËÍÒ»¸ö×Ö½Ú
- * @param       dat: Òª·¢ËÍµÄÊı¾İ
- * @retval      ÎŞ
+ * @brief       IICå‘é€ä¸€ä¸ªå­—èŠ‚
+ * @param       dat: è¦å‘é€çš„æ•°æ®
+ * @retval      æ— 
  */
 static void atk_md0700_touch_iic_send_byte(uint8_t dat)
 {
@@ -156,9 +156,9 @@ static void atk_md0700_touch_iic_send_byte(uint8_t dat)
 }
 
 /**
- * @brief       IIC½ÓÊÕÒ»¸ö×Ö½Ú
- * @param       ack: ack=1Ê±£¬·¢ËÍack; ack=0Ê±£¬·¢ËÍnack
- * @retval      ½ÓÊÕµ½µÄÊı¾İ
+ * @brief       IICæ¥æ”¶ä¸€ä¸ªå­—èŠ‚
+ * @param       ack: ack=1æ—¶ï¼Œå‘é€ack; ack=0æ—¶ï¼Œå‘é€nack
+ * @retval      æ¥æ”¶åˆ°çš„æ•°æ®
  */
 static uint8_t atk_md0700_touch_iic_recv_byte(uint8_t ack)
 {
@@ -193,40 +193,40 @@ static uint8_t atk_md0700_touch_iic_recv_byte(uint8_t ack)
 }
 
 /**
- * @brief       ³õÊ¼»¯IIC½Ó¿Ú
- * @param       ÎŞ
- * @retval      ÎŞ
+ * @brief       åˆå§‹åŒ–IICæ¥å£
+ * @param       æ— 
+ * @retval      æ— 
  */
 void atk_md0700_touch_iic_init(void)
 {
     GPIO_InitTypeDef gpio_init_struct = {0};
     
-    /* Ê¹ÄÜSCL¡¢SDAÒı½ÅGPIOµÄÊ±ÖÓ */
+    /* ä½¿èƒ½SCLã€SDAå¼•è„šGPIOçš„æ—¶é’Ÿ */
     ATK_MD0700_TOUCH_IIC_SCL_GPIO_CLK_ENABLE();
     ATK_MD0700_TOUCH_IIC_SDA_GPIO_CLK_ENABLE();
     
-    /* ³õÊ¼»¯SCLÒı½Å */
-    gpio_init_struct.Pin    = ATK_MD0700_TOUCH_IIC_SCL_GPIO_PIN;    /* SCLÒı½Å */
-    gpio_init_struct.Mode   = GPIO_MODE_OUTPUT_PP;                  /* ÍÆÍìÊä³ö */
-    gpio_init_struct.Pull   = GPIO_PULLUP;                          /* ÉÏÀ­ */
-    gpio_init_struct.Speed  = GPIO_SPEED_FREQ_HIGH;                 /* ¸ßËÙ */
+    /* åˆå§‹åŒ–SCLå¼•è„š */
+    gpio_init_struct.Pin    = ATK_MD0700_TOUCH_IIC_SCL_GPIO_PIN;    /* SCLå¼•è„š */
+    gpio_init_struct.Mode   = GPIO_MODE_OUTPUT_PP;                  /* æ¨æŒ½è¾“å‡º */
+    gpio_init_struct.Pull   = GPIO_PULLUP;                          /* ä¸Šæ‹‰ */
+    gpio_init_struct.Speed  = GPIO_SPEED_FREQ_HIGH;                 /* é«˜é€Ÿ */
     HAL_GPIO_Init(ATK_MD0700_TOUCH_IIC_SCL_GPIO_PORT, &gpio_init_struct);
     
-    /* ³õÊ¼»¯SDAÒı½Å */
-    gpio_init_struct.Pin    = ATK_MD0700_TOUCH_IIC_SDA_GPIO_PIN;    /* SDAÒı½Å */
-    gpio_init_struct.Mode   = GPIO_MODE_OUTPUT_OD;                  /* ¿ªÂ©Êä³ö */
+    /* åˆå§‹åŒ–SDAå¼•è„š */
+    gpio_init_struct.Pin    = ATK_MD0700_TOUCH_IIC_SDA_GPIO_PIN;    /* SDAå¼•è„š */
+    gpio_init_struct.Mode   = GPIO_MODE_OUTPUT_OD;                  /* å¼€æ¼è¾“å‡º */
     HAL_GPIO_Init(ATK_MD0700_TOUCH_IIC_SDA_GPIO_PORT, &gpio_init_struct);
     
     atk_md0700_touch_iic_stop();
 }
 
 /**
- * @brief       Ğ´ATK-MD0700Ä£¿é´¥Ãş¼Ä´æÆ÷
- * @param       reg: ´ıĞ´¼Ä´æÆ÷µØÖ·
- *              buf: ´ıĞ´ÈëµÄÊı¾İ
- *              len: ´ıĞ´ÈëÊı¾İµÄ³¤¶È
- * @retval      ATK_MD0700_TOUCH_IIC_EOK  : Ğ´ATK-MD0700Ä£¿é´¥Ãş¼Ä´æÆ÷³É¹¦
- *              ATK_MD0700_TOUCH_IIC_ERROR: Ğ´ATK-MD0700Ä£¿é´¥Ãş¼Ä´æÆ÷Ê§°Ü
+ * @brief       å†™ATK-MD0700æ¨¡å—è§¦æ‘¸å¯„å­˜å™¨
+ * @param       reg: å¾…å†™å¯„å­˜å™¨åœ°å€
+ *              buf: å¾…å†™å…¥çš„æ•°æ®
+ *              len: å¾…å†™å…¥æ•°æ®çš„é•¿åº¦
+ * @retval      ATK_MD0700_TOUCH_IIC_EOK  : å†™ATK-MD0700æ¨¡å—è§¦æ‘¸å¯„å­˜å™¨æˆåŠŸ
+ *              ATK_MD0700_TOUCH_IIC_ERROR: å†™ATK-MD0700æ¨¡å—è§¦æ‘¸å¯„å­˜å™¨å¤±è´¥
  */
 uint8_t atk_md0700_touch_iic_write_reg(uint8_t reg, uint8_t *buf, uint8_t len)
 {
@@ -260,12 +260,12 @@ uint8_t atk_md0700_touch_iic_write_reg(uint8_t reg, uint8_t *buf, uint8_t len)
 }
 
 /**
- * @brief       ¶ÁATK-MD0700Ä£¿é´¥Ãş¼Ä´æÆ÷
- * @param       reg: ´ı¶Á¼Ä´æÆ÷µØÖ·
- *              buf: ¶ÁÈ¡µÄÊı¾İ
- *              len: ´ı¶ÁÈ¡Êı¾İµÄ³¤¶È
- * @retval      ATK_MD0700_TOUCH_IIC_EOK  : ¶ÁATK-MD0700Ä£¿é´¥Ãş¼Ä´æÆ÷³É¹¦
- *              ATK_MD0700_TOUCH_IIC_ERROR: ¶ÁATK-MD0700Ä£¿é´¥Ãş¼Ä´æÆ÷Ê§°Ü
+ * @brief       è¯»ATK-MD0700æ¨¡å—è§¦æ‘¸å¯„å­˜å™¨
+ * @param       reg: å¾…è¯»å¯„å­˜å™¨åœ°å€
+ *              buf: è¯»å–çš„æ•°æ®
+ *              len: å¾…è¯»å–æ•°æ®çš„é•¿åº¦
+ * @retval      ATK_MD0700_TOUCH_IIC_EOK  : è¯»ATK-MD0700æ¨¡å—è§¦æ‘¸å¯„å­˜å™¨æˆåŠŸ
+ *              ATK_MD0700_TOUCH_IIC_ERROR: è¯»ATK-MD0700æ¨¡å—è§¦æ‘¸å¯„å­˜å™¨å¤±è´¥
  */
 void atk_md0700_touch_iic_read_reg(uint8_t reg, uint8_t *buf, uint8_t len)
 {

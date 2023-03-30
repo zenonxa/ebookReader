@@ -1,77 +1,77 @@
 #include "BSP/SDIO/sdio_sdcard.h"
 #include "string.h"
 //////////////////////////////////////////////////////////////////////////////////	 
-//±¾³ÌĞòÖ»¹©Ñ§Ï°Ê¹ÓÃ£¬Î´¾­×÷ÕßĞí¿É£¬²»µÃÓÃÓÚÆäËüÈÎºÎÓÃÍ¾
-//ALIENTEK STM32F103¿ª·¢°å
-//SD¿¨Çı¶¯´úÂë	   
-//ÕıµãÔ­×Ó@ALIENTEK
-//¼¼ÊõÂÛÌ³:www.openedv.com
-//´´½¨ÈÕÆÚ:2019/9/19
-//°æ±¾£ºV1.0
-//°æÈ¨ËùÓĞ£¬µÁ°æ±Ø¾¿¡£
-//Copyright(C) ¹ãÖİÊĞĞÇÒíµç×Ó¿Æ¼¼ÓĞÏŞ¹«Ë¾ 2014-2024
+//æœ¬ç¨‹åºåªä¾›å­¦ä¹ ä½¿ç”¨ï¼Œæœªç»ä½œè€…è®¸å¯ï¼Œä¸å¾—ç”¨äºå…¶å®ƒä»»ä½•ç”¨é€”
+//ALIENTEK STM32F103å¼€å‘æ¿
+//SDå¡é©±åŠ¨ä»£ç 	   
+//æ­£ç‚¹åŸå­@ALIENTEK
+//æŠ€æœ¯è®ºå›:www.openedv.com
+//åˆ›å»ºæ—¥æœŸ:2019/9/19
+//ç‰ˆæœ¬ï¼šV1.0
+//ç‰ˆæƒæ‰€æœ‰ï¼Œç›—ç‰ˆå¿…ç©¶ã€‚
+//Copyright(C) å¹¿å·å¸‚æ˜Ÿç¿¼ç”µå­ç§‘æŠ€æœ‰é™å…¬å¸ 2014-2024
 //All rights reserved									  
 //////////////////////////////////////////////////////////////////////////////////
 
-SD_HandleTypeDef        SDCARD_Handler;     		//SD¿¨¾ä±ú
-HAL_SD_CardInfoTypeDef  SDCardInfo;                 //SD¿¨ĞÅÏ¢½á¹¹Ìå
-DMA_HandleTypeDef SDTxDMAHandler,SDRxDMAHandler;    //SD¿¨DMA·¢ËÍºÍ½ÓÊÕ¾ä±ú
+SD_HandleTypeDef        SDCARD_Handler;     		//SDå¡å¥æŸ„
+HAL_SD_CardInfoTypeDef  SDCardInfo;                 //SDå¡ä¿¡æ¯ç»“æ„ä½“
+DMA_HandleTypeDef SDTxDMAHandler,SDRxDMAHandler;    //SDå¡DMAå‘é€å’Œæ¥æ”¶å¥æŸ„
 
-//SD_ReadDisk/SD_WriteDiskº¯Êı×¨ÓÃbuf,µ±ÕâÁ½¸öº¯ÊıµÄÊı¾İ»º´æÇøµØÖ·²»ÊÇ4×Ö½Ú¶ÔÆëµÄÊ±ºò,
-//ĞèÒªÓÃµ½¸ÃÊı×é,È·±£Êı¾İ»º´æÇøµØÖ·ÊÇ4×Ö½Ú¶ÔÆëµÄ.
+//SD_ReadDisk/SD_WriteDiskå‡½æ•°ä¸“ç”¨buf,å½“è¿™ä¸¤ä¸ªå‡½æ•°çš„æ•°æ®ç¼“å­˜åŒºåœ°å€ä¸æ˜¯4å­—èŠ‚å¯¹é½çš„æ—¶å€™,
+//éœ€è¦ç”¨åˆ°è¯¥æ•°ç»„,ç¡®ä¿æ•°æ®ç¼“å­˜åŒºåœ°å€æ˜¯4å­—èŠ‚å¯¹é½çš„.
 __align(4) uint8_t SDIO_DATA_BUFFER[512];
 
-//SD¿¨³õÊ¼»¯
-//·µ»ØÖµ:0 ³õÊ¼»¯ÕıÈ·£»ÆäËûÖµ£¬³õÊ¼»¯´íÎó
+//SDå¡åˆå§‹åŒ–
+//è¿”å›å€¼:0 åˆå§‹åŒ–æ­£ç¡®ï¼›å…¶ä»–å€¼ï¼Œåˆå§‹åŒ–é”™è¯¯
 uint8_t SD_Init(void)
 {
     uint8_t SD_Error;
     
-    //³õÊ¼»¯Ê±µÄÊ±ÖÓ²»ÄÜ´óÓÚ400KHZ 
+    //åˆå§‹åŒ–æ—¶çš„æ—¶é’Ÿä¸èƒ½å¤§äº400KHZ 
     SDCARD_Handler.Instance=SDIO;
-    SDCARD_Handler.Init.ClockEdge=SDIO_CLOCK_EDGE_RISING;          		//ÉÏÉıÑØ     
-    SDCARD_Handler.Init.ClockBypass=SDIO_CLOCK_BYPASS_DISABLE;     		//²»Ê¹ÓÃbypassÄ£Ê½£¬Ö±½ÓÓÃHCLK½øĞĞ·ÖÆµµÃµ½SDIO_CK
-    SDCARD_Handler.Init.ClockPowerSave=SDIO_CLOCK_POWER_SAVE_DISABLE;   //¿ÕÏĞÊ±²»¹Ø±ÕÊ±ÖÓµçÔ´
-    SDCARD_Handler.Init.BusWide=SDIO_BUS_WIDE_1B;                       //1Î»Êı¾İÏß
-    SDCARD_Handler.Init.HardwareFlowControl=SDIO_HARDWARE_FLOW_CONTROL_ENABLE;//¿ªÆôÓ²¼şÁ÷¿Ø
-    SDCARD_Handler.Init.ClockDiv=SDIO_TRANSFER_CLK_DIV;            		//SD´«ÊäÊ±ÖÓÆµÂÊ×î´ó25MHZ
+    SDCARD_Handler.Init.ClockEdge=SDIO_CLOCK_EDGE_RISING;          		//ä¸Šå‡æ²¿     
+    SDCARD_Handler.Init.ClockBypass=SDIO_CLOCK_BYPASS_DISABLE;     		//ä¸ä½¿ç”¨bypassæ¨¡å¼ï¼Œç›´æ¥ç”¨HCLKè¿›è¡Œåˆ†é¢‘å¾—åˆ°SDIO_CK
+    SDCARD_Handler.Init.ClockPowerSave=SDIO_CLOCK_POWER_SAVE_DISABLE;   //ç©ºé—²æ—¶ä¸å…³é—­æ—¶é’Ÿç”µæº
+    SDCARD_Handler.Init.BusWide=SDIO_BUS_WIDE_1B;                       //1ä½æ•°æ®çº¿
+    SDCARD_Handler.Init.HardwareFlowControl=SDIO_HARDWARE_FLOW_CONTROL_ENABLE;//å¼€å¯ç¡¬ä»¶æµæ§
+    SDCARD_Handler.Init.ClockDiv=SDIO_TRANSFER_CLK_DIV;            		//SDä¼ è¾“æ—¶é’Ÿé¢‘ç‡æœ€å¤§25MHZ
 	
     SD_Error=HAL_SD_Init(&SDCARD_Handler);
     if(SD_Error!=HAL_OK) return 1;
 	
-    SD_Error=HAL_SD_ConfigWideBusOperation(&SDCARD_Handler,SDIO_BUS_WIDE_4B);//Ê¹ÄÜ¿í×ÜÏßÄ£Ê½
+    SD_Error=HAL_SD_ConfigWideBusOperation(&SDCARD_Handler,SDIO_BUS_WIDE_4B);//ä½¿èƒ½å®½æ€»çº¿æ¨¡å¼
     if(SD_Error!=HAL_OK) return 2;
     return 0;
 }
 
-//SDMMCµ×²ãÇı¶¯£¬Ê±ÖÓÊ¹ÄÜ£¬Òı½ÅÅäÖÃ£¬DMAÅäÖÃ
-//´Ëº¯Êı»á±»HAL_SD_Init()µ÷ÓÃ
-//hsd:SD¿¨¾ä±ú
+//SDMMCåº•å±‚é©±åŠ¨ï¼Œæ—¶é’Ÿä½¿èƒ½ï¼Œå¼•è„šé…ç½®ï¼ŒDMAé…ç½®
+//æ­¤å‡½æ•°ä¼šè¢«HAL_SD_Init()è°ƒç”¨
+//hsd:SDå¡å¥æŸ„
 void HAL_SD_MspInit(SD_HandleTypeDef *hsd)
 {
     DMA_HandleTypeDef TxDMAHandler,RxDMAHandler;
     GPIO_InitTypeDef GPIO_Initure;
     
-    __HAL_RCC_SDIO_CLK_ENABLE();    //Ê¹ÄÜSDIOÊ±ÖÓ
-    __HAL_RCC_DMA2_CLK_ENABLE();    //Ê¹ÄÜDMA2Ê±ÖÓ 
-    __HAL_RCC_GPIOC_CLK_ENABLE();   //Ê¹ÄÜGPIOCÊ±ÖÓ
-    __HAL_RCC_GPIOD_CLK_ENABLE();   //Ê¹ÄÜGPIODÊ±ÖÓ
+    __HAL_RCC_SDIO_CLK_ENABLE();    //ä½¿èƒ½SDIOæ—¶é’Ÿ
+    __HAL_RCC_DMA2_CLK_ENABLE();    //ä½¿èƒ½DMA2æ—¶é’Ÿ 
+    __HAL_RCC_GPIOC_CLK_ENABLE();   //ä½¿èƒ½GPIOCæ—¶é’Ÿ
+    __HAL_RCC_GPIOD_CLK_ENABLE();   //ä½¿èƒ½GPIODæ—¶é’Ÿ
     
     //PC8,9,10,11,12
     GPIO_Initure.Pin=GPIO_PIN_8|GPIO_PIN_9|GPIO_PIN_10|GPIO_PIN_11|GPIO_PIN_12;
-    GPIO_Initure.Mode=GPIO_MODE_AF_PP;      //ÍÆÍì¸´ÓÃ
-    GPIO_Initure.Pull=GPIO_PULLUP;          //ÉÏÀ­
-    GPIO_Initure.Speed=GPIO_SPEED_FREQ_HIGH;//¸ßËÙ
-    HAL_GPIO_Init(GPIOC,&GPIO_Initure);     //³õÊ¼»¯
+    GPIO_Initure.Mode=GPIO_MODE_AF_PP;      //æ¨æŒ½å¤ç”¨
+    GPIO_Initure.Pull=GPIO_PULLUP;          //ä¸Šæ‹‰
+    GPIO_Initure.Speed=GPIO_SPEED_FREQ_HIGH;//é«˜é€Ÿ
+    HAL_GPIO_Init(GPIOC,&GPIO_Initure);     //åˆå§‹åŒ–
     
     //PD2
     GPIO_Initure.Pin=GPIO_PIN_2;            
-    HAL_GPIO_Init(GPIOD,&GPIO_Initure);     //³õÊ¼»¯
+    HAL_GPIO_Init(GPIOD,&GPIO_Initure);     //åˆå§‹åŒ–
 }
 
-//µÃµ½¿¨ĞÅÏ¢
-//cardinfo:¿¨ĞÅÏ¢´æ´¢Çø
-//·µ»ØÖµ:´íÎó×´Ì¬
+//å¾—åˆ°å¡ä¿¡æ¯
+//cardinfo:å¡ä¿¡æ¯å­˜å‚¨åŒº
+//è¿”å›å€¼:é”™è¯¯çŠ¶æ€
 uint8_t SD_GetCardInfo(HAL_SD_CardInfoTypeDef *cardinfo)
 {
     uint8_t sta;
@@ -79,28 +79,28 @@ uint8_t SD_GetCardInfo(HAL_SD_CardInfoTypeDef *cardinfo)
     return sta;
 }
 
-//ÅĞ¶ÏSD¿¨ÊÇ·ñ¿ÉÒÔ´«Êä(¶ÁĞ´)Êı¾İ
-//·µ»ØÖµ:SD_TRANSFER_OK ´«ÊäÍê³É£¬¿ÉÒÔ¼ÌĞøÏÂÒ»´Î´«Êä
-//		 SD_TRANSFER_BUSY SD¿¨ÕıÃ¦£¬²»¿ÉÒÔ½øĞĞÏÂÒ»´Î´«Êä
+//åˆ¤æ–­SDå¡æ˜¯å¦å¯ä»¥ä¼ è¾“(è¯»å†™)æ•°æ®
+//è¿”å›å€¼:SD_TRANSFER_OK ä¼ è¾“å®Œæˆï¼Œå¯ä»¥ç»§ç»­ä¸‹ä¸€æ¬¡ä¼ è¾“
+//		 SD_TRANSFER_BUSY SDå¡æ­£å¿™ï¼Œä¸å¯ä»¥è¿›è¡Œä¸‹ä¸€æ¬¡ä¼ è¾“
 uint8_t SD_GetCardState(void)
 {
   return((HAL_SD_GetCardState(&SDCARD_Handler)==HAL_SD_CARD_TRANSFER )?SD_TRANSFER_OK:SD_TRANSFER_BUSY);
 }
 
-//¶ÁSD¿¨
-//buf:¶ÁÊı¾İ»º´æÇø
-//sector:ÉÈÇøµØÖ·
-//cnt:ÉÈÇø¸öÊı	
-//·µ»ØÖµ:´íÎó×´Ì¬;0,Õı³£;ÆäËû,´íÎó´úÂë;
+//è¯»SDå¡
+//buf:è¯»æ•°æ®ç¼“å­˜åŒº
+//sector:æ‰‡åŒºåœ°å€
+//cnt:æ‰‡åŒºä¸ªæ•°	
+//è¿”å›å€¼:é”™è¯¯çŠ¶æ€;0,æ­£å¸¸;å…¶ä»–,é”™è¯¯ä»£ç ;
 uint8_t SD_ReadDisk(uint8_t* buf,uint32_t sector,uint32_t cnt)
 {
     uint8_t sta=HAL_OK;
 	uint32_t timeout=SD_TIMEOUT;
 	long long lsector=sector;
-    sys_intx_disable();//¹Ø±Õ×ÜÖĞ¶Ï(POLLINGÄ£Ê½,ÑÏ½ûÖĞ¶Ï´ò¶ÏSDIO¶ÁĞ´²Ù×÷!!!)
-	sta=HAL_SD_ReadBlocks(&SDCARD_Handler, (uint8_t*)buf,lsector,cnt,SD_TIMEOUT);//¶à¸ösectorµÄ¶Á²Ù×÷
+    sys_intx_disable();//å…³é—­æ€»ä¸­æ–­(POLLINGæ¨¡å¼,ä¸¥ç¦ä¸­æ–­æ‰“æ–­SDIOè¯»å†™æ“ä½œ!!!)
+	sta=HAL_SD_ReadBlocks(&SDCARD_Handler, (uint8_t*)buf,lsector,cnt,SD_TIMEOUT);//å¤šä¸ªsectorçš„è¯»æ“ä½œ
 	
-	//µÈ´ıSD¿¨¶ÁÍê
+	//ç­‰å¾…SDå¡è¯»å®Œ
 	while(SD_GetCardState()!=SD_TRANSFER_OK)
     {
 		if(timeout-- == 0)
@@ -108,25 +108,25 @@ uint8_t SD_ReadDisk(uint8_t* buf,uint32_t sector,uint32_t cnt)
 			sta=SD_TRANSFER_BUSY;
 		}
     }
-    sys_intx_enable();//¿ªÆô×ÜÖĞ¶Ï
+    sys_intx_enable();//å¼€å¯æ€»ä¸­æ–­
     return sta;
 }
 
 
-//Ğ´SD¿¨
-//buf:Ğ´Êı¾İ»º´æÇø
-//sector:ÉÈÇøµØÖ·
-//cnt:ÉÈÇø¸öÊı	
-//·µ»ØÖµ:´íÎó×´Ì¬;0,Õı³£;ÆäËû,´íÎó´úÂë;	
+//å†™SDå¡
+//buf:å†™æ•°æ®ç¼“å­˜åŒº
+//sector:æ‰‡åŒºåœ°å€
+//cnt:æ‰‡åŒºä¸ªæ•°	
+//è¿”å›å€¼:é”™è¯¯çŠ¶æ€;0,æ­£å¸¸;å…¶ä»–,é”™è¯¯ä»£ç ;	
 uint8_t SD_WriteDisk(uint8_t *buf,uint32_t sector,uint32_t cnt)
 {   
     uint8_t sta=HAL_OK;
 	uint32_t timeout=SD_TIMEOUT;
 	long long lsector=sector;
-    sys_intx_disable();//¹Ø±Õ×ÜÖĞ¶Ï(POLLINGÄ£Ê½,ÑÏ½ûÖĞ¶Ï´ò¶ÏSDIO¶ÁĞ´²Ù×÷!!!)
-	sta=HAL_SD_WriteBlocks(&SDCARD_Handler,(uint8_t*)buf,lsector,cnt,SD_TIMEOUT);//¶à¸ösectorµÄĞ´²Ù×÷
+    sys_intx_disable();//å…³é—­æ€»ä¸­æ–­(POLLINGæ¨¡å¼,ä¸¥ç¦ä¸­æ–­æ‰“æ–­SDIOè¯»å†™æ“ä½œ!!!)
+	sta=HAL_SD_WriteBlocks(&SDCARD_Handler,(uint8_t*)buf,lsector,cnt,SD_TIMEOUT);//å¤šä¸ªsectorçš„å†™æ“ä½œ
 
-	//µÈ´ıSD¿¨Ğ´Íê
+	//ç­‰å¾…SDå¡å†™å®Œ
 	while(SD_GetCardState()!=SD_TRANSFER_OK)
     {
 		if(timeout-- == 0)
@@ -134,6 +134,6 @@ uint8_t SD_WriteDisk(uint8_t *buf,uint32_t sector,uint32_t cnt)
 			sta=SD_TRANSFER_BUSY;
 		}
     }    
-	sys_intx_enable();//¿ªÆô×ÜÖĞ¶Ï
+	sys_intx_enable();//å¼€å¯æ€»ä¸­æ–­
     return sta;
 }

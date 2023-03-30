@@ -3,23 +3,23 @@
 #include <stm32f1xx.h>
 #include "fontupd.h"
 //////////////////////////////////////////////////////////////////////////////////	 
-//±¾³ÌĞòÖ»¹©Ñ§Ï°Ê¹ÓÃ£¬Î´¾­×÷ÕßĞí¿É£¬²»µÃÓÃÓÚÆäËüÈÎºÎÓÃÍ¾
-//ALIENTEK STM32F103¿ª·¢°å
-//ºº×ÖÏÔÊ¾ Çı¶¯´úÂë	   
-//ÕıµãÔ­×Ó@ALIENTEK
-//¼¼ÊõÂÛÌ³:www.openedv.com
-//´´½¨ÈÕÆÚ:2017/6/1
-//°æ±¾£ºV1.0
-//°æÈ¨ËùÓĞ£¬µÁ°æ±Ø¾¿¡£
-//Copyright(C) ¹ãÖİÊĞĞÇÒíµç×Ó¿Æ¼¼ÓĞÏŞ¹«Ë¾ 2014-2024
+//æœ¬ç¨‹åºåªä¾›å­¦ä¹ ä½¿ç”¨ï¼Œæœªç»ä½œè€…è®¸å¯ï¼Œä¸å¾—ç”¨äºå…¶å®ƒä»»ä½•ç”¨é€”
+//ALIENTEK STM32F103å¼€å‘æ¿
+//æ±‰å­—æ˜¾ç¤º é©±åŠ¨ä»£ç 	   
+//æ­£ç‚¹åŸå­@ALIENTEK
+//æŠ€æœ¯è®ºå›:www.openedv.com
+//åˆ›å»ºæ—¥æœŸ:2017/6/1
+//ç‰ˆæœ¬ï¼šV1.0
+//ç‰ˆæƒæ‰€æœ‰ï¼Œç›—ç‰ˆå¿…ç©¶ã€‚
+//Copyright(C) å¹¿å·å¸‚æ˜Ÿç¿¼ç”µå­ç§‘æŠ€æœ‰é™å…¬å¸ 2014-2024
 //All rights reserved									  
 ////////////////////////////////////////////////////////////////////////////////// 	 
  					     
-//µÃµ½ºº×ÖµÄµãÕóÂë
+//å¾—åˆ°æ±‰å­—çš„ç‚¹é˜µç 
 void Get_HzMat(unsigned char *code, unsigned char *mat, FontName fontName, FontSize fontSize);
-//ÔÚÖ¸¶¨Î»ÖÃÏÔÊ¾Ò»¸öºº×Ö
+//åœ¨æŒ‡å®šä½ç½®æ˜¾ç¤ºä¸€ä¸ªæ±‰å­—
 void Show_Font(uint16_t x,uint16_t y,uint8_t *font, FontName fontName, FontSize fontSize, uint8_t mode);
-//ÔÚÖ¸¶¨Î»ÖÃÏÔÊ¾Ò»¸ö×Ö·û´® 
+//åœ¨æŒ‡å®šä½ç½®æ˜¾ç¤ºä¸€ä¸ªå­—ç¬¦ä¸² 
 void Show_Str(uint16_t x,uint16_t y,uint16_t width,uint16_t height,uint8_t*str, 
 	FontName fontName, FontSize fontSize,uint8_t mode);
 void Show_Str_Mid(uint16_t x,uint16_t y,uint8_t*str, FontName fontName, FontSize fontSize, uint8_t len);

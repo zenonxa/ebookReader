@@ -3,23 +3,23 @@
 #include "SYSTEM/sys/sys.h"
 #include "font.h"
 //////////////////////////////////////////////////////////////////////////////////	 
-//±¾³ÌĞòÖ»¹©Ñ§Ï°Ê¹ÓÃ£¬Î´¾­×÷ÕßĞí¿É£¬²»µÃÓÃÓÚÆäËüÈÎºÎÓÃÍ¾
-//ALIENTEK STM32F103¿ª·¢°å
-//×Ö¿â¸üĞÂ Çı¶¯´úÂë	   
-//ÕıµãÔ­×Ó@ALIENTEK
-//¼¼ÊõÂÛÌ³:www.openedv.com
-//´´½¨ÈÕÆÚ:2017/6/1
-//°æ±¾£ºV1.0
-//°æÈ¨ËùÓĞ£¬µÁ°æ±Ø¾¿¡£
-//Copyright(C) ¹ãÖİÊĞĞÇÒíµç×Ó¿Æ¼¼ÓĞÏŞ¹«Ë¾ 2014-2024
+//æœ¬ç¨‹åºåªä¾›å­¦ä¹ ä½¿ç”¨ï¼Œæœªç»ä½œè€…è®¸å¯ï¼Œä¸å¾—ç”¨äºå…¶å®ƒä»»ä½•ç”¨é€”
+//ALIENTEK STM32F103å¼€å‘æ¿
+//å­—åº“æ›´æ–° é©±åŠ¨ä»£ç 	   
+//æ­£ç‚¹åŸå­@ALIENTEK
+//æŠ€æœ¯è®ºå›:www.openedv.com
+//åˆ›å»ºæ—¥æœŸ:2017/6/1
+//ç‰ˆæœ¬ï¼šV1.0
+//ç‰ˆæƒæ‰€æœ‰ï¼Œç›—ç‰ˆå¿…ç©¶ã€‚
+//Copyright(C) å¹¿å·å¸‚æ˜Ÿç¿¼ç”µå­ç§‘æŠ€æœ‰é™å…¬å¸ 2014-2024
 //All rights reserved									  
 //////////////////////////////////////////////////////////////////////////////////
 
 
-//×ÖÌåĞÅÏ¢±£´æµØÖ·,Õ¼33¸ö×Ö½Ú,µÚ1¸ö×Ö½ÚÓÃÓÚ±ê¼Ç×Ö¿âÊÇ·ñ´æÔÚ.ºóĞøÃ¿8¸ö×Ö½ÚÒ»×é,·Ö±ğ±£´æÆğÊ¼µØÖ·ºÍÎÄ¼ş´óĞ¡														   
+//å­—ä½“ä¿¡æ¯ä¿å­˜åœ°å€,å 33ä¸ªå­—èŠ‚,ç¬¬1ä¸ªå­—èŠ‚ç”¨äºæ ‡è®°å­—åº“æ˜¯å¦å­˜åœ¨.åç»­æ¯8ä¸ªå­—èŠ‚ä¸€ç»„,åˆ†åˆ«ä¿å­˜èµ·å§‹åœ°å€å’Œæ–‡ä»¶å¤§å°														   
 //extern uint32_t FONTINFOADDR;
-//×Ö¿âĞÅÏ¢½á¹¹Ìå¶¨Òå
-//ÓÃÀ´±£´æ×Ö¿â»ù±¾ĞÅÏ¢£¬µØÖ·£¬´óĞ¡µÈ
+//å­—åº“ä¿¡æ¯ç»“æ„ä½“å®šä¹‰
+//ç”¨æ¥ä¿å­˜å­—åº“åŸºæœ¬ä¿¡æ¯ï¼Œåœ°å€ï¼Œå¤§å°ç­‰
 
 #if 0
 /* Information of one font item, including address and size in flash */
@@ -28,11 +28,11 @@ typedef struct {
 } FontItem;
 #endif
 
-extern FontHeader fontHeader;	//×Ö¿âĞÅÏ¢½á¹¹Ìå
+extern FontHeader fontHeader;	//å­—åº“ä¿¡æ¯ç»“æ„ä½“
 
-uint32_t fupd_prog(uint16_t x,uint16_t y,uint8_t size,uint32_t fsize,uint32_t pos);	//ÏÔÊ¾¸üĞÂ½ø¶È
-uint8_t updata_fontx(FontName fontName, FontSize fontSize);						//¸üĞÂÖ¸¶¨×Ö¿â
-uint8_t update_font(void);														//¸üĞÂÈ«²¿×Ö¿â
+uint32_t fupd_prog(uint16_t x,uint16_t y,uint8_t size,uint32_t fsize,uint32_t pos);	//æ˜¾ç¤ºæ›´æ–°è¿›åº¦
+uint8_t updata_fontx(FontName fontName, FontSize fontSize);						//æ›´æ–°æŒ‡å®šå­—åº“
+uint8_t update_font(void);														//æ›´æ–°å…¨éƒ¨å­—åº“
 uint8_t update_mapping_table(void);
 
 #endif

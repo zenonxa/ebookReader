@@ -123,7 +123,7 @@ void DebugMon_Handler(void)
 {
 }
 
-/*******************OS 会重定义PendSV_Handler，delay.c中我们定义了SysTick_Handler，避免重复定义，注释以下两个函数****************************************/
+/*******************OS 浼氶噸瀹氫箟PendSV_Handler锛宒elay.c涓垜浠畾涔変簡SysTick_Handler锛岄伩鍏嶉噸澶嶅畾涔夛紝娉ㄩ噴浠ヤ笅涓や釜鍑芥暟****************************************/
 ///**
 //  * @brief  This function handles PendSVC exception.
 //  * @param  None

@@ -7,26 +7,26 @@
 #include "string.h"												    
 #include "SYSTEM/usart/usart.h"												    
 //////////////////////////////////////////////////////////////////////////////////	 
-//±¾³ÌĞòÖ»¹©Ñ§Ï°Ê¹ÓÃ£¬Î´¾­×÷ÕßĞí¿É£¬²»µÃÓÃÓÚÆäËüÈÎºÎÓÃÍ¾
-//ALIENTEK STM32F103¿ª·¢°å
-//ºº×ÖÏÔÊ¾ Çı¶¯´úÂë	   
-//ÕıµãÔ­×Ó@ALIENTEK
-//¼¼ÊõÂÛÌ³:www.openedv.com
-//´´½¨ÈÕÆÚ:2017/6/1
-//°æ±¾£ºV1.0
-//°æÈ¨ËùÓĞ£¬µÁ°æ±Ø¾¿¡£
-//Copyright(C) ¹ãÖİÊĞĞÇÒíµç×Ó¿Æ¼¼ÓĞÏŞ¹«Ë¾ 2014-2024
+//æœ¬ç¨‹åºåªä¾›å­¦ä¹ ä½¿ç”¨ï¼Œæœªç»ä½œè€…è®¸å¯ï¼Œä¸å¾—ç”¨äºå…¶å®ƒä»»ä½•ç”¨é€”
+//ALIENTEK STM32F103å¼€å‘æ¿
+//æ±‰å­—æ˜¾ç¤º é©±åŠ¨ä»£ç 	   
+//æ­£ç‚¹åŸå­@ALIENTEK
+//æŠ€æœ¯è®ºå›:www.openedv.com
+//åˆ›å»ºæ—¥æœŸ:2017/6/1
+//ç‰ˆæœ¬ï¼šV1.0
+//ç‰ˆæƒæ‰€æœ‰ï¼Œç›—ç‰ˆå¿…ç©¶ã€‚
+//Copyright(C) å¹¿å·å¸‚æ˜Ÿç¿¼ç”µå­ç§‘æŠ€æœ‰é™å…¬å¸ 2014-2024
 //All rights reserved									  
 ////////////////////////////////////////////////////////////////////////////////// 	 
  
 extern uint16_t POINT_COLOR;
 extern uint16_t BACK_COLOR;
  
-//code ×Ö·ûÖ¸Õë¿ªÊ¼
-//´Ó×Ö¿âÖĞ²éÕÒ³ö×ÖÄ£
-//code ×Ö·û´®µÄ¿ªÊ¼µØÖ·,GBKÂë
-//mat  Êı¾İ´æ·ÅµØÖ· (size/8+((size%8)?1:0))*(size) bytes´óĞ¡	
-//size:×ÖÌå´óĞ¡
+//code å­—ç¬¦æŒ‡é’ˆå¼€å§‹
+//ä»å­—åº“ä¸­æŸ¥æ‰¾å‡ºå­—æ¨¡
+//code å­—ç¬¦ä¸²çš„å¼€å§‹åœ°å€,GBKç 
+//mat  æ•°æ®å­˜æ”¾åœ°å€ (size/8+((size%8)?1:0))*(size) byteså¤§å°	
+//size:å­—ä½“å¤§å°
 void Get_HzMat(unsigned char *code, unsigned char *mat, FontName fontName, FontSize fontSize)
 {		    
 	unsigned char qh,ql;
@@ -35,20 +35,20 @@ void Get_HzMat(unsigned char *code, unsigned char *mat, FontName fontName, FontS
 	uint32_t address;
 	uint8_t size;
 	getSize(fontSize);
-	uint8_t csize=(size/8+((size%8)?1:0))*(size);//µÃµ½×ÖÌåÒ»¸ö×Ö·û¶ÔÓ¦µãÕó¼¯ËùÕ¼µÄ×Ö½ÚÊı
+	uint8_t csize=(size/8+((size%8)?1:0))*(size);//å¾—åˆ°å­—ä½“ä¸€ä¸ªå­—ç¬¦å¯¹åº”ç‚¹é˜µé›†æ‰€å çš„å­—èŠ‚æ•°
 	qh = *code;
 	ql = *(++code);
-	if(qh<0x81||ql<0x40||ql==0xff||qh==0xff)//·Ç ³£ÓÃºº×Ö
+	if(qh<0x81||ql<0x40||ql==0xff||qh==0xff)//é å¸¸ç”¨æ±‰å­—
 	{   		    
-	    for(i=0;i<csize;i++)*mat++=0x00;//Ìî³äÂú¸ñ
-	    return; //½áÊø·ÃÎÊ
+	    for(i=0;i<csize;i++)*mat++=0x00;//å¡«å……æ»¡æ ¼
+	    return; //ç»“æŸè®¿é—®
 	}          
 	if(ql<0x7f)
-		ql-=0x40;//×¢Òâ!
+		ql-=0x40;//æ³¨æ„!
 	else 
 		ql-=0x41;
 	qh -= 0x81;   
-	foffset = ((unsigned long)190*qh+ql)*csize;	//µÃµ½×Ö¿âÖĞµÄ×Ö½ÚÆ«ÒÆÁ¿
+	foffset = ((unsigned long)190*qh+ql)*csize;	//å¾—åˆ°å­—åº“ä¸­çš„å­—èŠ‚åç§»é‡
 	address = getFontAddr(fontName, fontSize);
 	W25QXX_Read(mat, address+foffset, csize);
 #if 0
@@ -66,24 +66,24 @@ void Get_HzMat(unsigned char *code, unsigned char *mat, FontName fontName, FontS
 	}
 #endif	
 }
-//ÏÔÊ¾Ò»¸öÖ¸¶¨´óĞ¡µÄºº×Ö
-//x,y :ºº×ÖµÄ×ø±ê
-//font:ºº×ÖGBKÂë
-//size:×ÖÌå´óĞ¡
-//mode:0,Õı³£ÏÔÊ¾,1,µş¼ÓÏÔÊ¾	   
+//æ˜¾ç¤ºä¸€ä¸ªæŒ‡å®šå¤§å°çš„æ±‰å­—
+//x,y :æ±‰å­—çš„åæ ‡
+//font:æ±‰å­—GBKç 
+//size:å­—ä½“å¤§å°
+//mode:0,æ­£å¸¸æ˜¾ç¤º,1,å åŠ æ˜¾ç¤º	   
 void Show_Font(uint16_t x,uint16_t y,uint8_t *font, FontName fontName, FontSize fontSize, uint8_t mode)
 {
 	uint8_t temp,t,t1;
 	uint16_t y0=y;
 	uint8_t dzk[72];
 	uint8_t size = getSize(fontSize);
-	uint8_t csize=(size/8+((size%8)?1:0))*(size);	//µÃµ½×ÖÌåÒ»¸ö×Ö·û¶ÔÓ¦µãÕó¼¯ËùÕ¼µÄ×Ö½ÚÊı	 
+	uint8_t csize=(size/8+((size%8)?1:0))*(size);	//å¾—åˆ°å­—ä½“ä¸€ä¸ªå­—ç¬¦å¯¹åº”ç‚¹é˜µé›†æ‰€å çš„å­—èŠ‚æ•°	 
 	if(size!=12 && size!=16 && size!=24 && size != 32)
-		return;	//²»Ö§³ÖµÄsize
-	Get_HzMat(font, dzk, fontName, fontSize);		//µÃµ½ÏàÓ¦´óĞ¡µÄµãÕóÊı¾İ
+		return;	//ä¸æ”¯æŒçš„size
+	Get_HzMat(font, dzk, fontName, fontSize);		//å¾—åˆ°ç›¸åº”å¤§å°çš„ç‚¹é˜µæ•°æ®
 	for(t=0;t<csize;t++)
 	{   												   
-		temp=dzk[t];			//µÃµ½µãÕóÊı¾İ                          
+		temp=dzk[t];			//å¾—åˆ°ç‚¹é˜µæ•°æ®                          
 		for(t1=0;t1<8;t1++)
 		{
 			if(temp&0x80)
@@ -101,63 +101,63 @@ void Show_Font(uint16_t x,uint16_t y,uint8_t *font, FontName fontName, FontSize 
 		}  	 
 	}
 }
-//ÔÚÖ¸¶¨Î»ÖÃ¿ªÊ¼ÏÔÊ¾Ò»¸ö×Ö·û´®	    
-//Ö§³Ö×Ô¶¯»»ĞĞ
-//(x,y):ÆğÊ¼×ø±ê
-//width,height:ÇøÓò
-//str  :×Ö·û´®
-//size :×ÖÌå´óĞ¡
-//mode:0,·Çµş¼Ó·½Ê½;1,µş¼Ó·½Ê½    	   		   
+//åœ¨æŒ‡å®šä½ç½®å¼€å§‹æ˜¾ç¤ºä¸€ä¸ªå­—ç¬¦ä¸²	    
+//æ”¯æŒè‡ªåŠ¨æ¢è¡Œ
+//(x,y):èµ·å§‹åæ ‡
+//width,height:åŒºåŸŸ
+//str  :å­—ç¬¦ä¸²
+//size :å­—ä½“å¤§å°
+//mode:0,éå åŠ æ–¹å¼;1,å åŠ æ–¹å¼    	   		   
 void Show_Str(uint16_t x,uint16_t y,uint16_t width,uint16_t height,uint8_t*str, 
 	FontName fontName, FontSize fontSize,uint8_t mode)
 {					
 	uint16_t x0=x;
 	uint16_t y0=y;							  	  
-    uint8_t bHz=0;     //×Ö·û»òÕßÖĞÎÄ
+    uint8_t bHz=0;     //å­—ç¬¦æˆ–è€…ä¸­æ–‡
 	uint8_t size = getSize(fontSize);
-    while(*str!=0)//Êı¾İÎ´½áÊø
+    while(*str!=0)//æ•°æ®æœªç»“æŸ
     { 
         if(!bHz)
         {
 	        if(*str>0x80)
-				bHz=1;//ÖĞÎÄ 
-	        else              //×Ö·û
+				bHz=1;//ä¸­æ–‡ 
+	        else              //å­—ç¬¦
 	        {      
-                if(x>(x0+width-size/2))//»»ĞĞ
+                if(x>(x0+width-size/2))//æ¢è¡Œ
 				{				   
 					y+=size;
 					x=x0;	   
 				}							    
-		        if(y>(y0+height-size))break;//Ô½½ç·µ»Ø      
-		        if(*str==13)//»»ĞĞ·ûºÅ
+		        if(y>(y0+height-size))break;//è¶Šç•Œè¿”å›      
+		        if(*str==13)//æ¢è¡Œç¬¦å·
 		        {         
 		            y+=size;
 					x=x0;
 		            str++; 
 		        }  else {
-					atk_md0700_show_char(x,y,*str,mapping_font_size(size),POINT_COLOR);//ÓĞĞ§²¿·ÖĞ´Èë
+					atk_md0700_show_char(x,y,*str,mapping_font_size(size),POINT_COLOR);//æœ‰æ•ˆéƒ¨åˆ†å†™å…¥
 				}					
 				str++; 
-		        x+=size/2; //×Ö·û,ÎªÈ«×ÖµÄÒ»°ë 
+		        x+=size/2; //å­—ç¬¦,ä¸ºå…¨å­—çš„ä¸€åŠ 
 	        }
-        }else//ÖĞÎÄ 
+        }else//ä¸­æ–‡ 
         {     
-            bHz=0;//ÓĞºº×Ö¿â    
-            if(x>(x0+width-size))//»»ĞĞ
+            bHz=0;//æœ‰æ±‰å­—åº“    
+            if(x>(x0+width-size))//æ¢è¡Œ
 			{	    
 				y+=size;
 				x=x0;		  
 			}
-	        if(y>(y0+height-size))break;//Ô½½ç·µ»Ø  						     
-	        Show_Font(x, y, str, fontName, fontSize, mode); //ÏÔÊ¾Õâ¸öºº×Ö,¿ÕĞÄÏÔÊ¾ 
+	        if(y>(y0+height-size))break;//è¶Šç•Œè¿”å›  						     
+	        Show_Font(x, y, str, fontName, fontSize, mode); //æ˜¾ç¤ºè¿™ä¸ªæ±‰å­—,ç©ºå¿ƒæ˜¾ç¤º 
 	        str+=2; 
-	        x+=size;//ÏÂÒ»¸öºº×ÖÆ«ÒÆ	    
+	        x+=size;//ä¸‹ä¸€ä¸ªæ±‰å­—åç§»	    
         }						 
     }   
 }  			 		 
-//ÔÚÖ¸¶¨¿í¶ÈµÄÖĞ¼äÏÔÊ¾×Ö·û´®
-//Èç¹û×Ö·û³¤¶È³¬¹ıÁËlen,ÔòÓÃShow_StrÏÔÊ¾
-//len:Ö¸¶¨ÒªÏÔÊ¾µÄ¿í¶È		  
+//åœ¨æŒ‡å®šå®½åº¦çš„ä¸­é—´æ˜¾ç¤ºå­—ç¬¦ä¸²
+//å¦‚æœå­—ç¬¦é•¿åº¦è¶…è¿‡äº†len,åˆ™ç”¨Show_Stræ˜¾ç¤º
+//len:æŒ‡å®šè¦æ˜¾ç¤ºçš„å®½åº¦		  
 void Show_Str_Mid(uint16_t x,uint16_t y,uint8_t*str, FontName fontName, FontSize fontSize, uint8_t len)
 {
 	uint16_t strlenth=0;

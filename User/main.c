@@ -5,7 +5,7 @@ uint8_t* page_buffer[PAGE_NUM];
 unsigned int page_buffer_len[PAGE_NUM];
 
 extern FIL *main_file;	  	// file 1
-extern FIL *ftemp;	  		// fiel temp.
+extern FIL *ftemp;	  		// file temp.
 extern UINT br,bw;			// the number of byte really read or written
 extern FILINFO fileinfo;	// file information
 extern DIR dir;  			// directory
@@ -102,7 +102,7 @@ int main(void)
 		infinite_throw("Read test file fail.");
 	}
 	/* Test to show a string with Chinese character */
-	Show_Str_Mid(30, 30, (uint8_t*)"Ò»¸ö×Ö·û´®²âÊÔ", Font_SimSun, PX12, 20);
+	Show_Str_Mid(30, 30, (uint8_t*)"ä¸€ä¸ªå­—ç¬¦ä¸²æµ‹è¯•", Font_SimSun, PX12, 20);
 	f_close(&my_file);
 	/* Unmount SD Card volume */
 	f_mount(NULL, "0:", 1);

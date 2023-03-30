@@ -8,43 +8,43 @@
 #include "BSP/W25QXX/w25qxx.h"
 #include "log.h"
 //////////////////////////////////////////////////////////////////////////////////	 
-//±¾³ÌĞòÖ»¹©Ñ§Ï°Ê¹ÓÃ£¬Î´¾­×÷ÕßĞí¿É£¬²»µÃÓÃÓÚÆäËüÈÎºÎÓÃÍ¾
-//ALIENTEK STM32¿ª·¢°å
-//FATFS À©Õ¹´úÂë	   
-//ÕıµãÔ­×Ó@ALIENTEK
-//¼¼ÊõÂÛÌ³:www.openedv.com
-//´´½¨ÈÕÆÚ:2019/9/28
-//°æ±¾£ºV1.1
-//°æÈ¨ËùÓĞ£¬µÁ°æ±Ø¾¿¡£
-//Copyright(C) ¹ãÖİÊĞĞÇÒíµç×Ó¿Æ¼¼ÓĞÏŞ¹«Ë¾ 2014-2024
+//æœ¬ç¨‹åºåªä¾›å­¦ä¹ ä½¿ç”¨ï¼Œæœªç»ä½œè€…è®¸å¯ï¼Œä¸å¾—ç”¨äºå…¶å®ƒä»»ä½•ç”¨é€”
+//ALIENTEK STM32å¼€å‘æ¿
+//FATFS æ‰©å±•ä»£ç 	   
+//æ­£ç‚¹åŸå­@ALIENTEK
+//æŠ€æœ¯è®ºå›:www.openedv.com
+//åˆ›å»ºæ—¥æœŸ:2019/9/28
+//ç‰ˆæœ¬ï¼šV1.1
+//ç‰ˆæƒæ‰€æœ‰ï¼Œç›—ç‰ˆå¿…ç©¶ã€‚
+//Copyright(C) å¹¿å·å¸‚æ˜Ÿç¿¼ç”µå­ç§‘æŠ€æœ‰é™å…¬å¸ 2014-2024
 //All rights reserved	
 //********************************************************************************
-//Éı¼¶ËµÃ÷
+//å‡çº§è¯´æ˜
 //V1.1
-//ĞŞÕıexf_copyº¯Êı,ÎÄ¼ş½ø¶ÈÏÔÊ¾´íÎóµÄbug
+//ä¿®æ­£exf_copyå‡½æ•°,æ–‡ä»¶è¿›åº¦æ˜¾ç¤ºé”™è¯¯çš„bug
 ////////////////////////////////////////////////////////////////////////////////// 	
 
 
-#define FILE_MAX_TYPE_NUM		7	//×î¶àFILE_MAX_TYPE_NUM¸ö´óÀà
-#define FILE_MAX_SUBT_NUM		4	//×î¶àFILE_MAX_SUBT_NUM¸öĞ¡Àà
+#define FILE_MAX_TYPE_NUM		7	//æœ€å¤šFILE_MAX_TYPE_NUMä¸ªå¤§ç±»
+#define FILE_MAX_SUBT_NUM		4	//æœ€å¤šFILE_MAX_SUBT_NUMä¸ªå°ç±»
 
 
- //ÎÄ¼şÀàĞÍÁĞ±í
+ //æ–‡ä»¶ç±»å‹åˆ—è¡¨
 u8*const FILE_TYPE_TBL[FILE_MAX_TYPE_NUM][FILE_MAX_SUBT_NUM]=
 {
-	{"BIN"},							//BINÎÄ¼ş
-	{"LRC"},							//LRCÎÄ¼ş
-	{"NES", "SMS"},						//NES/SMSÎÄ¼ş
-	{"TXT", "C",	"H"},				//ÎÄ±¾ÎÄ¼ş
-	{"WAV", "MP3",	"APE",	"FLAC"},	//Ö§³ÖµÄÒôÀÖÎÄ¼ş
-	{"BMP", "JPG",	"JPEG",	"GIF"},		//Í¼Æ¬ÎÄ¼ş
-	{"AVI"},							//ÊÓÆµÎÄ¼ş
+	{"BIN"},							//BINæ–‡ä»¶
+	{"LRC"},							//LRCæ–‡ä»¶
+	{"NES", "SMS"},						//NES/SMSæ–‡ä»¶
+	{"TXT", "C",	"H"},				//æ–‡æœ¬æ–‡ä»¶
+	{"WAV", "MP3",	"APE",	"FLAC"},	//æ”¯æŒçš„éŸ³ä¹æ–‡ä»¶
+	{"BMP", "JPG",	"JPEG",	"GIF"},		//å›¾ç‰‡æ–‡ä»¶
+	{"AVI"},							//è§†é¢‘æ–‡ä»¶
 };
-///////////////////////////////¹«¹²ÎÄ¼şÇø,Ê¹ÓÃmallocµÄÊ±ºò////////////////////////////////////////////
+///////////////////////////////å…¬å…±æ–‡ä»¶åŒº,ä½¿ç”¨mallocçš„æ—¶å€™////////////////////////////////////////////
 /* Array of logic drivers for FATFS */
-FATFS *fs[FF_VOLUMES]= {NULL};//Âß¼­´ÅÅÌ¹¤×÷Çø.
+FATFS *fs[FF_VOLUMES]= {NULL};//é€»è¾‘ç£ç›˜å·¥ä½œåŒº.
 /* Buffer for FATFS */
-u8 *fatbuf = NULL;			//SD¿¨Êı¾İ»º´æÇø
+u8 *fatbuf = NULL;			//SDå¡æ•°æ®ç¼“å­˜åŒº
 /* A main and a vice file to be used, and a temperary file */
 FIL *main_file = NULL;
 FIL *vice_file = NULL;
@@ -52,20 +52,20 @@ FIL *temp_file = NULL;
 /* the number of byte be read or writen */
 UINT br,bw;
 /* File and directory infomation structure */
-FILINFO fileinfo;	// ÎÄ¼şĞÅÏ¢
-DIR dir;  			// Ä¿Â¼
+FILINFO fileinfo;	// æ–‡ä»¶ä¿¡æ¯
+DIR dir;  			// ç›®å½•
 /* Cache for flash when do reading or writing operation */
 u8* flash_buffer = NULL;
 ///////////////////////////////////////////////////////////////////////////////////////
-//ÎªexfunsÉêÇëÄÚ´æ
-//·µ»ØÖµ:0,³É¹¦
-//1,Ê§°Ü
+//ä¸ºexfunsç”³è¯·å†…å­˜
+//è¿”å›å€¼:0,æˆåŠŸ
+//1,å¤±è´¥
 u8 exfuns_init(void)
 {
 	u8 i, res = 0;
 	for(i=0; i<FF_VOLUMES; i++)
 	{
-		fs[i] = (FATFS*)mymalloc(SRAMIN,sizeof(FATFS));	//Îª´ÅÅÌi¹¤×÷ÇøÉêÇëÄÚ´æ
+		fs[i] = (FATFS*)mymalloc(SRAMIN,sizeof(FATFS));	//ä¸ºç£ç›˜iå·¥ä½œåŒºç”³è¯·å†…å­˜
 		if(!fs[i]) {
 			printf("Fail to malloc for FATFS fs[%d]\r\n", i);
 			break;
@@ -89,30 +89,30 @@ u8 exfuns_init(void)
 	return res;
 }
 
-//½«Ğ¡Ğ´×ÖÄ¸×ªÎª´óĞ´×ÖÄ¸,Èç¹ûÊÇÊı×Ö,Ôò±£³Ö²»±ä.
+//å°†å°å†™å­—æ¯è½¬ä¸ºå¤§å†™å­—æ¯,å¦‚æœæ˜¯æ•°å­—,åˆ™ä¿æŒä¸å˜.
 u8 char_upper(u8 c)
 {
-	if(c<'A')return c;//Êı×Ö,±£³Ö²»±ä.
-	if(c>='a')return c-0x20;//±äÎª´óĞ´.
-	else return c;//´óĞ´,±£³Ö²»±ä
+	if(c<'A')return c;//æ•°å­—,ä¿æŒä¸å˜.
+	if(c>='a')return c-0x20;//å˜ä¸ºå¤§å†™.
+	else return c;//å¤§å†™,ä¿æŒä¸å˜
 }	      
-//±¨¸æÎÄ¼şµÄÀàĞÍ
-//fname:ÎÄ¼şÃû
-//·µ»ØÖµ:0XFF,±íÊ¾ÎŞ·¨Ê¶±ğµÄÎÄ¼şÀàĞÍ±àºÅ.
-//		 ÆäËû,¸ßËÄÎ»±íÊ¾ËùÊô´óÀà,µÍËÄÎ»±íÊ¾ËùÊôĞ¡Àà.
+//æŠ¥å‘Šæ–‡ä»¶çš„ç±»å‹
+//fname:æ–‡ä»¶å
+//è¿”å›å€¼:0XFF,è¡¨ç¤ºæ— æ³•è¯†åˆ«çš„æ–‡ä»¶ç±»å‹ç¼–å·.
+//		 å…¶ä»–,é«˜å››ä½è¡¨ç¤ºæ‰€å±å¤§ç±»,ä½å››ä½è¡¨ç¤ºæ‰€å±å°ç±».
 u8 f_typetell(u8 *fname)
 {
 	u8 tbuf[5];
-	u8 *attr='\0';//ºó×ºÃû
+	u8 *attr='\0';//åç¼€å
 	u8 i=0,j;
 	while(i<250)
 	{
 		i++;
-		if(*fname=='\0')break;//Æ«ÒÆµ½ÁË×îºóÁË.
+		if(*fname=='\0')break;//åç§»åˆ°äº†æœ€åäº†.
 		fname++;
 	}
-	if(i==250)return 0XFF;//´íÎóµÄ×Ö·û´®.
- 	for(i=0;i<5;i++)//µÃµ½ºó×ºÃû
+	if(i==250)return 0XFF;//é”™è¯¯çš„å­—ç¬¦ä¸².
+ 	for(i=0;i<5;i++)//å¾—åˆ°åç¼€å
 	{
 		fname--;
 		if(*fname=='.')
@@ -123,68 +123,68 @@ u8 f_typetell(u8 *fname)
 		}
   	}
 	strcpy((char *)tbuf,(const char*)attr);//copy
- 	for(i=0;i<4;i++)tbuf[i]=char_upper(tbuf[i]);//È«²¿±äÎª´óĞ´ 
-	for(i=0;i<FILE_MAX_TYPE_NUM;i++)	//´óÀà¶Ô±È
+ 	for(i=0;i<4;i++)tbuf[i]=char_upper(tbuf[i]);//å…¨éƒ¨å˜ä¸ºå¤§å†™ 
+	for(i=0;i<FILE_MAX_TYPE_NUM;i++)	//å¤§ç±»å¯¹æ¯”
 	{
-		for(j=0;j<FILE_MAX_SUBT_NUM;j++)//×ÓÀà¶Ô±È
+		for(j=0;j<FILE_MAX_SUBT_NUM;j++)//å­ç±»å¯¹æ¯”
 		{
-			if(*FILE_TYPE_TBL[i][j]==0)break;//´Ë×éÒÑ¾­Ã»ÓĞ¿É¶Ô±ÈµÄ³ÉÔ±ÁË.
-			if(strcmp((const char *)FILE_TYPE_TBL[i][j],(const char *)tbuf)==0)//ÕÒµ½ÁË
+			if(*FILE_TYPE_TBL[i][j]==0)break;//æ­¤ç»„å·²ç»æ²¡æœ‰å¯å¯¹æ¯”çš„æˆå‘˜äº†.
+			if(strcmp((const char *)FILE_TYPE_TBL[i][j],(const char *)tbuf)==0)//æ‰¾åˆ°äº†
 			{
 				return (i<<4)|j;
 			}
 		}
 	}
-	return 0XFF;//Ã»ÕÒµ½		 			   
+	return 0XFF;//æ²¡æ‰¾åˆ°		 			   
 }
 
-//µÃµ½´ÅÅÌÊ£ÓàÈİÁ¿
-//drv:´ÅÅÌ±àºÅ("0:"/"1:")
-//total:×ÜÈİÁ¿	 £¨µ¥Î»KB£©
-//free:Ê£ÓàÈİÁ¿	 £¨µ¥Î»KB£©
-//·µ»ØÖµ:0,Õı³£.ÆäËû,´íÎó´úÂë
+//å¾—åˆ°ç£ç›˜å‰©ä½™å®¹é‡
+//drv:ç£ç›˜ç¼–å·("0:"/"1:")
+//total:æ€»å®¹é‡	 ï¼ˆå•ä½KBï¼‰
+//free:å‰©ä½™å®¹é‡	 ï¼ˆå•ä½KBï¼‰
+//è¿”å›å€¼:0,æ­£å¸¸.å…¶ä»–,é”™è¯¯ä»£ç 
 u8 exf_getfree(u8 *drv,u32 *total,u32 *free)
 {
 	FATFS *fs1;
 	u8 res;
     u32 fre_clust=0, fre_sect=0, tot_sect=0;
-    //µÃµ½´ÅÅÌĞÅÏ¢¼°¿ÕÏĞ´ØÊıÁ¿
+    //å¾—åˆ°ç£ç›˜ä¿¡æ¯åŠç©ºé—²ç°‡æ•°é‡
     res =(u32)f_getfree((const TCHAR*)drv, (DWORD*)&fre_clust, &fs1);
     if(res==0)
 	{											   
-	    tot_sect=(fs1->n_fatent-2)*fs1->csize;	//µÃµ½×ÜÉÈÇøÊı
-	    fre_sect=fre_clust*fs1->csize;			//µÃµ½¿ÕÏĞÉÈÇøÊı	   
+	    tot_sect=(fs1->n_fatent-2)*fs1->csize;	//å¾—åˆ°æ€»æ‰‡åŒºæ•°
+	    fre_sect=fre_clust*fs1->csize;			//å¾—åˆ°ç©ºé—²æ‰‡åŒºæ•°	   
 #if FF_MIN_SS != FF_MAX_SS
-#if _MAX_SS!=512				  				//ÉÈÇø´óĞ¡²»ÊÇ512×Ö½Ú,Ôò×ª»»Îª512×Ö½Ú
+#if _MAX_SS!=512				  				//æ‰‡åŒºå¤§å°ä¸æ˜¯512å­—èŠ‚,åˆ™è½¬æ¢ä¸º512å­—èŠ‚
 		tot_sect*=fs1->ssize/512;
 		fre_sect*=fs1->ssize/512;
 #endif	  
 #endif
-		*total=tot_sect>>1;	//µ¥Î»ÎªKB
-		*free=fre_sect>>1;	//µ¥Î»ÎªKB 
+		*total=tot_sect>>1;	//å•ä½ä¸ºKB
+		*free=fre_sect>>1;	//å•ä½ä¸ºKB 
  	}
 	return res;
 }		   
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//ÎÄ¼ş¸´ÖÆ
-//×¢ÒâÎÄ¼ş´óĞ¡²»Òª³¬¹ı4GB.
-//½«psrcÎÄ¼ş,copyµ½pdst.
-//fcpymsg,º¯ÊıÖ¸Õë,ÓÃÓÚÊµÏÖ¿½±´Ê±µÄĞÅÏ¢ÏÔÊ¾
-//        pname:ÎÄ¼ş/ÎÄ¼ş¼ĞÃû
-//        pct:°Ù·Ö±È
+//æ–‡ä»¶å¤åˆ¶
+//æ³¨æ„æ–‡ä»¶å¤§å°ä¸è¦è¶…è¿‡4GB.
+//å°†psrcæ–‡ä»¶,copyåˆ°pdst.
+//fcpymsg,å‡½æ•°æŒ‡é’ˆ,ç”¨äºå®ç°æ‹·è´æ—¶çš„ä¿¡æ¯æ˜¾ç¤º
+//        pname:æ–‡ä»¶/æ–‡ä»¶å¤¹å
+//        pct:ç™¾åˆ†æ¯”
 //        mode:
-//			[0]:¸üĞÂÎÄ¼şÃû
-//			[1]:¸üĞÂ°Ù·Ö±Èpct
-//			[2]:¸üĞÂÎÄ¼ş¼Ğ
-//			[3~7]:±£Áô
-//psrc,pdst:Ô´ÎÄ¼şºÍÄ¿±êÎÄ¼ş
-//totsize:×Ü´óĞ¡(µ±totsizeÎª0µÄÊ±ºò,±íÊ¾½ö½öÎªµ¥¸öÎÄ¼ş¿½±´)
-//cpdsize:ÒÑ¸´ÖÆÁËµÄ´óĞ¡.
-//fwmode:ÎÄ¼şĞ´ÈëÄ£Ê½
-//0:²»¸²¸ÇÔ­ÓĞµÄÎÄ¼ş
-//1:¸²¸ÇÔ­ÓĞµÄÎÄ¼ş
-//·µ»ØÖµ:0,Õı³£
-//    ÆäËû,´íÎó,0XFF,Ç¿ÖÆÍË³ö
+//			[0]:æ›´æ–°æ–‡ä»¶å
+//			[1]:æ›´æ–°ç™¾åˆ†æ¯”pct
+//			[2]:æ›´æ–°æ–‡ä»¶å¤¹
+//			[3~7]:ä¿ç•™
+//psrc,pdst:æºæ–‡ä»¶å’Œç›®æ ‡æ–‡ä»¶
+//totsize:æ€»å¤§å°(å½“totsizeä¸º0çš„æ—¶å€™,è¡¨ç¤ºä»…ä»…ä¸ºå•ä¸ªæ–‡ä»¶æ‹·è´)
+//cpdsize:å·²å¤åˆ¶äº†çš„å¤§å°.
+//fwmode:æ–‡ä»¶å†™å…¥æ¨¡å¼
+//0:ä¸è¦†ç›–åŸæœ‰çš„æ–‡ä»¶
+//1:è¦†ç›–åŸæœ‰çš„æ–‡ä»¶
+//è¿”å›å€¼:0,æ­£å¸¸
+//    å…¶ä»–,é”™è¯¯,0XFF,å¼ºåˆ¶é€€å‡º
 u8 exf_copy(u8(*fcpymsg)(u8*pname,u8 pct,u8 mode),u8 *psrc,u8 *pdst,u32 totsize,u32 cpdsize,u8 fwmode)
 {
 	u8 res;
@@ -195,38 +195,38 @@ u8 exf_copy(u8(*fcpymsg)(u8*pname,u8 pct,u8 mode),u8 *psrc,u8 *pdst,u32 totsize,
 	u8 *fbuf=0;
 	u8 curpct=0;
 	unsigned long long lcpdsize=cpdsize; 
- 	fsrc=(FIL*)mymalloc(SRAMIN,sizeof(FIL));//ÉêÇëÄÚ´æ
+ 	fsrc=(FIL*)mymalloc(SRAMIN,sizeof(FIL));//ç”³è¯·å†…å­˜
  	fdst=(FIL*)mymalloc(SRAMIN,sizeof(FIL));
 	fbuf=(u8*)mymalloc(SRAMIN,8192);
-  	if(fsrc==NULL||fdst==NULL||fbuf==NULL)res=100;//Ç°ÃæµÄÖµÁô¸øfatfs
+  	if(fsrc==NULL||fdst==NULL||fbuf==NULL)res=100;//å‰é¢çš„å€¼ç•™ç»™fatfs
 	else
 	{   
-		if(fwmode==0)fwmode=FA_CREATE_NEW;//²»¸²¸Ç
-		else fwmode=FA_CREATE_ALWAYS;	  //¸²¸Ç´æÔÚµÄÎÄ¼ş
+		if(fwmode==0)fwmode=FA_CREATE_NEW;//ä¸è¦†ç›–
+		else fwmode=FA_CREATE_ALWAYS;	  //è¦†ç›–å­˜åœ¨çš„æ–‡ä»¶
 		 
-	 	res=f_open(fsrc,(const TCHAR*)psrc,FA_READ|FA_OPEN_EXISTING);	//´ò¿ªÖ»¶ÁÎÄ¼ş
-	 	if(res==0)res=f_open(fdst,(const TCHAR*)pdst,FA_WRITE|fwmode); 	//µÚÒ»¸ö´ò¿ª³É¹¦,²Å¿ªÊ¼´ò¿ªµÚ¶ş¸ö
-		if(res==0)//Á½¸ö¶¼´ò¿ª³É¹¦ÁË
+	 	res=f_open(fsrc,(const TCHAR*)psrc,FA_READ|FA_OPEN_EXISTING);	//æ‰“å¼€åªè¯»æ–‡ä»¶
+	 	if(res==0)res=f_open(fdst,(const TCHAR*)pdst,FA_WRITE|fwmode); 	//ç¬¬ä¸€ä¸ªæ‰“å¼€æˆåŠŸ,æ‰å¼€å§‹æ‰“å¼€ç¬¬äºŒä¸ª
+		if(res==0)//ä¸¤ä¸ªéƒ½æ‰“å¼€æˆåŠŸäº†
 		{
-			if(totsize==0)//½ö½öÊÇµ¥¸öÎÄ¼ş¸´ÖÆ
+			if(totsize==0)//ä»…ä»…æ˜¯å•ä¸ªæ–‡ä»¶å¤åˆ¶
 			{
 				totsize=fsrc->obj.objsize;
 				lcpdsize=0;
 				curpct=0;
-		 	}else curpct=(lcpdsize*100)/totsize;	//µÃµ½ĞÂ°Ù·Ö±È
-			fcpymsg(psrc,curpct,0X02);			//¸üĞÂ°Ù·Ö±È
-			while(res==0)//¿ªÊ¼¸´ÖÆ
+		 	}else curpct=(lcpdsize*100)/totsize;	//å¾—åˆ°æ–°ç™¾åˆ†æ¯”
+			fcpymsg(psrc,curpct,0X02);			//æ›´æ–°ç™¾åˆ†æ¯”
+			while(res==0)//å¼€å§‹å¤åˆ¶
 			{
-				res=f_read(fsrc,fbuf,8192,(UINT*)&br);	//Ô´Í·¶Á³ö512×Ö½Ú
+				res=f_read(fsrc,fbuf,8192,(UINT*)&br);	//æºå¤´è¯»å‡º512å­—èŠ‚
 				if(res||br==0)break;
-				res=f_write(fdst,fbuf,(UINT)br,(UINT*)&bw);	//Ğ´ÈëÄ¿µÄÎÄ¼ş
+				res=f_write(fdst,fbuf,(UINT)br,(UINT*)&bw);	//å†™å…¥ç›®çš„æ–‡ä»¶
 				lcpdsize+=bw;
-				if(curpct!=(lcpdsize*100)/totsize)//ÊÇ·ñĞèÒª¸üĞÂ°Ù·Ö±È
+				if(curpct!=(lcpdsize*100)/totsize)//æ˜¯å¦éœ€è¦æ›´æ–°ç™¾åˆ†æ¯”
 				{
 					curpct=(lcpdsize*100)/totsize;
-					if(fcpymsg(psrc,curpct,0X02))//¸üĞÂ°Ù·Ö±È
+					if(fcpymsg(psrc,curpct,0X02))//æ›´æ–°ç™¾åˆ†æ¯”
 					{
-						res=0XFF;//Ç¿ÖÆÍË³ö
+						res=0XFF;//å¼ºåˆ¶é€€å‡º
 						break;
 					}
 				}			     
@@ -236,15 +236,15 @@ u8 exf_copy(u8(*fcpymsg)(u8*pname,u8 pct,u8 mode),u8 *psrc,u8 *pdst,u32 totsize,
 		    f_close(fdst);
 		}
 	}
-	myfree(SRAMIN,fsrc);//ÊÍ·ÅÄÚ´æ
+	myfree(SRAMIN,fsrc);//é‡Šæ”¾å†…å­˜
 	myfree(SRAMIN,fdst);
 	myfree(SRAMIN,fbuf);
 	return res;
 }
 
-//µÃµ½Â·¾¶ÏÂµÄÎÄ¼ş¼Ğ
-//·µ»ØÖµ:0,Â·¾¶¾ÍÊÇ¸ö¾í±êºÅ.
-//    ÆäËû,ÎÄ¼ş¼ĞÃû×ÖÊ×µØÖ·
+//å¾—åˆ°è·¯å¾„ä¸‹çš„æ–‡ä»¶å¤¹
+//è¿”å›å€¼:0,è·¯å¾„å°±æ˜¯ä¸ªå·æ ‡å·.
+//    å…¶ä»–,æ–‡ä»¶å¤¹åå­—é¦–åœ°å€
 u8* exf_get_src_dname(u8* dpfn)
 {
 	u16 temp=0;
@@ -254,24 +254,24 @@ u8* exf_get_src_dname(u8* dpfn)
 		temp++;	
 	}
 	if(temp<4)return 0; 
-	while((*dpfn!=0x5c)&&(*dpfn!=0x2f))dpfn--;	//×·Êöµ½µ¹ÊıµÚÒ»¸ö"\"»òÕß"/"´¦ 
+	while((*dpfn!=0x5c)&&(*dpfn!=0x2f))dpfn--;	//è¿½è¿°åˆ°å€’æ•°ç¬¬ä¸€ä¸ª"\"æˆ–è€…"/"å¤„ 
 	return ++dpfn;
 }
-//µÃµ½ÎÄ¼ş¼Ğ´óĞ¡
-//×¢ÒâÎÄ¼ş¼Ğ´óĞ¡²»Òª³¬¹ı4GB.
-//·µ»ØÖµ:0,ÎÄ¼ş¼Ğ´óĞ¡Îª0,»òÕß¶ÁÈ¡¹ı³ÌÖĞ·¢ÉúÁË´íÎó.
-//    ÆäËû,ÎÄ¼ş¼Ğ´óĞ¡.
+//å¾—åˆ°æ–‡ä»¶å¤¹å¤§å°
+//æ³¨æ„æ–‡ä»¶å¤¹å¤§å°ä¸è¦è¶…è¿‡4GB.
+//è¿”å›å€¼:0,æ–‡ä»¶å¤¹å¤§å°ä¸º0,æˆ–è€…è¯»å–è¿‡ç¨‹ä¸­å‘ç”Ÿäº†é”™è¯¯.
+//    å…¶ä»–,æ–‡ä»¶å¤¹å¤§å°.
 u32 exf_fdsize(u8 *fdname)
 {
-#define MAX_PATHNAME_DEPTH	512+1	//×î´óÄ¿±êÎÄ¼şÂ·¾¶+ÎÄ¼şÃûÉî¶È
+#define MAX_PATHNAME_DEPTH	512+1	//æœ€å¤§ç›®æ ‡æ–‡ä»¶è·¯å¾„+æ–‡ä»¶åæ·±åº¦
 	u8 res=0;	  
-    DIR *fddir=0;		//Ä¿Â¼
-	FILINFO *finfo=0;	//ÎÄ¼şĞÅÏ¢
-	u8 * pathname=0;	//Ä¿±êÎÄ¼ş¼ĞÂ·¾¶+ÎÄ¼şÃû
- 	u16 pathlen=0;		//Ä¿±êÂ·¾¶³¤¶È
+    DIR *fddir=0;		//ç›®å½•
+	FILINFO *finfo=0;	//æ–‡ä»¶ä¿¡æ¯
+	u8 * pathname=0;	//ç›®æ ‡æ–‡ä»¶å¤¹è·¯å¾„+æ–‡ä»¶å
+ 	u16 pathlen=0;		//ç›®æ ‡è·¯å¾„é•¿åº¦
 	u32 fdsize=0;
 
-	fddir=(DIR*)mymalloc(SRAMIN,sizeof(DIR));//ÉêÇëÄÚ´æ
+	fddir=(DIR*)mymalloc(SRAMIN,sizeof(DIR));//ç”³è¯·å†…å­˜
  	finfo=(FILINFO*)mymalloc(SRAMIN,sizeof(FILINFO));
    	if(fddir==NULL||finfo==NULL)res=100;
 	if(res==0)
@@ -281,24 +281,24 @@ u32 exf_fdsize(u8 *fdname)
  		if(res==0)
 		{
 			pathname[0]=0;	    
-			strcat((char*)pathname,(const char*)fdname); //¸´ÖÆÂ·¾¶	
-		    res=f_opendir(fddir,(const TCHAR*)fdname); 		//´ò¿ªÔ´Ä¿Â¼
-		    if(res==0)//´ò¿ªÄ¿Â¼³É¹¦ 
+			strcat((char*)pathname,(const char*)fdname); //å¤åˆ¶è·¯å¾„	
+		    res=f_opendir(fddir,(const TCHAR*)fdname); 		//æ‰“å¼€æºç›®å½•
+		    if(res==0)//æ‰“å¼€ç›®å½•æˆåŠŸ 
 			{														   
-				while(res==0)//¿ªÊ¼¸´ÖÆÎÄ¼ş¼ĞÀïÃæµÄ¶«¶«
+				while(res==0)//å¼€å§‹å¤åˆ¶æ–‡ä»¶å¤¹é‡Œé¢çš„ä¸œä¸œ
 				{
-			        res=f_readdir(fddir,finfo);						//¶ÁÈ¡Ä¿Â¼ÏÂµÄÒ»¸öÎÄ¼ş
-			        if(res!=FR_OK||finfo->fname[0]==0)break;		//´íÎóÁË/µ½Ä©Î²ÁË,ÍË³ö
-			        if(finfo->fname[0]=='.')continue;     			//ºöÂÔÉÏ¼¶Ä¿Â¼
-					if(finfo->fattrib&0X10)//ÊÇ×ÓÄ¿Â¼(ÎÄ¼şÊôĞÔ,0X20,¹éµµÎÄ¼ş;0X10,×ÓÄ¿Â¼;)
+			        res=f_readdir(fddir,finfo);						//è¯»å–ç›®å½•ä¸‹çš„ä¸€ä¸ªæ–‡ä»¶
+			        if(res!=FR_OK||finfo->fname[0]==0)break;		//é”™è¯¯äº†/åˆ°æœ«å°¾äº†,é€€å‡º
+			        if(finfo->fname[0]=='.')continue;     			//å¿½ç•¥ä¸Šçº§ç›®å½•
+					if(finfo->fattrib&0X10)//æ˜¯å­ç›®å½•(æ–‡ä»¶å±æ€§,0X20,å½’æ¡£æ–‡ä»¶;0X10,å­ç›®å½•;)
 					{
- 						pathlen=strlen((const char*)pathname);		//µÃµ½µ±Ç°Â·¾¶µÄ³¤¶È
-						strcat((char*)pathname,(const char*)"/");	//¼ÓĞ±¸Ü
-						strcat((char*)pathname,(const char*)finfo->fname);	//Ô´Â·¾¶¼ÓÉÏ×ÓÄ¿Â¼Ãû×Ö
- 						//printf("\r\nsub folder:%s\r\n",pathname);	//´òÓ¡×ÓÄ¿Â¼Ãû
-						fdsize+=exf_fdsize(pathname);				//µÃµ½×ÓÄ¿Â¼´óĞ¡,µİ¹éµ÷ÓÃ
-						pathname[pathlen]=0;						//¼ÓÈë½áÊø·û
-					}else fdsize+=finfo->fsize;						//·ÇÄ¿Â¼,Ö±½Ó¼ÓÉÏÎÄ¼şµÄ´óĞ¡
+ 						pathlen=strlen((const char*)pathname);		//å¾—åˆ°å½“å‰è·¯å¾„çš„é•¿åº¦
+						strcat((char*)pathname,(const char*)"/");	//åŠ æ–œæ 
+						strcat((char*)pathname,(const char*)finfo->fname);	//æºè·¯å¾„åŠ ä¸Šå­ç›®å½•åå­—
+ 						//printf("\r\nsub folder:%s\r\n",pathname);	//æ‰“å°å­ç›®å½•å
+						fdsize+=exf_fdsize(pathname);				//å¾—åˆ°å­ç›®å½•å¤§å°,é€’å½’è°ƒç”¨
+						pathname[pathlen]=0;						//åŠ å…¥ç»“æŸç¬¦
+					}else fdsize+=finfo->fsize;						//éç›®å½•,ç›´æ¥åŠ ä¸Šæ–‡ä»¶çš„å¤§å°
 						
 				} 
 		    }	  
@@ -310,43 +310,43 @@ u32 exf_fdsize(u8 *fdname)
 	if(res)return 0;
 	else return fdsize;
 }	  
-//ÎÄ¼ş¼Ğ¸´ÖÆ
-//×¢ÒâÎÄ¼ş¼Ğ´óĞ¡²»Òª³¬¹ı4GB.
-//½«psrcÎÄ¼ş¼Ğ,copyµ½pdstÎÄ¼ş¼Ğ.
-//pdst:±ØĞëĞÎÈç"X:"/"X:XX"/"X:XX/XX"Ö®ÀàµÄ.¶øÇÒÒªÊµÏÖÈ·ÈÏÉÏÒ»¼¶ÎÄ¼ş¼Ğ´æÔÚ
-//fcpymsg,º¯ÊıÖ¸Õë,ÓÃÓÚÊµÏÖ¿½±´Ê±µÄĞÅÏ¢ÏÔÊ¾
-//        pname:ÎÄ¼ş/ÎÄ¼ş¼ĞÃû
-//        pct:°Ù·Ö±È
+//æ–‡ä»¶å¤¹å¤åˆ¶
+//æ³¨æ„æ–‡ä»¶å¤¹å¤§å°ä¸è¦è¶…è¿‡4GB.
+//å°†psrcæ–‡ä»¶å¤¹,copyåˆ°pdstæ–‡ä»¶å¤¹.
+//pdst:å¿…é¡»å½¢å¦‚"X:"/"X:XX"/"X:XX/XX"ä¹‹ç±»çš„.è€Œä¸”è¦å®ç°ç¡®è®¤ä¸Šä¸€çº§æ–‡ä»¶å¤¹å­˜åœ¨
+//fcpymsg,å‡½æ•°æŒ‡é’ˆ,ç”¨äºå®ç°æ‹·è´æ—¶çš„ä¿¡æ¯æ˜¾ç¤º
+//        pname:æ–‡ä»¶/æ–‡ä»¶å¤¹å
+//        pct:ç™¾åˆ†æ¯”
 //        mode:
-//			[0]:¸üĞÂÎÄ¼şÃû
-//			[1]:¸üĞÂ°Ù·Ö±Èpct
-//			[2]:¸üĞÂÎÄ¼ş¼Ğ
-//			[3~7]:±£Áô
-//psrc,pdst:Ô´ÎÄ¼ş¼ĞºÍÄ¿±êÎÄ¼ş¼Ğ
-//totsize:×Ü´óĞ¡(µ±totsizeÎª0µÄÊ±ºò,±íÊ¾½ö½öÎªµ¥¸öÎÄ¼ş¿½±´)
-//cpdsize:ÒÑ¸´ÖÆÁËµÄ´óĞ¡.
-//fwmode:ÎÄ¼şĞ´ÈëÄ£Ê½
-//0:²»¸²¸ÇÔ­ÓĞµÄÎÄ¼ş
-//1:¸²¸ÇÔ­ÓĞµÄÎÄ¼ş
-//·µ»ØÖµ:0,³É¹¦
-//    ÆäËû,´íÎó´úÂë;0XFF,Ç¿ÖÆÍË³ö
+//			[0]:æ›´æ–°æ–‡ä»¶å
+//			[1]:æ›´æ–°ç™¾åˆ†æ¯”pct
+//			[2]:æ›´æ–°æ–‡ä»¶å¤¹
+//			[3~7]:ä¿ç•™
+//psrc,pdst:æºæ–‡ä»¶å¤¹å’Œç›®æ ‡æ–‡ä»¶å¤¹
+//totsize:æ€»å¤§å°(å½“totsizeä¸º0çš„æ—¶å€™,è¡¨ç¤ºä»…ä»…ä¸ºå•ä¸ªæ–‡ä»¶æ‹·è´)
+//cpdsize:å·²å¤åˆ¶äº†çš„å¤§å°.
+//fwmode:æ–‡ä»¶å†™å…¥æ¨¡å¼
+//0:ä¸è¦†ç›–åŸæœ‰çš„æ–‡ä»¶
+//1:è¦†ç›–åŸæœ‰çš„æ–‡ä»¶
+//è¿”å›å€¼:0,æˆåŠŸ
+//    å…¶ä»–,é”™è¯¯ä»£ç ;0XFF,å¼ºåˆ¶é€€å‡º
 u8 exf_fdcopy(u8(*fcpymsg)(u8*pname,u8 pct,u8 mode),u8 *psrc,u8 *pdst,u32 *totsize,u32 *cpdsize,u8 fwmode)
 {
-#define MAX_PATHNAME_DEPTH	512+1	//×î´óÄ¿±êÎÄ¼şÂ·¾¶+ÎÄ¼şÃûÉî¶È
+#define MAX_PATHNAME_DEPTH	512+1	//æœ€å¤§ç›®æ ‡æ–‡ä»¶è·¯å¾„+æ–‡ä»¶åæ·±åº¦
 	u8 res=0;	  
-    DIR *srcdir=0;		//Ô´Ä¿Â¼
-	DIR *dstdir=0;		//Ô´Ä¿Â¼
-	FILINFO *finfo=0;	//ÎÄ¼şĞÅÏ¢
-	u8 *fn=0;   		//³¤ÎÄ¼şÃû
+    DIR *srcdir=0;		//æºç›®å½•
+	DIR *dstdir=0;		//æºç›®å½•
+	FILINFO *finfo=0;	//æ–‡ä»¶ä¿¡æ¯
+	u8 *fn=0;   		//é•¿æ–‡ä»¶å
 
-	u8 * dstpathname=0;	//Ä¿±êÎÄ¼ş¼ĞÂ·¾¶+ÎÄ¼şÃû
-	u8 * srcpathname=0;	//Ô´ÎÄ¼ş¼ĞÂ·¾¶+ÎÄ¼şÃû
+	u8 * dstpathname=0;	//ç›®æ ‡æ–‡ä»¶å¤¹è·¯å¾„+æ–‡ä»¶å
+	u8 * srcpathname=0;	//æºæ–‡ä»¶å¤¹è·¯å¾„+æ–‡ä»¶å
 	
- 	u16 dstpathlen=0;	//Ä¿±êÂ·¾¶³¤¶È
- 	u16 srcpathlen=0;	//Ô´Â·¾¶³¤¶È
+ 	u16 dstpathlen=0;	//ç›®æ ‡è·¯å¾„é•¿åº¦
+ 	u16 srcpathlen=0;	//æºè·¯å¾„é•¿åº¦
 
   
-	srcdir=(DIR*)mymalloc(SRAMIN,sizeof(DIR));//ÉêÇëÄÚ´æ
+	srcdir=(DIR*)mymalloc(SRAMIN,sizeof(DIR));//ç”³è¯·å†…å­˜
  	dstdir=(DIR*)mymalloc(SRAMIN,sizeof(DIR));
 	finfo=(FILINFO*)mymalloc(SRAMIN,sizeof(FILINFO));
 
@@ -360,47 +360,47 @@ u8 exf_fdcopy(u8(*fcpymsg)(u8*pname,u8 pct,u8 mode),u8 *psrc,u8 *pdst,u32 *totsi
 		{
 			dstpathname[0]=0;
 			srcpathname[0]=0;
-			strcat((char*)srcpathname,(const char*)psrc); 	//¸´ÖÆÔ­Ê¼Ô´ÎÄ¼şÂ·¾¶	
-			strcat((char*)dstpathname,(const char*)pdst); 	//¸´ÖÆÔ­Ê¼Ä¿±êÎÄ¼şÂ·¾¶	
-		    res=f_opendir(srcdir,(const TCHAR*)psrc); 		//´ò¿ªÔ´Ä¿Â¼
-		    if(res==0)//´ò¿ªÄ¿Â¼³É¹¦ 
+			strcat((char*)srcpathname,(const char*)psrc); 	//å¤åˆ¶åŸå§‹æºæ–‡ä»¶è·¯å¾„	
+			strcat((char*)dstpathname,(const char*)pdst); 	//å¤åˆ¶åŸå§‹ç›®æ ‡æ–‡ä»¶è·¯å¾„	
+		    res=f_opendir(srcdir,(const TCHAR*)psrc); 		//æ‰“å¼€æºç›®å½•
+		    if(res==0)//æ‰“å¼€ç›®å½•æˆåŠŸ 
 			{
-  				strcat((char*)dstpathname,(const char*)"/");//¼ÓÈëĞ±¸Ü
+  				strcat((char*)dstpathname,(const char*)"/");//åŠ å…¥æ–œæ 
  				fn=exf_get_src_dname(psrc);
-				if(fn==0)//¾í±ê¿½±´
+				if(fn==0)//å·æ ‡æ‹·è´
 				{
 					dstpathlen=strlen((const char*)dstpathname);
-					dstpathname[dstpathlen]=psrc[0];	//¼ÇÂ¼¾í±ê
-					dstpathname[dstpathlen+1]=0;		//½áÊø·û 
-				}else strcat((char*)dstpathname,(const char*)fn);//¼ÓÎÄ¼şÃû		
- 				fcpymsg(fn,0,0X04);//¸üĞÂÎÄ¼ş¼ĞÃû
-				res=f_mkdir((const TCHAR*)dstpathname);//Èç¹ûÎÄ¼ş¼ĞÒÑ¾­´æÔÚ,¾Í²»´´½¨.Èç¹û²»´æÔÚ¾Í´´½¨ĞÂµÄÎÄ¼ş¼Ğ.
+					dstpathname[dstpathlen]=psrc[0];	//è®°å½•å·æ ‡
+					dstpathname[dstpathlen+1]=0;		//ç»“æŸç¬¦ 
+				}else strcat((char*)dstpathname,(const char*)fn);//åŠ æ–‡ä»¶å		
+ 				fcpymsg(fn,0,0X04);//æ›´æ–°æ–‡ä»¶å¤¹å
+				res=f_mkdir((const TCHAR*)dstpathname);//å¦‚æœæ–‡ä»¶å¤¹å·²ç»å­˜åœ¨,å°±ä¸åˆ›å»º.å¦‚æœä¸å­˜åœ¨å°±åˆ›å»ºæ–°çš„æ–‡ä»¶å¤¹.
 				if(res==FR_EXIST)res=0;
-				while(res==0)//¿ªÊ¼¸´ÖÆÎÄ¼ş¼ĞÀïÃæµÄ¶«¶«
+				while(res==0)//å¼€å§‹å¤åˆ¶æ–‡ä»¶å¤¹é‡Œé¢çš„ä¸œä¸œ
 				{
-			        res=f_readdir(srcdir,finfo);					//¶ÁÈ¡Ä¿Â¼ÏÂµÄÒ»¸öÎÄ¼ş
-			        if(res!=FR_OK||finfo->fname[0]==0)break;		//´íÎóÁË/µ½Ä©Î²ÁË,ÍË³ö
-			        if(finfo->fname[0]=='.')continue;     			//ºöÂÔÉÏ¼¶Ä¿Â¼
-					fn=(u8*)finfo->fname; 							//µÃµ½ÎÄ¼şÃû
-					dstpathlen=strlen((const char*)dstpathname);	//µÃµ½µ±Ç°Ä¿±êÂ·¾¶µÄ³¤¶È
-					srcpathlen=strlen((const char*)srcpathname);	//µÃµ½Ô´Â·¾¶³¤¶È
+			        res=f_readdir(srcdir,finfo);					//è¯»å–ç›®å½•ä¸‹çš„ä¸€ä¸ªæ–‡ä»¶
+			        if(res!=FR_OK||finfo->fname[0]==0)break;		//é”™è¯¯äº†/åˆ°æœ«å°¾äº†,é€€å‡º
+			        if(finfo->fname[0]=='.')continue;     			//å¿½ç•¥ä¸Šçº§ç›®å½•
+					fn=(u8*)finfo->fname; 							//å¾—åˆ°æ–‡ä»¶å
+					dstpathlen=strlen((const char*)dstpathname);	//å¾—åˆ°å½“å‰ç›®æ ‡è·¯å¾„çš„é•¿åº¦
+					srcpathlen=strlen((const char*)srcpathname);	//å¾—åˆ°æºè·¯å¾„é•¿åº¦
 
-					strcat((char*)srcpathname,(const char*)"/");//Ô´Â·¾¶¼ÓĞ±¸Ü
- 					if(finfo->fattrib&0X10)//ÊÇ×ÓÄ¿Â¼(ÎÄ¼şÊôĞÔ,0X20,¹éµµÎÄ¼ş;0X10,×ÓÄ¿Â¼;)
+					strcat((char*)srcpathname,(const char*)"/");//æºè·¯å¾„åŠ æ–œæ 
+ 					if(finfo->fattrib&0X10)//æ˜¯å­ç›®å½•(æ–‡ä»¶å±æ€§,0X20,å½’æ¡£æ–‡ä»¶;0X10,å­ç›®å½•;)
 					{
-						strcat((char*)srcpathname,(const char*)fn);		//Ô´Â·¾¶¼ÓÉÏ×ÓÄ¿Â¼Ãû×Ö
-						res=exf_fdcopy(fcpymsg,srcpathname,dstpathname,totsize,cpdsize,fwmode);	//¿½±´ÎÄ¼ş¼Ğ
-					}else //·ÇÄ¿Â¼
+						strcat((char*)srcpathname,(const char*)fn);		//æºè·¯å¾„åŠ ä¸Šå­ç›®å½•åå­—
+						res=exf_fdcopy(fcpymsg,srcpathname,dstpathname,totsize,cpdsize,fwmode);	//æ‹·è´æ–‡ä»¶å¤¹
+					}else //éç›®å½•
 					{
-						strcat((char*)dstpathname,(const char*)"/");//Ä¿±êÂ·¾¶¼ÓĞ±¸Ü
-						strcat((char*)dstpathname,(const char*)fn);	//Ä¿±êÂ·¾¶¼ÓÎÄ¼şÃû
-						strcat((char*)srcpathname,(const char*)fn);	//Ô´Â·¾¶¼ÓÎÄ¼şÃû
- 						fcpymsg(fn,0,0X01);//¸üĞÂÎÄ¼şÃû
-						res=exf_copy(fcpymsg,srcpathname,dstpathname,*totsize,*cpdsize,fwmode);//¸´ÖÆÎÄ¼ş
-						*cpdsize+=finfo->fsize;//Ôö¼ÓÒ»¸öÎÄ¼ş´óĞ¡
+						strcat((char*)dstpathname,(const char*)"/");//ç›®æ ‡è·¯å¾„åŠ æ–œæ 
+						strcat((char*)dstpathname,(const char*)fn);	//ç›®æ ‡è·¯å¾„åŠ æ–‡ä»¶å
+						strcat((char*)srcpathname,(const char*)fn);	//æºè·¯å¾„åŠ æ–‡ä»¶å
+ 						fcpymsg(fn,0,0X01);//æ›´æ–°æ–‡ä»¶å
+						res=exf_copy(fcpymsg,srcpathname,dstpathname,*totsize,*cpdsize,fwmode);//å¤åˆ¶æ–‡ä»¶
+						*cpdsize+=finfo->fsize;//å¢åŠ ä¸€ä¸ªæ–‡ä»¶å¤§å°
 					}
-					srcpathname[srcpathlen]=0;//¼ÓÈë½áÊø·û
-					dstpathname[dstpathlen]=0;//¼ÓÈë½áÊø·û	    
+					srcpathname[srcpathlen]=0;//åŠ å…¥ç»“æŸç¬¦
+					dstpathname[dstpathlen]=0;//åŠ å…¥ç»“æŸç¬¦	    
 				} 
 		    }	  
   			myfree(SRAMIN,dstpathname);
@@ -435,17 +435,17 @@ uint8_t load_file_to_flash(char* fname, uint32_t flash_addr) {
 	ProgressWithInfo_Init(&logParam.progressWithInfo, offset, f_size(temp_file), 
 							fname, "SD Card", "Flash");
 	print_log(Flash_Write_Log, &logParam);
-	//ËÀÑ­»·Ö´ĞĞ
+	//æ­»å¾ªç¯æ‰§è¡Œ
 	while(res == FR_OK) {
-		res = f_read(temp_file, flash_buffer, FLASH_BUFFER_SIZE, &br); //¶ÁÈ¡Êı¾İ
+		res = f_read(temp_file, flash_buffer, FLASH_BUFFER_SIZE, &br); //è¯»å–æ•°æ®
 		if(res != FR_OK) {
-			break; //Ö´ĞĞ´íÎó
+			break; //æ‰§è¡Œé”™è¯¯
 		}
 //		if (offset/(5*FLASH_BUFFER_SIZE) == 0) {
 //			/* Show the progress of the update */
 //			//print_loading_log(fname, offset, f_size(temp_file));
 //		}
-		W25QXX_Write(flash_buffer, flash_addr+offset, FLASH_BUFFER_SIZE); //´Ó 0 ¿ªÊ¼Ğ´ 4096 ¸öÊı¾İ
+		W25QXX_Write(flash_buffer, flash_addr+offset, FLASH_BUFFER_SIZE); //ä» 0 å¼€å§‹å†™ 4096 ä¸ªæ•°æ®
 		offset += br;
 		/* Show the update progress */
 		ProgressWithInfo_Update(&logParam.progressWithInfo, offset);

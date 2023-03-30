@@ -1,32 +1,32 @@
 /**
  ****************************************************************************************************
  * @file        atk_md0700_fsmc.c
- * @author      ÕıµãÔ­×ÓÍÅ¶Ó(ALIENTEK)
+ * @author      æ­£ç‚¹åŸå­å›¢é˜Ÿ(ALIENTEK)
  * @version     V1.0
  * @date        2022-06-21
- * @brief       ATK-MD0700Ä£¿éFSMC½Ó¿ÚÇı¶¯´úÂë
- * @license     Copyright (c) 2020-2032, ¹ãÖİÊĞĞÇÒíµç×Ó¿Æ¼¼ÓĞÏŞ¹«Ë¾
+ * @brief       ATK-MD0700æ¨¡å—FSMCæ¥å£é©±åŠ¨ä»£ç 
+ * @license     Copyright (c) 2020-2032, å¹¿å·å¸‚æ˜Ÿç¿¼ç”µå­ç§‘æŠ€æœ‰é™å…¬å¸
  ****************************************************************************************************
  * @attention
  *
- * ÊµÑéÆ½Ì¨:ÕıµãÔ­×Ó STM32F103¿ª·¢°å
- * ÔÚÏßÊÓÆµ:www.yuanzige.com
- * ¼¼ÊõÂÛÌ³:www.openedv.com
- * ¹«Ë¾ÍøÖ·:www.alientek.com
- * ¹ºÂòµØÖ·:openedv.taobao.com
+ * å®éªŒå¹³å°:æ­£ç‚¹åŸå­ STM32F103å¼€å‘æ¿
+ * åœ¨çº¿è§†é¢‘:www.yuanzige.com
+ * æŠ€æœ¯è®ºå›:www.openedv.com
+ * å…¬å¸ç½‘å€:www.alientek.com
+ * è´­ä¹°åœ°å€:openedv.taobao.com
  *
  ****************************************************************************************************
  */
 
 #include "./BSP/ATK_MD0700/atk_md0700_fsmc.h"
 
-/* ATK-MD0700Ä£¿éFSMC¾ä±ú */
+/* ATK-MD0700æ¨¡å—FSMCå¥æŸ„ */
 static SRAM_HandleTypeDef g_sram_handle = {0};
 
 /**
- * @brief       ATK-MD0700Ä£¿éFSMC½Ó¿Ú³õÊ¼»¯
- * @param       ÎŞ
- * @retval      ÎŞ
+ * @brief       ATK-MD0700æ¨¡å—FSMCæ¥å£åˆå§‹åŒ–
+ * @param       æ— 
+ * @retval      æ— 
  */
 void atk_md0700_fsmc_init(void)
 {
@@ -34,7 +34,7 @@ void atk_md0700_fsmc_init(void)
     FSMC_NORSRAM_TimingTypeDef read_timing = {0};
     FSMC_NORSRAM_TimingTypeDef write_timing = {0};
     
-    /* Ê¹ÄÜÊ±ÖÓ */
+    /* ä½¿èƒ½æ—¶é’Ÿ */
     ATK_MD0700_FSMC_CLK_ENABLE();
     ATK_MD0700_FSMC_RS_GPIO_CLK_ENABLE();
     ATK_MD0700_FSMC_CS_GPIO_CLK_ENABLE();
@@ -57,127 +57,127 @@ void atk_md0700_fsmc_init(void)
     ATK_MD0700_FSMC_D14_GPIO_CLK_ENABLE();
     ATK_MD0700_FSMC_D15_GPIO_CLK_ENABLE();
     
-    /* ³õÊ¼»¯RSÒı½Å */
+    /* åˆå§‹åŒ–RSå¼•è„š */
     gpio_init_struct.Pin    = ATK_MD0700_FSMC_RS_GPIO_PIN;
     gpio_init_struct.Mode   = GPIO_MODE_AF_PP;
     gpio_init_struct.Speed  = GPIO_SPEED_FREQ_HIGH;
     HAL_GPIO_Init(ATK_MD0700_FSMC_RS_GPIO_PORT, &gpio_init_struct);
     
-    /* ³õÊ¼»¯CSÒı½Å */
+    /* åˆå§‹åŒ–CSå¼•è„š */
     gpio_init_struct.Pin    = ATK_MD0700_FSMC_CS_GPIO_PIN;
     gpio_init_struct.Mode   = GPIO_MODE_AF_PP;
     gpio_init_struct.Speed  = GPIO_SPEED_FREQ_HIGH;
     HAL_GPIO_Init(ATK_MD0700_FSMC_CS_GPIO_PORT, &gpio_init_struct);
     
-    /* ³õÊ¼»¯RDÒı½Å */
+    /* åˆå§‹åŒ–RDå¼•è„š */
     gpio_init_struct.Pin    = ATK_MD0700_FSMC_RD_GPIO_PIN;
     gpio_init_struct.Mode   = GPIO_MODE_AF_PP;
     gpio_init_struct.Speed  = GPIO_SPEED_FREQ_HIGH;
     HAL_GPIO_Init(ATK_MD0700_FSMC_RD_GPIO_PORT, &gpio_init_struct);
     
-    /* ³õÊ¼»¯WRÒı½Å */
+    /* åˆå§‹åŒ–WRå¼•è„š */
     gpio_init_struct.Pin    = ATK_MD0700_FSMC_WR_GPIO_PIN;
     gpio_init_struct.Mode   = GPIO_MODE_AF_PP;
     gpio_init_struct.Speed  = GPIO_SPEED_FREQ_HIGH;
     HAL_GPIO_Init(ATK_MD0700_FSMC_WR_GPIO_PORT, &gpio_init_struct);
     
-    /* ³õÊ¼»¯D0Òı½Å */
+    /* åˆå§‹åŒ–D0å¼•è„š */
     gpio_init_struct.Pin    = ATK_MD0700_FSMC_D0_GPIO_PIN;
     gpio_init_struct.Mode   = GPIO_MODE_AF_PP;
     gpio_init_struct.Speed  = GPIO_SPEED_FREQ_HIGH;
     HAL_GPIO_Init(ATK_MD0700_FSMC_D0_GPIO_PORT, &gpio_init_struct);
     
-    /* ³õÊ¼»¯D1Òı½Å */
+    /* åˆå§‹åŒ–D1å¼•è„š */
     gpio_init_struct.Pin    = ATK_MD0700_FSMC_D1_GPIO_PIN;
     gpio_init_struct.Mode   = GPIO_MODE_AF_PP;
     gpio_init_struct.Speed  = GPIO_SPEED_FREQ_HIGH;
     HAL_GPIO_Init(ATK_MD0700_FSMC_D1_GPIO_PORT, &gpio_init_struct);
     
-    /* ³õÊ¼»¯D2Òı½Å */
+    /* åˆå§‹åŒ–D2å¼•è„š */
     gpio_init_struct.Pin    = ATK_MD0700_FSMC_D2_GPIO_PIN;
     gpio_init_struct.Mode   = GPIO_MODE_AF_PP;
     gpio_init_struct.Speed  = GPIO_SPEED_FREQ_HIGH;
     HAL_GPIO_Init(ATK_MD0700_FSMC_D2_GPIO_PORT, &gpio_init_struct);
     
-    /* ³õÊ¼»¯D3Òı½Å */
+    /* åˆå§‹åŒ–D3å¼•è„š */
     gpio_init_struct.Pin    = ATK_MD0700_FSMC_D3_GPIO_PIN;
     gpio_init_struct.Mode   = GPIO_MODE_AF_PP;
     gpio_init_struct.Speed  = GPIO_SPEED_FREQ_HIGH;
     HAL_GPIO_Init(ATK_MD0700_FSMC_D3_GPIO_PORT, &gpio_init_struct);
     
-    /* ³õÊ¼»¯D4Òı½Å */
+    /* åˆå§‹åŒ–D4å¼•è„š */
     gpio_init_struct.Pin    = ATK_MD0700_FSMC_D4_GPIO_PIN;
     gpio_init_struct.Mode   = GPIO_MODE_AF_PP;
     gpio_init_struct.Speed  = GPIO_SPEED_FREQ_HIGH;
     HAL_GPIO_Init(ATK_MD0700_FSMC_D4_GPIO_PORT, &gpio_init_struct);
     
-    /* ³õÊ¼»¯D5Òı½Å */
+    /* åˆå§‹åŒ–D5å¼•è„š */
     gpio_init_struct.Pin    = ATK_MD0700_FSMC_D5_GPIO_PIN;
     gpio_init_struct.Mode   = GPIO_MODE_AF_PP;
     gpio_init_struct.Speed  = GPIO_SPEED_FREQ_HIGH;
     HAL_GPIO_Init(ATK_MD0700_FSMC_D5_GPIO_PORT, &gpio_init_struct);
     
-    /* ³õÊ¼»¯D6Òı½Å */
+    /* åˆå§‹åŒ–D6å¼•è„š */
     gpio_init_struct.Pin    = ATK_MD0700_FSMC_D6_GPIO_PIN;
     gpio_init_struct.Mode   = GPIO_MODE_AF_PP;
     gpio_init_struct.Speed  = GPIO_SPEED_FREQ_HIGH;
     HAL_GPIO_Init(ATK_MD0700_FSMC_D6_GPIO_PORT, &gpio_init_struct);
     
-    /* ³õÊ¼»¯D7Òı½Å */
+    /* åˆå§‹åŒ–D7å¼•è„š */
     gpio_init_struct.Pin    = ATK_MD0700_FSMC_D7_GPIO_PIN;
     gpio_init_struct.Mode   = GPIO_MODE_AF_PP;
     gpio_init_struct.Speed  = GPIO_SPEED_FREQ_HIGH;
     HAL_GPIO_Init(ATK_MD0700_FSMC_D7_GPIO_PORT, &gpio_init_struct);
     
-    /* ³õÊ¼»¯D8Òı½Å */
+    /* åˆå§‹åŒ–D8å¼•è„š */
     gpio_init_struct.Pin    = ATK_MD0700_FSMC_D8_GPIO_PIN;
     gpio_init_struct.Mode   = GPIO_MODE_AF_PP;
     gpio_init_struct.Speed  = GPIO_SPEED_FREQ_HIGH;
     HAL_GPIO_Init(ATK_MD0700_FSMC_D8_GPIO_PORT, &gpio_init_struct);
     
-    /* ³õÊ¼»¯D9Òı½Å */
+    /* åˆå§‹åŒ–D9å¼•è„š */
     gpio_init_struct.Pin    = ATK_MD0700_FSMC_D9_GPIO_PIN;
     gpio_init_struct.Mode   = GPIO_MODE_AF_PP;
     gpio_init_struct.Speed  = GPIO_SPEED_FREQ_HIGH;
     HAL_GPIO_Init(ATK_MD0700_FSMC_D9_GPIO_PORT, &gpio_init_struct);
     
-    /* ³õÊ¼»¯D10Òı½Å */
+    /* åˆå§‹åŒ–D10å¼•è„š */
     gpio_init_struct.Pin    = ATK_MD0700_FSMC_D10_GPIO_PIN;
     gpio_init_struct.Mode   = GPIO_MODE_AF_PP;
     gpio_init_struct.Speed  = GPIO_SPEED_FREQ_HIGH;
     HAL_GPIO_Init(ATK_MD0700_FSMC_D10_GPIO_PORT, &gpio_init_struct);
     
-    /* ³õÊ¼»¯D11Òı½Å */
+    /* åˆå§‹åŒ–D11å¼•è„š */
     gpio_init_struct.Pin    = ATK_MD0700_FSMC_D11_GPIO_PIN;
     gpio_init_struct.Mode   = GPIO_MODE_AF_PP;
     gpio_init_struct.Speed  = GPIO_SPEED_FREQ_HIGH;
     HAL_GPIO_Init(ATK_MD0700_FSMC_D11_GPIO_PORT, &gpio_init_struct);
     
-    /* ³õÊ¼»¯D12Òı½Å */
+    /* åˆå§‹åŒ–D12å¼•è„š */
     gpio_init_struct.Pin    = ATK_MD0700_FSMC_D12_GPIO_PIN;
     gpio_init_struct.Mode   = GPIO_MODE_AF_PP;
     gpio_init_struct.Speed  = GPIO_SPEED_FREQ_HIGH;
     HAL_GPIO_Init(ATK_MD0700_FSMC_D12_GPIO_PORT, &gpio_init_struct);
     
-    /* ³õÊ¼»¯D13Òı½Å */
+    /* åˆå§‹åŒ–D13å¼•è„š */
     gpio_init_struct.Pin    = ATK_MD0700_FSMC_D13_GPIO_PIN;
     gpio_init_struct.Mode   = GPIO_MODE_AF_PP;
     gpio_init_struct.Speed  = GPIO_SPEED_FREQ_HIGH;
     HAL_GPIO_Init(ATK_MD0700_FSMC_D13_GPIO_PORT, &gpio_init_struct);
     
-    /* ³õÊ¼»¯D14Òı½Å */
+    /* åˆå§‹åŒ–D14å¼•è„š */
     gpio_init_struct.Pin    = ATK_MD0700_FSMC_D14_GPIO_PIN;
     gpio_init_struct.Mode   = GPIO_MODE_AF_PP;
     gpio_init_struct.Speed  = GPIO_SPEED_FREQ_HIGH;
     HAL_GPIO_Init(ATK_MD0700_FSMC_D14_GPIO_PORT, &gpio_init_struct);
     
-    /* ³õÊ¼»¯D15Òı½Å */
+    /* åˆå§‹åŒ–D15å¼•è„š */
     gpio_init_struct.Pin    = ATK_MD0700_FSMC_D15_GPIO_PIN;
     gpio_init_struct.Mode   = GPIO_MODE_AF_PP;
     gpio_init_struct.Speed  = GPIO_SPEED_FREQ_HIGH;
     HAL_GPIO_Init(ATK_MD0700_FSMC_D15_GPIO_PORT, &gpio_init_struct);
     
-    /* FSMCÅäÖÃ */
+    /* FSMCé…ç½® */
     g_sram_handle.Instance                  = FSMC_NORSRAM_DEVICE;
     g_sram_handle.Extended                  = FSMC_NORSRAM_EXTENDED_DEVICE;
     g_sram_handle.Init.NSBank               = ATK_MD0700_FSMC_BANK;
@@ -193,16 +193,16 @@ void atk_md0700_fsmc_init(void)
     g_sram_handle.Init.ExtendedMode         = FSMC_EXTENDED_MODE_ENABLE;
     g_sram_handle.Init.AsynchronousWait     = FSMC_ASYNCHRONOUS_WAIT_DISABLE;
     g_sram_handle.Init.WriteBurst           = FSMC_WRITE_BURST_DISABLE;
-    /* FSMC¶ÁÊ±ĞòÅäÖÃ */
+    /* FSMCè¯»æ—¶åºé…ç½® */
     read_timing.AddressSetupTime            = ATK_MD0700_FSMC_READ_AST;
     read_timing.DataSetupTime               = ATK_MD0700_FSMC_READ_DST;
     read_timing.BusTurnAroundDuration       = 0;
     read_timing.AccessMode                  = FSMC_ACCESS_MODE_A;
-    /* FSMCĞ´Ê±ĞòÅäÖÃ */
+    /* FSMCå†™æ—¶åºé…ç½® */
     write_timing.AddressSetupTime           = ATK_MD0700_FSMC_WRITE_AST;
     write_timing.DataSetupTime              = ATK_MD0700_FSMC_WRITE_DST;
     write_timing.BusTurnAroundDuration      = 0;
     write_timing.AccessMode                 = FSMC_ACCESS_MODE_A;
-    /* ³õÊ¼»¯FSMC */
+    /* åˆå§‹åŒ–FSMC */
     HAL_SRAM_Init(&g_sram_handle, &read_timing, &write_timing);
 }

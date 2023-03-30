@@ -1,81 +1,81 @@
 #include "BSP/SPI/spi.h"
 //////////////////////////////////////////////////////////////////////////////////	 
-//±¾³ÌĞòÖ»¹©Ñ§Ï°Ê¹ÓÃ£¬Î´¾­×÷ÕßĞí¿É£¬²»µÃÓÃÓÚÆäËüÈÎºÎÓÃÍ¾
-//ALIENTEK STM32F103¿ª·¢°å
-//SPIÇı¶¯´úÂë	   
-//ÕıµãÔ­×Ó@ALIENTEK
-//¼¼ÊõÂÛÌ³:www.openedv.com
-//´´½¨ÈÕÆÚ:2019/9/18
-//°æ±¾£ºV1.0
-//°æÈ¨ËùÓĞ£¬µÁ°æ±Ø¾¿¡£
-//Copyright(C) ¹ãÖİÊĞĞÇÒíµç×Ó¿Æ¼¼ÓĞÏŞ¹«Ë¾ 2014-2024
+//æœ¬ç¨‹åºåªä¾›å­¦ä¹ ä½¿ç”¨ï¼Œæœªç»ä½œè€…è®¸å¯ï¼Œä¸å¾—ç”¨äºå…¶å®ƒä»»ä½•ç”¨é€”
+//ALIENTEK STM32F103å¼€å‘æ¿
+//SPIé©±åŠ¨ä»£ç 	   
+//æ­£ç‚¹åŸå­@ALIENTEK
+//æŠ€æœ¯è®ºå›:www.openedv.com
+//åˆ›å»ºæ—¥æœŸ:2019/9/18
+//ç‰ˆæœ¬ï¼šV1.0
+//ç‰ˆæƒæ‰€æœ‰ï¼Œç›—ç‰ˆå¿…ç©¶ã€‚
+//Copyright(C) å¹¿å·å¸‚æ˜Ÿç¿¼ç”µå­ç§‘æŠ€æœ‰é™å…¬å¸ 2014-2024
 //All rights reserved									  
 ////////////////////////////////////////////////////////////////////////////////// 	
 
-SPI_HandleTypeDef SPI2_Handler;  //SPI1¾ä±ú
+SPI_HandleTypeDef SPI2_Handler;  //SPI1å¥æŸ„
 
-//ÒÔÏÂÊÇSPIÄ£¿éµÄ³õÊ¼»¯´úÂë£¬ÅäÖÃ³ÉÖ÷»úÄ£Ê½ 						  
-//SPI¿Ú³õÊ¼»¯
-//ÕâÀïÕëÊÇ¶ÔSPI1µÄ³õÊ¼»¯
+//ä»¥ä¸‹æ˜¯SPIæ¨¡å—çš„åˆå§‹åŒ–ä»£ç ï¼Œé…ç½®æˆä¸»æœºæ¨¡å¼ 						  
+//SPIå£åˆå§‹åŒ–
+//è¿™é‡Œé’ˆæ˜¯å¯¹SPI1çš„åˆå§‹åŒ–
 void SPI2_Init(void)
 {
     SPI2_Handler.Instance=SPI2;                         //SPI2
-    SPI2_Handler.Init.Mode=SPI_MODE_MASTER;             //ÉèÖÃSPI¹¤×÷Ä£Ê½£¬ÉèÖÃÎªÖ÷Ä£Ê½
-    SPI2_Handler.Init.Direction=SPI_DIRECTION_2LINES;   //ÉèÖÃSPIµ¥Ïò»òÕßË«ÏòµÄÊı¾İÄ£Ê½:SPIÉèÖÃÎªË«ÏßÄ£Ê½
-    SPI2_Handler.Init.DataSize=SPI_DATASIZE_8BIT;       //ÉèÖÃSPIµÄÊı¾İ´óĞ¡:SPI·¢ËÍ½ÓÊÕ8Î»Ö¡½á¹¹
-    SPI2_Handler.Init.CLKPolarity=SPI_POLARITY_HIGH;    //´®ĞĞÍ¬²½Ê±ÖÓµÄ¿ÕÏĞ×´Ì¬Îª¸ßµçÆ½
-    SPI2_Handler.Init.CLKPhase=SPI_PHASE_2EDGE;         //´®ĞĞÍ¬²½Ê±ÖÓµÄµÚ¶ş¸öÌø±äÑØ£¨ÉÏÉı»òÏÂ½µ£©Êı¾İ±»²ÉÑù
-    SPI2_Handler.Init.NSS=SPI_NSS_SOFT;                 //NSSĞÅºÅÓÉÓ²¼ş£¨NSS¹Ü½Å£©»¹ÊÇÈí¼ş£¨Ê¹ÓÃSSIÎ»£©¹ÜÀí:ÄÚ²¿NSSĞÅºÅÓĞSSIÎ»¿ØÖÆ
-    SPI2_Handler.Init.BaudRatePrescaler=SPI_BAUDRATEPRESCALER_256;//¶¨Òå²¨ÌØÂÊÔ¤·ÖÆµµÄÖµ:²¨ÌØÂÊÔ¤·ÖÆµÖµÎª256
-    SPI2_Handler.Init.FirstBit=SPI_FIRSTBIT_MSB;        //Ö¸¶¨Êı¾İ´«Êä´ÓMSBÎ»»¹ÊÇLSBÎ»¿ªÊ¼:Êı¾İ´«Êä´ÓMSBÎ»¿ªÊ¼
-    SPI2_Handler.Init.TIMode=SPI_TIMODE_DISABLE;        //¹Ø±ÕTIÄ£Ê½
-    SPI2_Handler.Init.CRCCalculation=SPI_CRCCALCULATION_DISABLE;//¹Ø±ÕÓ²¼şCRCĞ£Ñé
-    SPI2_Handler.Init.CRCPolynomial=7;                  //CRCÖµ¼ÆËãµÄ¶àÏîÊ½
-    HAL_SPI_Init(&SPI2_Handler);//³õÊ¼»¯
+    SPI2_Handler.Init.Mode=SPI_MODE_MASTER;             //è®¾ç½®SPIå·¥ä½œæ¨¡å¼ï¼Œè®¾ç½®ä¸ºä¸»æ¨¡å¼
+    SPI2_Handler.Init.Direction=SPI_DIRECTION_2LINES;   //è®¾ç½®SPIå•å‘æˆ–è€…åŒå‘çš„æ•°æ®æ¨¡å¼:SPIè®¾ç½®ä¸ºåŒçº¿æ¨¡å¼
+    SPI2_Handler.Init.DataSize=SPI_DATASIZE_8BIT;       //è®¾ç½®SPIçš„æ•°æ®å¤§å°:SPIå‘é€æ¥æ”¶8ä½å¸§ç»“æ„
+    SPI2_Handler.Init.CLKPolarity=SPI_POLARITY_HIGH;    //ä¸²è¡ŒåŒæ­¥æ—¶é’Ÿçš„ç©ºé—²çŠ¶æ€ä¸ºé«˜ç”µå¹³
+    SPI2_Handler.Init.CLKPhase=SPI_PHASE_2EDGE;         //ä¸²è¡ŒåŒæ­¥æ—¶é’Ÿçš„ç¬¬äºŒä¸ªè·³å˜æ²¿ï¼ˆä¸Šå‡æˆ–ä¸‹é™ï¼‰æ•°æ®è¢«é‡‡æ ·
+    SPI2_Handler.Init.NSS=SPI_NSS_SOFT;                 //NSSä¿¡å·ç”±ç¡¬ä»¶ï¼ˆNSSç®¡è„šï¼‰è¿˜æ˜¯è½¯ä»¶ï¼ˆä½¿ç”¨SSIä½ï¼‰ç®¡ç†:å†…éƒ¨NSSä¿¡å·æœ‰SSIä½æ§åˆ¶
+    SPI2_Handler.Init.BaudRatePrescaler=SPI_BAUDRATEPRESCALER_256;//å®šä¹‰æ³¢ç‰¹ç‡é¢„åˆ†é¢‘çš„å€¼:æ³¢ç‰¹ç‡é¢„åˆ†é¢‘å€¼ä¸º256
+    SPI2_Handler.Init.FirstBit=SPI_FIRSTBIT_MSB;        //æŒ‡å®šæ•°æ®ä¼ è¾“ä»MSBä½è¿˜æ˜¯LSBä½å¼€å§‹:æ•°æ®ä¼ è¾“ä»MSBä½å¼€å§‹
+    SPI2_Handler.Init.TIMode=SPI_TIMODE_DISABLE;        //å…³é—­TIæ¨¡å¼
+    SPI2_Handler.Init.CRCCalculation=SPI_CRCCALCULATION_DISABLE;//å…³é—­ç¡¬ä»¶CRCæ ¡éªŒ
+    SPI2_Handler.Init.CRCPolynomial=7;                  //CRCå€¼è®¡ç®—çš„å¤šé¡¹å¼
+    HAL_SPI_Init(&SPI2_Handler);//åˆå§‹åŒ–
     
-    __HAL_SPI_ENABLE(&SPI2_Handler);                    //Ê¹ÄÜSPI2
+    __HAL_SPI_ENABLE(&SPI2_Handler);                    //ä½¿èƒ½SPI2
 	
-    SPI2_ReadWriteByte(0Xff);                           //Æô¶¯´«Êä
+    SPI2_ReadWriteByte(0Xff);                           //å¯åŠ¨ä¼ è¾“
 }
 
-//SPI5µ×²ãÇı¶¯£¬Ê±ÖÓÊ¹ÄÜ£¬Òı½ÅÅäÖÃ
-//´Ëº¯Êı»á±»HAL_SPI_Init()µ÷ÓÃ
-//hspi:SPI¾ä±ú
+//SPI5åº•å±‚é©±åŠ¨ï¼Œæ—¶é’Ÿä½¿èƒ½ï¼Œå¼•è„šé…ç½®
+//æ­¤å‡½æ•°ä¼šè¢«HAL_SPI_Init()è°ƒç”¨
+//hspi:SPIå¥æŸ„
 void HAL_SPI_MspInit(SPI_HandleTypeDef *hspi)
 {
     GPIO_InitTypeDef GPIO_Initure;
     
-    __HAL_RCC_GPIOB_CLK_ENABLE();       //Ê¹ÄÜGPIOBÊ±ÖÓ
-    __HAL_RCC_SPI2_CLK_ENABLE();        //Ê¹ÄÜSPI2Ê±ÖÓ
+    __HAL_RCC_GPIOB_CLK_ENABLE();       //ä½¿èƒ½GPIOBæ—¶é’Ÿ
+    __HAL_RCC_SPI2_CLK_ENABLE();        //ä½¿èƒ½SPI2æ—¶é’Ÿ
     
     //PB13,14,15
     GPIO_Initure.Pin=GPIO_PIN_13|GPIO_PIN_14|GPIO_PIN_15;
-    GPIO_Initure.Mode=GPIO_MODE_AF_PP;              //¸´ÓÃÍÆÍìÊä³ö
-    GPIO_Initure.Pull=GPIO_PULLUP;                  //ÉÏÀ­
-    GPIO_Initure.Speed=GPIO_SPEED_FREQ_HIGH;        //¿ìËÙ            
+    GPIO_Initure.Mode=GPIO_MODE_AF_PP;              //å¤ç”¨æ¨æŒ½è¾“å‡º
+    GPIO_Initure.Pull=GPIO_PULLUP;                  //ä¸Šæ‹‰
+    GPIO_Initure.Speed=GPIO_SPEED_FREQ_HIGH;        //å¿«é€Ÿ            
     HAL_GPIO_Init(GPIOB,&GPIO_Initure);
 }
 
-//SPIËÙ¶ÈÉèÖÃº¯Êı
-//SPIËÙ¶È=fAPB1/·ÖÆµÏµÊı
+//SPIé€Ÿåº¦è®¾ç½®å‡½æ•°
+//SPIé€Ÿåº¦=fAPB1/åˆ†é¢‘ç³»æ•°
 //@ref SPI_BaudRate_Prescaler:SPI_BAUDRATEPRESCALER_2~SPI_BAUDRATEPRESCALER_2 256
-//fAPB1Ê±ÖÓÒ»°ãÎª42Mhz£º
+//fAPB1æ—¶é’Ÿä¸€èˆ¬ä¸º42Mhzï¼š
 void SPI2_SetSpeed(uint8_t SPI_BaudRatePrescaler)
 {
-    assert_param(IS_SPI_BAUDRATE_PRESCALER(SPI_BaudRatePrescaler));//ÅĞ¶ÏÓĞĞ§ĞÔ
-    __HAL_SPI_DISABLE(&SPI2_Handler);            //¹Ø±ÕSPI
-    SPI2_Handler.Instance->CR1&=0XFFC7;          //Î»3-5ÇåÁã£¬ÓÃÀ´ÉèÖÃ²¨ÌØÂÊ
-    SPI2_Handler.Instance->CR1|=SPI_BaudRatePrescaler;//ÉèÖÃSPIËÙ¶È
-    __HAL_SPI_ENABLE(&SPI2_Handler);             //Ê¹ÄÜSPI
+    assert_param(IS_SPI_BAUDRATE_PRESCALER(SPI_BaudRatePrescaler));//åˆ¤æ–­æœ‰æ•ˆæ€§
+    __HAL_SPI_DISABLE(&SPI2_Handler);            //å…³é—­SPI
+    SPI2_Handler.Instance->CR1&=0XFFC7;          //ä½3-5æ¸…é›¶ï¼Œç”¨æ¥è®¾ç½®æ³¢ç‰¹ç‡
+    SPI2_Handler.Instance->CR1|=SPI_BaudRatePrescaler;//è®¾ç½®SPIé€Ÿåº¦
+    __HAL_SPI_ENABLE(&SPI2_Handler);             //ä½¿èƒ½SPI
     
 }
 
-//SPI1 ¶ÁĞ´Ò»¸ö×Ö½Ú
-//TxData:ÒªĞ´ÈëµÄ×Ö½Ú
-//·µ»ØÖµ:¶ÁÈ¡µ½µÄ×Ö½Ú
+//SPI1 è¯»å†™ä¸€ä¸ªå­—èŠ‚
+//TxData:è¦å†™å…¥çš„å­—èŠ‚
+//è¿”å›å€¼:è¯»å–åˆ°çš„å­—èŠ‚
 uint8_t SPI2_ReadWriteByte(uint8_t TxData)
 {
     uint8_t Rxdata;
     HAL_SPI_TransmitReceive(&SPI2_Handler,&TxData,&Rxdata,1, 1000);       
- 	return Rxdata;          		    //·µ»ØÊÕµ½µÄÊı¾İ		
+ 	return Rxdata;          		    //è¿”å›æ”¶åˆ°çš„æ•°æ®		
 }

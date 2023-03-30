@@ -16,8 +16,8 @@
 //#define DEV_MMC		1	/* Example: Map MMC/SD card to physical drive 1 */
 //#define DEV_USB		2	/* Example: Map USB MSD to physical drive 2 */
 
-#define USE_EX_FLASH			0	// ÊÇ·ñ¶ÔÍâ²¿ FLASH Ó¦ÓÃ FATFS	¡¾0:½ûÓÃ 1:ÆôÓÃ¡¿
-#define USE_DYNAMIC_MEM_ALLOC	1	// ÊÇ·ñÊ¹ÓÃ¶¯Ì¬·ÖÅä				¡¾0:½ûÓÃ 1:ÆôÓÃ¡¿
+#define USE_EX_FLASH			0	// æ˜¯å¦å¯¹å¤–éƒ¨ FLASH åº”ç”¨ FATFS	ã€0:ç¦ç”¨ 1:å¯ç”¨ã€‘
+#define USE_DYNAMIC_MEM_ALLOC	1	// æ˜¯å¦ä½¿ç”¨åŠ¨æ€åˆ†é…				ã€0:ç¦ç”¨ 1:å¯ç”¨ã€‘
 
 #if USE_EX_FLASH
 	#include "BSP/w25qxx/w25qxx.h"
@@ -32,14 +32,14 @@
 #define SD_CARD		0
 
 #if USE_EX_FLASH
-	#define EX_FLASH 1	//Íâ²¿flash,¾í±êÎª1
+	#define EX_FLASH 1	//å¤–éƒ¨flash,å·æ ‡ä¸º1
 #endif
 
-//Ç°12M×Ö½Ú¸øfatfsÓÃ,12M×Ö½Úºó,ÓÃÓÚ´æ·Å×Ö¿â,×Ö¿âÕ¼ÓÃ3.09M.	Ê£Óà²¿·Ö,¸ø¿Í»§×Ô¼ºÓÃ
+//å‰12Må­—èŠ‚ç»™fatfsç”¨,12Må­—èŠ‚å,ç”¨äºå­˜æ”¾å­—åº“,å­—åº“å ç”¨3.09M.	å‰©ä½™éƒ¨åˆ†,ç»™å®¢æˆ·è‡ªå·±ç”¨
 #if USE_EX_FLASH
 	#define FLASH_SECTOR_SIZE 	512
-	uint16_t	    FLASH_SECTOR_COUNT=2048*12;	//W25Q1218,Ç°12M×Ö½Ú¸øFATFSÕ¼ÓÃ
-	#define FLASH_BLOCK_SIZE   	8     	//Ã¿¸öBLOCKÓĞ8¸öÉÈÇø
+	uint16_t	    FLASH_SECTOR_COUNT=2048*12;	//W25Q1218,å‰12Må­—èŠ‚ç»™FATFSå ç”¨
+	#define FLASH_BLOCK_SIZE   	8     	//æ¯ä¸ªBLOCKæœ‰8ä¸ªæ‰‡åŒº
 #endif
 
 
@@ -71,9 +71,9 @@ DSTATUS disk_initialize (
 			result = SD_Init();
 			break;
 #if USE_EX_FLASH
-		case EX_FLASH://Íâ²¿flash
+		case EX_FLASH://å¤–éƒ¨flash
 			W25QXX_Init();
-			FLASH_SECTOR_COUNT=2048*12;//W25Q1218,Ç°12M×Ö½Ú¸øFATFSÕ¼ÓÃ 
+			FLASH_SECTOR_COUNT=2048*12;//W25Q1218,å‰12Må­—èŠ‚ç»™FATFSå ç”¨ 
  			break;
 #endif
 		default:
@@ -99,21 +99,21 @@ DRESULT disk_read (
 {
 	uint8_t res = 0;
 	if (!count)
-		return RES_PARERR;	//count²»ÄÜµÈÓÚ0£¬·ñÔò·µ»Ø²ÎÊı´íÎó		 
+		return RES_PARERR;	//countä¸èƒ½ç­‰äº0ï¼Œå¦åˆ™è¿”å›å‚æ•°é”™è¯¯		 
 
 	switch(pdrv)
 	{
-		case SD_CARD://SD¿¨
+		case SD_CARD://SDå¡
 			res=SD_ReadDisk(buff,sector,count);	 
-			while(res)//¶Á³ö´í
+			while(res)//è¯»å‡ºé”™
 			{
-				SD_Init();	//ÖØĞÂ³õÊ¼»¯SD¿¨
+				SD_Init();	//é‡æ–°åˆå§‹åŒ–SDå¡
 				res=SD_ReadDisk(buff,sector,count);	
 				//printf("sd rd error:%d\r\n",res);
 			}
 			break;
 #if USE_EX_FLASH
-		case EX_FLASH://Íâ²¿flash
+		case EX_FLASH://å¤–éƒ¨flash
 			for(;count>0;count--)
 			{
 				W25QXX_Read(buff,sector*FLASH_SECTOR_SIZE,FLASH_SECTOR_SIZE);
@@ -127,7 +127,7 @@ DRESULT disk_read (
 			res=1; 
 	}
 	
-	//´¦Àí·µ»ØÖµ£¬½«SPI_SD_driver.cµÄ·µ»ØÖµ×ª³Éff.cµÄ·µ»ØÖµ
+	//å¤„ç†è¿”å›å€¼ï¼Œå°†SPI_SD_driver.cçš„è¿”å›å€¼è½¬æˆff.cçš„è¿”å›å€¼
     if(res==0x00)
 		return RES_OK;	 
     else
@@ -150,21 +150,21 @@ DRESULT disk_write (
 )
 {
 	uint8_t res = 0;
-	if (!count)return RES_PARERR;//count²»ÄÜµÈÓÚ0£¬·ñÔò·µ»Ø²ÎÊı´íÎó	
+	if (!count)return RES_PARERR;//countä¸èƒ½ç­‰äº0ï¼Œå¦åˆ™è¿”å›å‚æ•°é”™è¯¯	
 
 	switch(pdrv)
 	{
-		case SD_CARD://SD¿¨
+		case SD_CARD://SDå¡
 			res=SD_WriteDisk((uint8_t*)buff,sector,count);
-			while(res)//Ğ´³ö´í
+			while(res)//å†™å‡ºé”™
 			{
-				SD_Init();	//ÖØĞÂ³õÊ¼»¯SD¿¨
+				SD_Init();	//é‡æ–°åˆå§‹åŒ–SDå¡
 				res=SD_WriteDisk((uint8_t*)buff,sector,count);	
 				//printf("sd wr error:%d\r\n",res);
 			}
 			break;
 		#if USE_EX_FLASH
-		case EX_FLASH://Íâ²¿flash
+		case EX_FLASH://å¤–éƒ¨flash
 			for(;count>0;count--)
 			{										    
 				W25QXX_Write((uint8_t*)buff,sector*FLASH_SECTOR_SIZE,FLASH_SECTOR_SIZE);
@@ -178,7 +178,7 @@ DRESULT disk_write (
 			res=1; 
 	}
 
-    //´¦Àí·µ»ØÖµ£¬½«SPI_SD_driver.cµÄ·µ»ØÖµ×ª³Éff.cµÄ·µ»ØÖµ
+    //å¤„ç†è¿”å›å€¼ï¼Œå°†SPI_SD_driver.cçš„è¿”å›å€¼è½¬æˆff.cçš„è¿”å›å€¼
     if(res == 0x00)
 		return RES_OK;	 
     else return
@@ -199,7 +199,7 @@ DRESULT disk_ioctl (
 )
 {
 	DRESULT res;
-	if(pdrv==SD_CARD)//SD¿¨
+	if(pdrv==SD_CARD)//SDå¡
 	{
 		switch(cmd)
 	    {
@@ -224,7 +224,7 @@ DRESULT disk_ioctl (
 	    }
 	}
 		#if USE_EX_FLASH
-	else if(pdrv==EX_FLASH)	//Íâ²¿FLASH  
+	else if(pdrv==EX_FLASH)	//å¤–éƒ¨FLASH  
 	{
 	    switch(cmd)
 	    {
@@ -249,7 +249,7 @@ DRESULT disk_ioctl (
 	    }
 	}
 	#endif
-	else res=RES_ERROR;//ÆäËûµÄ²»Ö§³Ö
+	else res=RES_ERROR;//å…¶ä»–çš„ä¸æ”¯æŒ
 
 	return res;;
 }
@@ -261,14 +261,14 @@ DWORD get_fattime (void)
 }
 
 #if USE_DYNAMIC_MEM_ALLOC
-//¶¯Ì¬·ÖÅäÄÚ´æ
+//åŠ¨æ€åˆ†é…å†…å­˜
 void *ff_memalloc (UINT size)			
 {
 	return (void*)mymalloc(SRAMIN,size);
 }
 
 
-//ÊÍ·ÅÄÚ´æ
+//é‡Šæ”¾å†…å­˜
 void ff_memfree (void* mf)		 
 {
 	myfree(SRAMIN,mf);

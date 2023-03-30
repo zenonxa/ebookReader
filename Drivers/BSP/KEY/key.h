@@ -1,23 +1,23 @@
 /**
  ****************************************************************************************************
  * @file        key.h
- * @author      ÕıµãÔ­×ÓÍÅ¶Ó(ALIENTEK)
+ * @author      æ­£ç‚¹åŸå­å›¢é˜Ÿ(ALIENTEK)
  * @version     V1.0
  * @date        2020-04-19
- * @brief       °´¼üÊäÈë Çı¶¯´úÂë
- * @license     Copyright (c) 2020-2032, ¹ãÖİÊĞĞÇÒíµç×Ó¿Æ¼¼ÓĞÏŞ¹«Ë¾
+ * @brief       æŒ‰é”®è¾“å…¥ é©±åŠ¨ä»£ç 
+ * @license     Copyright (c) 2020-2032, å¹¿å·å¸‚æ˜Ÿç¿¼ç”µå­ç§‘æŠ€æœ‰é™å…¬å¸
  ****************************************************************************************************
  * @attention
  *
- * ÊµÑéÆ½Ì¨:ÕıµãÔ­×Ó STM32F103¿ª·¢°å
- * ÔÚÏßÊÓÆµ:www.yuanzige.com
- * ¼¼ÊõÂÛÌ³:www.openedv.com
- * ¹«Ë¾ÍøÖ·:www.alientek.com
- * ¹ºÂòµØÖ·:openedv.taobao.com
+ * å®éªŒå¹³å°:æ­£ç‚¹åŸå­ STM32F103å¼€å‘æ¿
+ * åœ¨çº¿è§†é¢‘:www.yuanzige.com
+ * æŠ€æœ¯è®ºå›:www.openedv.com
+ * å…¬å¸ç½‘å€:www.alientek.com
+ * è´­ä¹°åœ°å€:openedv.taobao.com
  *
- * ĞŞ¸ÄËµÃ÷
+ * ä¿®æ”¹è¯´æ˜
  * V1.0 20200419
- * µÚÒ»´Î·¢²¼
+ * ç¬¬ä¸€æ¬¡å‘å¸ƒ
  *
  ****************************************************************************************************
  */
@@ -28,39 +28,39 @@
 #include "./SYSTEM/sys/sys.h"
 
 /******************************************************************************************/
-/* Òı½Å ¶¨Òå */
+/* å¼•è„š å®šä¹‰ */
 
 #define KEY0_GPIO_PORT                  GPIOE
 #define KEY0_GPIO_PIN                   GPIO_PIN_4
-#define KEY0_GPIO_CLK_ENABLE()          do{ __HAL_RCC_GPIOE_CLK_ENABLE(); }while(0)   /* PE¿ÚÊ±ÖÓÊ¹ÄÜ */
+#define KEY0_GPIO_CLK_ENABLE()          do{ __HAL_RCC_GPIOE_CLK_ENABLE(); }while(0)   /* PEå£æ—¶é’Ÿä½¿èƒ½ */
 
 #define KEY1_GPIO_PORT                  GPIOE
 #define KEY1_GPIO_PIN                   GPIO_PIN_3
-#define KEY1_GPIO_CLK_ENABLE()          do{ __HAL_RCC_GPIOE_CLK_ENABLE(); }while(0)   /* PE¿ÚÊ±ÖÓÊ¹ÄÜ */
+#define KEY1_GPIO_CLK_ENABLE()          do{ __HAL_RCC_GPIOE_CLK_ENABLE(); }while(0)   /* PEå£æ—¶é’Ÿä½¿èƒ½ */
 
 #define KEY2_GPIO_PORT                  GPIOE
 #define KEY2_GPIO_PIN                   GPIO_PIN_2
-#define KEY2_GPIO_CLK_ENABLE()          do{ __HAL_RCC_GPIOE_CLK_ENABLE(); }while(0)   /* PE¿ÚÊ±ÖÓÊ¹ÄÜ */
+#define KEY2_GPIO_CLK_ENABLE()          do{ __HAL_RCC_GPIOE_CLK_ENABLE(); }while(0)   /* PEå£æ—¶é’Ÿä½¿èƒ½ */
 
 #define WKUP_GPIO_PORT                  GPIOA
 #define WKUP_GPIO_PIN                   GPIO_PIN_0
-#define WKUP_GPIO_CLK_ENABLE()          do{ __HAL_RCC_GPIOA_CLK_ENABLE(); }while(0)   /* PA¿ÚÊ±ÖÓÊ¹ÄÜ */
+#define WKUP_GPIO_CLK_ENABLE()          do{ __HAL_RCC_GPIOA_CLK_ENABLE(); }while(0)   /* PAå£æ—¶é’Ÿä½¿èƒ½ */
 
 /******************************************************************************************/
 
-#define KEY0        HAL_GPIO_ReadPin(KEY0_GPIO_PORT, KEY0_GPIO_PIN)     /* ¶ÁÈ¡KEY0Òı½Å */
-#define KEY1        HAL_GPIO_ReadPin(KEY1_GPIO_PORT, KEY1_GPIO_PIN)     /* ¶ÁÈ¡KEY1Òı½Å */
-#define KEY2        HAL_GPIO_ReadPin(KEY2_GPIO_PORT, KEY2_GPIO_PIN)     /* ¶ÁÈ¡KEY2Òı½Å */
-#define WK_UP       HAL_GPIO_ReadPin(WKUP_GPIO_PORT, WKUP_GPIO_PIN)     /* ¶ÁÈ¡WKUPÒı½Å */
+#define KEY0        HAL_GPIO_ReadPin(KEY0_GPIO_PORT, KEY0_GPIO_PIN)     /* è¯»å–KEY0å¼•è„š */
+#define KEY1        HAL_GPIO_ReadPin(KEY1_GPIO_PORT, KEY1_GPIO_PIN)     /* è¯»å–KEY1å¼•è„š */
+#define KEY2        HAL_GPIO_ReadPin(KEY2_GPIO_PORT, KEY2_GPIO_PIN)     /* è¯»å–KEY2å¼•è„š */
+#define WK_UP       HAL_GPIO_ReadPin(WKUP_GPIO_PORT, WKUP_GPIO_PIN)     /* è¯»å–WKUPå¼•è„š */
 
 
-#define KEY0_PRES    1              /* KEY0°´ÏÂ */
-#define KEY1_PRES    2              /* KEY1°´ÏÂ */
-#define KEY2_PRES    3              /* KEY2°´ÏÂ */
-#define WKUP_PRES    4              /* KEY_UP°´ÏÂ(¼´WK_UP) */
+#define KEY0_PRES    1              /* KEY0æŒ‰ä¸‹ */
+#define KEY1_PRES    2              /* KEY1æŒ‰ä¸‹ */
+#define KEY2_PRES    3              /* KEY2æŒ‰ä¸‹ */
+#define WKUP_PRES    4              /* KEY_UPæŒ‰ä¸‹(å³WK_UP) */
 
-void key_init(void);                /* °´¼ü³õÊ¼»¯º¯Êı */
-uint8_t key_scan(uint8_t mode);     /* °´¼üÉ¨Ãèº¯Êı */
+void key_init(void);                /* æŒ‰é”®åˆå§‹åŒ–å‡½æ•° */
+uint8_t key_scan(uint8_t mode);     /* æŒ‰é”®æ‰«æå‡½æ•° */
 
 #endif
 

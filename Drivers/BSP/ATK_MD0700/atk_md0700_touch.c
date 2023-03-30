@@ -1,19 +1,19 @@
 /**
  ****************************************************************************************************
  * @file        atk_md0700_touch.c
- * @author      ÕıµãÔ­×ÓÍÅ¶Ó(ALIENTEK)
+ * @author      æ­£ç‚¹åŸå­å›¢é˜Ÿ(ALIENTEK)
  * @version     V1.0
  * @date        2022-06-21
- * @brief       ATK-MD0700Ä£¿é´¥ÃşÇı¶¯´úÂë
- * @license     Copyright (c) 2020-2032, ¹ãÖİÊĞĞÇÒíµç×Ó¿Æ¼¼ÓĞÏŞ¹«Ë¾
+ * @brief       ATK-MD0700æ¨¡å—è§¦æ‘¸é©±åŠ¨ä»£ç 
+ * @license     Copyright (c) 2020-2032, å¹¿å·å¸‚æ˜Ÿç¿¼ç”µå­ç§‘æŠ€æœ‰é™å…¬å¸
  ****************************************************************************************************
  * @attention
  *
- * ÊµÑéÆ½Ì¨:ÕıµãÔ­×Ó STM32F103¿ª·¢°å
- * ÔÚÏßÊÓÆµ:www.yuanzige.com
- * ¼¼ÊõÂÛÌ³:www.openedv.com
- * ¹«Ë¾ÍøÖ·:www.alientek.com
- * ¹ºÂòµØÖ·:openedv.taobao.com
+ * å®éªŒå¹³å°:æ­£ç‚¹åŸå­ STM32F103å¼€å‘æ¿
+ * åœ¨çº¿è§†é¢‘:www.yuanzige.com
+ * æŠ€æœ¯è®ºå›:www.openedv.com
+ * å…¬å¸ç½‘å€:www.alientek.com
+ * è´­ä¹°åœ°å€:openedv.taobao.com
  *
  ****************************************************************************************************
  */
@@ -26,22 +26,22 @@
 
 #if (ATK_MD0700_USING_TOUCH != 0)
 
-/* ATK-MD0700Ä£¿é´¥Ãş²¿·Ö¼Ä´æÆ÷¶¨Òå */
-#define ATK_MD0700_TOUCH_REG_DEVIDE_MODE        0x00    /* Éè±¸Ä£Ê½¿ØÖÆ¼Ä´æÆ÷ */
-#define ATK_MD0700_TOUCH_REG_ID_G_MODE          0xA4    /* ÖĞ¶ÏÄ£Ê½¿ØÖÆ¼Ä´æÆ÷ */
-#define ATK_MD0700_TOUCH_REG_ID_G_THGROUP       0x80    /* ÓĞĞ§´¥ÃşãĞÖµÅäÖÃ¼Ä´æÆ÷ */
-#define ATK_MD0700_TOUCH_REG_ID_G_PERIODACTIVE  0x88    /* ¼¤»îÖÜÆÚÅäÖÃ¼Ä´æÆ÷ */
-#define ATK_MD0700_TOUCH_REG_TD_STATUS          0x02    /* ´¥Ãş×´Ì¬¼Ä´æÆ÷ */
-#define ATK_MD0700_TOUCH_REG_TP1                0x03    /* ´¥Ãşµã1Êı¾İ¼Ä´æÆ÷ */
-#define ATK_MD0700_TOUCH_REG_TP2                0x09    /* ´¥Ãşµã2Êı¾İ¼Ä´æÆ÷ */
-#define ATK_MD0700_TOUCH_REG_TP3                0x0F    /* ´¥Ãşµã3Êı¾İ¼Ä´æÆ÷ */
-#define ATK_MD0700_TOUCH_REG_TP4                0x15    /* ´¥Ãşµã4Êı¾İ¼Ä´æÆ÷ */
-#define ATK_MD0700_TOUCH_REG_TP5                0x1B    /* ´¥Ãşµã5Êı¾İ¼Ä´æÆ÷ */
+/* ATK-MD0700æ¨¡å—è§¦æ‘¸éƒ¨åˆ†å¯„å­˜å™¨å®šä¹‰ */
+#define ATK_MD0700_TOUCH_REG_DEVIDE_MODE        0x00    /* è®¾å¤‡æ¨¡å¼æ§åˆ¶å¯„å­˜å™¨ */
+#define ATK_MD0700_TOUCH_REG_ID_G_MODE          0xA4    /* ä¸­æ–­æ¨¡å¼æ§åˆ¶å¯„å­˜å™¨ */
+#define ATK_MD0700_TOUCH_REG_ID_G_THGROUP       0x80    /* æœ‰æ•ˆè§¦æ‘¸é˜ˆå€¼é…ç½®å¯„å­˜å™¨ */
+#define ATK_MD0700_TOUCH_REG_ID_G_PERIODACTIVE  0x88    /* æ¿€æ´»å‘¨æœŸé…ç½®å¯„å­˜å™¨ */
+#define ATK_MD0700_TOUCH_REG_TD_STATUS          0x02    /* è§¦æ‘¸çŠ¶æ€å¯„å­˜å™¨ */
+#define ATK_MD0700_TOUCH_REG_TP1                0x03    /* è§¦æ‘¸ç‚¹1æ•°æ®å¯„å­˜å™¨ */
+#define ATK_MD0700_TOUCH_REG_TP2                0x09    /* è§¦æ‘¸ç‚¹2æ•°æ®å¯„å­˜å™¨ */
+#define ATK_MD0700_TOUCH_REG_TP3                0x0F    /* è§¦æ‘¸ç‚¹3æ•°æ®å¯„å­˜å™¨ */
+#define ATK_MD0700_TOUCH_REG_TP4                0x15    /* è§¦æ‘¸ç‚¹4æ•°æ®å¯„å­˜å™¨ */
+#define ATK_MD0700_TOUCH_REG_TP5                0x1B    /* è§¦æ‘¸ç‚¹5æ•°æ®å¯„å­˜å™¨ */
 
-/* ´¥Ãş×´Ì¬¼Ä´æÆ÷ÑÚÂë */
+/* è§¦æ‘¸çŠ¶æ€å¯„å­˜å™¨æ©ç  */
 #define ATK_MD0700_TOUCH_TD_STATUS_MASK_CNT     0x0F
 
-/* ATK-MD0700Ä£¿é´¥ÃşµãÊı¾İ¼Ä´æÆ÷ */
+/* ATK-MD0700æ¨¡å—è§¦æ‘¸ç‚¹æ•°æ®å¯„å­˜å™¨ */
 static const uint16_t g_atk_md0700_touch_tp_reg[ATK_MD0700_TOUCH_TP_MAX] = {
     ATK_MD0700_TOUCH_REG_TP1,
     ATK_MD0700_TOUCH_REG_TP2,
@@ -51,26 +51,26 @@ static const uint16_t g_atk_md0700_touch_tp_reg[ATK_MD0700_TOUCH_TP_MAX] = {
 };
 
 /**
- * @brief       ATK-MD0700Ä£¿é´¥ÃşÓ²¼ş³õÊ¼»¯
- * @param       ÎŞ
- * @retval      ÎŞ
+ * @brief       ATK-MD0700æ¨¡å—è§¦æ‘¸ç¡¬ä»¶åˆå§‹åŒ–
+ * @param       æ— 
+ * @retval      æ— 
  */
 static void atk_md0700_touch_hw_init(void)
 {
     GPIO_InitTypeDef gpio_init_struct = {0};
     
-    /* Ê¹ÄÜÊ±ÖÓ */
+    /* ä½¿èƒ½æ—¶é’Ÿ */
     ATK_MD0700_TOUCH_PEN_GPIO_CLK_ENABLE();
     ATK_MD0700_TOUCH_CS_GPIO_CLK_ENABLE();
     
-    /* ³õÊ¼»¯PENÒı½Å */
+    /* åˆå§‹åŒ–PENå¼•è„š */
     gpio_init_struct.Pin    = ATK_MD0700_TOUCH_PEN_GPIO_PIN;
     gpio_init_struct.Mode   = GPIO_MODE_INPUT;
     gpio_init_struct.Pull   = GPIO_PULLUP;
     gpio_init_struct.Speed  = GPIO_SPEED_FREQ_HIGH;
     HAL_GPIO_Init(ATK_MD0700_TOUCH_PEN_GPIO_PORT, &gpio_init_struct);
     
-    /* ³õÊ¼»¯TCSÒı½Å */
+    /* åˆå§‹åŒ–TCSå¼•è„š */
     gpio_init_struct.Pin    = ATK_MD0700_TOUCH_CS_GPIO_PIN;
     gpio_init_struct.Mode   = GPIO_MODE_OUTPUT_PP;
     gpio_init_struct.Pull   = GPIO_PULLUP;
@@ -79,9 +79,9 @@ static void atk_md0700_touch_hw_init(void)
 }
 
 /**
- * @brief       ATK-MD0700Ä£¿é´¥ÃşÓ²¼ş¸´Î»
- * @param       ÎŞ
- * @retval      ÎŞ
+ * @brief       ATK-MD0700æ¨¡å—è§¦æ‘¸ç¡¬ä»¶å¤ä½
+ * @param       æ— 
+ * @retval      æ— 
  */
 static void atk_md0700_touch_hw_reset(void)
 {
@@ -92,35 +92,35 @@ static void atk_md0700_touch_hw_reset(void)
 }
 
 /**
- * @brief       ATK-MD0700Ä£¿é´¥Ãş¼Ä´æÆ÷³õÊ¼»¯
- * @param       ÎŞ
- * @retval      ÎŞ
+ * @brief       ATK-MD0700æ¨¡å—è§¦æ‘¸å¯„å­˜å™¨åˆå§‹åŒ–
+ * @param       æ— 
+ * @retval      æ— 
  */
 static void atk_md0700_touch_reg_init(void)
 {
     uint8_t dat;
     
-    /* Éè±¸Ä£Ê½¿ØÖÆ¼Ä´æÆ÷ */
+    /* è®¾å¤‡æ¨¡å¼æ§åˆ¶å¯„å­˜å™¨ */
     dat = 0x00;
     atk_md0700_touch_iic_write_reg(ATK_MD0700_TOUCH_REG_DEVIDE_MODE, &dat, sizeof(dat));
     
-    /* ÖĞ¶ÏÄ£Ê½¿ØÖÆ¼Ä´æÆ÷ */
+    /* ä¸­æ–­æ¨¡å¼æ§åˆ¶å¯„å­˜å™¨ */
     dat = 0x00;
     atk_md0700_touch_iic_write_reg(ATK_MD0700_TOUCH_REG_ID_G_MODE, &dat, sizeof(dat));
     
-    /* ÓĞĞ§´¥ÃşãĞÖµÅäÖÃ¼Ä´æÆ÷ */
+    /* æœ‰æ•ˆè§¦æ‘¸é˜ˆå€¼é…ç½®å¯„å­˜å™¨ */
     dat = 22;
     atk_md0700_touch_iic_write_reg(ATK_MD0700_TOUCH_REG_ID_G_THGROUP, &dat, sizeof(dat));
     
-    /* ¼¤»îÖÜÆÚÅäÖÃ¼Ä´æÆ÷£¬²»ÄÜĞ¡ÓÚ12 */
+    /* æ¿€æ´»å‘¨æœŸé…ç½®å¯„å­˜å™¨ï¼Œä¸èƒ½å°äº12 */
     dat = 12;
     atk_md0700_touch_iic_write_reg(ATK_MD0700_TOUCH_REG_ID_G_PERIODACTIVE, &dat, sizeof(dat));
 }
 
 /**
- * @brief       ATK-MD0700Ä£¿é´¥Ãş³õÊ¼»¯
- * @param       ÎŞ
- * @retval      ÎŞ
+ * @brief       ATK-MD0700æ¨¡å—è§¦æ‘¸åˆå§‹åŒ–
+ * @param       æ— 
+ * @retval      æ— 
  */
 void atk_md0700_touch_init(void)
 {
@@ -131,12 +131,12 @@ void atk_md0700_touch_init(void)
 }
 
 /**
- * @brief       ATK-MD0700Ä£¿é´¥ÃşÉ¨Ãè
- * @note        Á¬Ğøµ÷ÓÃ¼ä¸ôĞè´óÓÚ4ms
- * @param       point: É¨Ãèµ½µÄ´¥ÃşµãĞÅÏ¢
- *              cnt  : ĞèÒªÉ¨ÃèµÄ´¥ÃşµãÊıÁ¿£¨1~ATK_MD0700_TOUCH_TP_MAX£©
- * @retval      0   : Ã»ÓĞÉ¨Ãèµ½´¥Ãşµã
- *              ÆäËû: Êµ¼Ê»ñÈ¡µ½µÄ´¥ÃşµãĞÅÏ¢ÊıÁ¿
+ * @brief       ATK-MD0700æ¨¡å—è§¦æ‘¸æ‰«æ
+ * @note        è¿ç»­è°ƒç”¨é—´éš”éœ€å¤§äº4ms
+ * @param       point: æ‰«æåˆ°çš„è§¦æ‘¸ç‚¹ä¿¡æ¯
+ *              cnt  : éœ€è¦æ‰«æçš„è§¦æ‘¸ç‚¹æ•°é‡ï¼ˆ1~ATK_MD0700_TOUCH_TP_MAXï¼‰
+ * @retval      0   : æ²¡æœ‰æ‰«æåˆ°è§¦æ‘¸ç‚¹
+ *              å…¶ä»–: å®é™…è·å–åˆ°çš„è§¦æ‘¸ç‚¹ä¿¡æ¯æ•°é‡
  */
 uint8_t atk_md0700_touch_scan(atk_md0700_touch_point_t *point, uint8_t cnt)
 {

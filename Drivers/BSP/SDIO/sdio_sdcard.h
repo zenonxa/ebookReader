@@ -2,24 +2,24 @@
 #define _SDMMC_SDCARD_H
 #include "SYSTEM/sys/sys.h"
 //////////////////////////////////////////////////////////////////////////////////	 
-//±¾³ÌĞòÖ»¹©Ñ§Ï°Ê¹ÓÃ£¬Î´¾­×÷ÕßĞí¿É£¬²»µÃÓÃÓÚÆäËüÈÎºÎÓÃÍ¾
-//ALIENTEK STM32F103¿ª·¢°å
-//SD¿¨Çı¶¯´úÂë	   
-//ÕıµãÔ­×Ó@ALIENTEK
-//¼¼ÊõÂÛÌ³:www.openedv.com
-//´´½¨ÈÕÆÚ:2019/9/19
-//°æ±¾£ºV1.0
-//°æÈ¨ËùÓĞ£¬µÁ°æ±Ø¾¿¡£
-//Copyright(C) ¹ãÖİÊĞĞÇÒíµç×Ó¿Æ¼¼ÓĞÏŞ¹«Ë¾ 2014-2024
+//æœ¬ç¨‹åºåªä¾›å­¦ä¹ ä½¿ç”¨ï¼Œæœªç»ä½œè€…è®¸å¯ï¼Œä¸å¾—ç”¨äºå…¶å®ƒä»»ä½•ç”¨é€”
+//ALIENTEK STM32F103å¼€å‘æ¿
+//SDå¡é©±åŠ¨ä»£ç 	   
+//æ­£ç‚¹åŸå­@ALIENTEK
+//æŠ€æœ¯è®ºå›:www.openedv.com
+//åˆ›å»ºæ—¥æœŸ:2019/9/19
+//ç‰ˆæœ¬ï¼šV1.0
+//ç‰ˆæƒæ‰€æœ‰ï¼Œç›—ç‰ˆå¿…ç©¶ã€‚
+//Copyright(C) å¹¿å·å¸‚æ˜Ÿç¿¼ç”µå­ç§‘æŠ€æœ‰é™å…¬å¸ 2014-2024
 //All rights reserved									  
 //////////////////////////////////////////////////////////////////////////////////
 
-#define SD_TIMEOUT 			((uint32_t)100000000)  	//³¬Ê±Ê±¼ä
+#define SD_TIMEOUT 			((uint32_t)100000000)  	//è¶…æ—¶æ—¶é—´
 #define SD_TRANSFER_OK     	((uint8_t)0x00)
 #define SD_TRANSFER_BUSY   	((uint8_t)0x01) 
 
-extern SD_HandleTypeDef        SDCARD_Handler;     	//SD¿¨¾ä±ú
-extern HAL_SD_CardInfoTypeDef  SDCardInfo;         	//SD¿¨ĞÅÏ¢½á¹¹Ìå
+extern SD_HandleTypeDef        SDCARD_Handler;     	//SDå¡å¥æŸ„
+extern HAL_SD_CardInfoTypeDef  SDCardInfo;         	//SDå¡ä¿¡æ¯ç»“æ„ä½“
 
 uint8_t SD_Init(void);
 uint8_t SD_GetCardInfo(HAL_SD_CardInfoTypeDef *cardinfo);

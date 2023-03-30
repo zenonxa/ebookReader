@@ -1,19 +1,19 @@
 /**
  ****************************************************************************************************
  * @file        atk_md0700_touch_iic.h
- * @author      ÕıµãÔ­×ÓÍÅ¶Ó(ALIENTEK)
+ * @author      æ­£ç‚¹åŸå­å›¢é˜Ÿ(ALIENTEK)
  * @version     V1.0
  * @date        2022-06-21
- * @brief       ATK-MD0700Ä£¿é´¥ÃşIIC½Ó¿ÚÇı¶¯´úÂë
- * @license     Copyright (c) 2020-2032, ¹ãÖİÊĞĞÇÒíµç×Ó¿Æ¼¼ÓĞÏŞ¹«Ë¾
+ * @brief       ATK-MD0700æ¨¡å—è§¦æ‘¸IICæ¥å£é©±åŠ¨ä»£ç 
+ * @license     Copyright (c) 2020-2032, å¹¿å·å¸‚æ˜Ÿç¿¼ç”µå­ç§‘æŠ€æœ‰é™å…¬å¸
  ****************************************************************************************************
  * @attention
  *
- * ÊµÑéÆ½Ì¨:ÕıµãÔ­×Ó STM32F103¿ª·¢°å
- * ÔÚÏßÊÓÆµ:www.yuanzige.com
- * ¼¼ÊõÂÛÌ³:www.openedv.com
- * ¹«Ë¾ÍøÖ·:www.alientek.com
- * ¹ºÂòµØÖ·:openedv.taobao.com
+ * å®éªŒå¹³å°:æ­£ç‚¹åŸå­ STM32F103å¼€å‘æ¿
+ * åœ¨çº¿è§†é¢‘:www.yuanzige.com
+ * æŠ€æœ¯è®ºå›:www.openedv.com
+ * å…¬å¸ç½‘å€:www.alientek.com
+ * è´­ä¹°åœ°å€:openedv.taobao.com
  *
  ****************************************************************************************************
  */
@@ -25,10 +25,10 @@
 
 #if (ATK_MD0700_USING_TOUCH != 0)
 
-/* ATK-MD0700´¥ÃşIICÍ¨Ñ¶µØÖ· */
+/* ATK-MD0700è§¦æ‘¸IICé€šè®¯åœ°å€ */
 #define ATK_MD0700_TOUCH_IIC_ADDR                   0x38
 
-/* Òı½Å¶¨Òå */
+/* å¼•è„šå®šä¹‰ */
 #define ATK_MD0700_TOUCH_IIC_SCL_GPIO_PORT          GPIOB
 #define ATK_MD0700_TOUCH_IIC_SCL_GPIO_PIN           GPIO_PIN_1
 #define ATK_MD0700_TOUCH_IIC_SCL_GPIO_CLK_ENABLE()  do{ __HAL_RCC_GPIOB_CLK_ENABLE(); }while(0)
@@ -36,7 +36,7 @@
 #define ATK_MD0700_TOUCH_IIC_SDA_GPIO_PIN           GPIO_PIN_9
 #define ATK_MD0700_TOUCH_IIC_SDA_GPIO_CLK_ENABLE()  do{ __HAL_RCC_GPIOF_CLK_ENABLE(); }while(0)
 
-/* IO²Ù×÷ */
+/* IOæ“ä½œ */
 #define ATK_MD0700_TOUCH_IIC_SCL(x)                 do{ x ?                                                                                                         \
                                                         HAL_GPIO_WritePin(ATK_MD0700_TOUCH_IIC_SCL_GPIO_PORT, ATK_MD0700_TOUCH_IIC_SCL_GPIO_PIN, GPIO_PIN_SET) :    \
                                                         HAL_GPIO_WritePin(ATK_MD0700_TOUCH_IIC_SCL_GPIO_PORT, ATK_MD0700_TOUCH_IIC_SCL_GPIO_PIN, GPIO_PIN_RESET);   \
@@ -49,14 +49,14 @@
 
 #define ATK_MD0700_TOUCH_IIC_READ_SDA()             HAL_GPIO_ReadPin(ATK_MD0700_TOUCH_IIC_SDA_GPIO_PORT, ATK_MD0700_TOUCH_IIC_SDA_GPIO_PIN)
 
-/* ´íÎó´úÂë */
-#define ATK_MD0700_TOUCH_IIC_EOK    0   /* Ã»ÓĞ´íÎó */
-#define ATK_MD0700_TOUCH_IIC_ERROR  1   /* ´íÎó */
+/* é”™è¯¯ä»£ç  */
+#define ATK_MD0700_TOUCH_IIC_EOK    0   /* æ²¡æœ‰é”™è¯¯ */
+#define ATK_MD0700_TOUCH_IIC_ERROR  1   /* é”™è¯¯ */
 
-/* ²Ù×÷º¯Êı */
-void atk_md0700_touch_iic_init(void);                                           /* ³õÊ¼»¯IIC½Ó¿Ú */
-uint8_t atk_md0700_touch_iic_write_reg(uint8_t reg, uint8_t *buf, uint8_t len); /* Ğ´ATK-MD0700Ä£¿é´¥Ãş¼Ä´æÆ÷ */
-void atk_md0700_touch_iic_read_reg(uint8_t reg, uint8_t *buf, uint8_t len);     /* ¶ÁATK-MD0700Ä£¿é´¥Ãş¼Ä´æÆ÷ */
+/* æ“ä½œå‡½æ•° */
+void atk_md0700_touch_iic_init(void);                                           /* åˆå§‹åŒ–IICæ¥å£ */
+uint8_t atk_md0700_touch_iic_write_reg(uint8_t reg, uint8_t *buf, uint8_t len); /* å†™ATK-MD0700æ¨¡å—è§¦æ‘¸å¯„å­˜å™¨ */
+void atk_md0700_touch_iic_read_reg(uint8_t reg, uint8_t *buf, uint8_t len);     /* è¯»ATK-MD0700æ¨¡å—è§¦æ‘¸å¯„å­˜å™¨ */
 
 #endif /* ATK_MD0700_USING_TOUCH */
 

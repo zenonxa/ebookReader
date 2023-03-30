@@ -1,19 +1,19 @@
 /**
  ****************************************************************************************************
  * @file        atk_md0700.c
- * @author      ÕıµãÔ­×ÓÍÅ¶Ó(ALIENTEK)
+ * @author      æ­£ç‚¹åŸå­å›¢é˜Ÿ(ALIENTEK)
  * @version     V1.0
  * @date        2022-06-21
- * @brief       ATK-MD0700Ä£¿éÇı¶¯´úÂë
- * @license     Copyright (c) 2020-2032, ¹ãÖİÊĞĞÇÒíµç×Ó¿Æ¼¼ÓĞÏŞ¹«Ë¾
+ * @brief       ATK-MD0700æ¨¡å—é©±åŠ¨ä»£ç 
+ * @license     Copyright (c) 2020-2032, å¹¿å·å¸‚æ˜Ÿç¿¼ç”µå­ç§‘æŠ€æœ‰é™å…¬å¸
  ****************************************************************************************************
  * @attention
  *
- * ÊµÑéÆ½Ì¨:ÕıµãÔ­×Ó STM32F103¿ª·¢°å
- * ÔÚÏßÊÓÆµ:www.yuanzige.com
- * ¼¼ÊõÂÛÌ³:www.openedv.com
- * ¹«Ë¾ÍøÖ·:www.alientek.com
- * ¹ºÂòµØÖ·:openedv.taobao.com
+ * å®éªŒå¹³å°:æ­£ç‚¹åŸå­ STM32F103å¼€å‘æ¿
+ * åœ¨çº¿è§†é¢‘:www.yuanzige.com
+ * æŠ€æœ¯è®ºå›:www.openedv.com
+ * å…¬å¸ç½‘å€:www.alientek.com
+ * è´­ä¹°åœ°å€:openedv.taobao.com
  *
  ****************************************************************************************************
  */
@@ -23,10 +23,10 @@
 #include "./BSP/ATK_MD0700/atk_md0700_fsmc.h"
 #include "./SYSTEM/delay/delay.h"
 
-/* ATK-MD0700Ä£¿éLCD²úÆ·ID */
-#define ATK_MD0700_PID              0x61    /* ²úÆ·ID */
+/* ATK-MD0700æ¨¡å—LCDäº§å“ID */
+#define ATK_MD0700_PID              0x61    /* äº§å“ID */
 
-/* ATK-MD0700Ä£¿éLCDÉ¨Ãè·½Ïò */
+/* ATK-MD0700æ¨¡å—LCDæ‰«ææ–¹å‘ */
 #define ATK_MD0700_SCAN_DIR_L2R_U2D (0x0000)
 #define ATK_MD0700_SCAN_DIR_L2R_D2U (0x0080)
 #define ATK_MD0700_SCAN_DIR_R2L_U2D (0x0040)
@@ -36,23 +36,23 @@
 #define ATK_MD0700_SCAN_DIR_D2U_L2R (0x00A0)
 #define ATK_MD0700_SCAN_DIR_D2U_R2L (0x00E0)
 
-//LCDµÄ»­±ÊÑÕÉ«ºÍ±³¾°É«
-u16 POINT_COLOR=0x0000;         //»­±ÊÑÕÉ«
-u16 BACK_COLOR=0xFFFF;          //±³¾°É« 
+//LCDçš„ç”»ç¬”é¢œè‰²å’ŒèƒŒæ™¯è‰²
+u16 POINT_COLOR=0x0000;         //ç”»ç¬”é¢œè‰²
+u16 BACK_COLOR=0xFFFF;          //èƒŒæ™¯è‰² 
 
-/* ATK-MD0700Ä£¿é×´Ì¬Êı¾İ½á¹¹Ìå */
+/* ATK-MD0700æ¨¡å—çŠ¶æ€æ•°æ®ç»“æ„ä½“ */
 static struct
 {
-    uint8_t pid;                        /* Çı¶¯Æ÷PID */
-    uint16_t width;                     /* LCD¿í¶È */
-    uint16_t height;                    /* LCD¸ß¶È */
-    atk_md0700_lcd_scan_dir_t scan_dir; /* LCDÉ¨Ãè·½Ïò */
-    atk_md0700_lcd_disp_dir_t disp_dir; /* LCDÏÔÊ¾·½Ïò */
+    uint8_t pid;                        /* é©±åŠ¨å™¨PID */
+    uint16_t width;                     /* LCDå®½åº¦ */
+    uint16_t height;                    /* LCDé«˜åº¦ */
+    atk_md0700_lcd_scan_dir_t scan_dir; /* LCDæ‰«ææ–¹å‘ */
+    atk_md0700_lcd_disp_dir_t disp_dir; /* LCDæ˜¾ç¤ºæ–¹å‘ */
 } g_atk_md0700_sta = {0};
 
 
-// ×ª»»u8ÀàĞÍÎªÄÚ²¿atk_md0700_lcd_font_tÀàĞÍ£¬±íÊ¾×ÖÌå´óĞ¡
-// ÔÊĞíÖµ:[12, 16, 24, 32]. ·Ç·¨´óĞ¡»á½âÊÍÎª 12
+// è½¬æ¢u8ç±»å‹ä¸ºå†…éƒ¨atk_md0700_lcd_font_tç±»å‹ï¼Œè¡¨ç¤ºå­—ä½“å¤§å°
+// å…è®¸å€¼:[12, 16, 24, 32]. éæ³•å¤§å°ä¼šè§£é‡Šä¸º 12
 atk_md0700_lcd_font_t mapping_font_size(uint8_t size) {
 	atk_md0700_lcd_font_t lcd_font_size;
 	switch(size) {
@@ -72,9 +72,9 @@ atk_md0700_lcd_font_t mapping_font_size(uint8_t size) {
 }
 
 /**
- * @brief       »ñÈ¡ATK-MD0700Ä£¿éLCDÇı¶¯Æ÷PID
- * @param       ÎŞ
- * @retval      LCDÇı¶¯Æ÷²úÆ·ID
+ * @brief       è·å–ATK-MD0700æ¨¡å—LCDé©±åŠ¨å™¨PID
+ * @param       æ— 
+ * @retval      LCDé©±åŠ¨å™¨äº§å“ID
  */
 static uint8_t atk_md0700_get_pid(void)
 {
@@ -90,9 +90,9 @@ static uint8_t atk_md0700_get_pid(void)
 }
 
 /**
- * @brief       ATK-MD0700Ä£¿é¼Ä´æÆ÷³õÊ¼»¯
- * @param       ÎŞ
- * @retval      ÎŞ
+ * @brief       ATK-MD0700æ¨¡å—å¯„å­˜å™¨åˆå§‹åŒ–
+ * @param       æ— 
+ * @retval      æ— 
  */
 static void atk_md0700_reg_init(void)
 {
@@ -158,9 +158,9 @@ static void atk_md0700_reg_init(void)
 }
 
 /**
- * @brief       ÉèÖÃATK-MD0700Ä£¿éÁĞµØÖ·
- * @param       ÎŞ
- * @retval      ÎŞ
+ * @brief       è®¾ç½®ATK-MD0700æ¨¡å—åˆ—åœ°å€
+ * @param       æ— 
+ * @retval      æ— 
  */
 static void atk_md0700_set_column_address(uint16_t sc, uint16_t ec)
 {
@@ -187,9 +187,9 @@ static void atk_md0700_set_column_address(uint16_t sc, uint16_t ec)
 }
 
 /**
- * @brief       ÉèÖÃATK-MD0700Ä£¿éÒ³µØÖ·
- * @param       ÎŞ
- * @retval      ÎŞ
+ * @brief       è®¾ç½®ATK-MD0700æ¨¡å—é¡µåœ°å€
+ * @param       æ— 
+ * @retval      æ— 
  */
 static void atk_md0700_set_page_address(uint16_t sp, uint16_t ep)
 {
@@ -216,9 +216,9 @@ static void atk_md0700_set_page_address(uint16_t sp, uint16_t ep)
 }
 
 /**
- * @brief       ¿ªÊ¼Ğ´ATK-MD0700Ä£¿éÏÔ´æ
- * @param       ÎŞ
- * @retval      ÎŞ
+ * @brief       å¼€å§‹å†™ATK-MD0700æ¨¡å—æ˜¾å­˜
+ * @param       æ— 
+ * @retval      æ— 
  */
 static void atk_md0700_start_write_memory(void)
 {
@@ -226,9 +226,9 @@ static void atk_md0700_start_write_memory(void)
 }
 
 /**
- * @brief       ¿ªÊ¼¶ÁATK-MD0700Ä£¿éÏÔ´æ
- * @param       ÎŞ
- * @retval      ÎŞ
+ * @brief       å¼€å§‹è¯»ATK-MD0700æ¨¡å—æ˜¾å­˜
+ * @param       æ— 
+ * @retval      æ— 
  */
 static void atk_md0700_start_read_memory(void)
 {
@@ -236,9 +236,9 @@ static void atk_md0700_start_read_memory(void)
 }
 
 /**
- * @brief       Æ½·½º¯Êı£¬x^y
- * @param       x: µ×Êı
- *              y: Ö¸Êı
+ * @brief       å¹³æ–¹å‡½æ•°ï¼Œx^y
+ * @param       x: åº•æ•°
+ *              y: æŒ‡æ•°
  * @retval      x^y
  */
 static uint32_t atk_md0700_pow(uint8_t x, uint8_t y)
@@ -255,17 +255,17 @@ static uint32_t atk_md0700_pow(uint8_t x, uint8_t y)
 }
 
 /**
- * @brief       ATK-MD0700Ä£¿é³õÊ¼»¯
- * @param       ÎŞ
- * @retval      ATK_MD0700_EOK  : ATK_MD0700Ä£¿é³õÊ¼»¯³É¹¦
- *              ATK_MD0700_ERROR: ATK_MD0700Ä£¿é³õÊ¼»¯Ê§°Ü
+ * @brief       ATK-MD0700æ¨¡å—åˆå§‹åŒ–
+ * @param       æ— 
+ * @retval      ATK_MD0700_EOK  : ATK_MD0700æ¨¡å—åˆå§‹åŒ–æˆåŠŸ
+ *              ATK_MD0700_ERROR: ATK_MD0700æ¨¡å—åˆå§‹åŒ–å¤±è´¥
  */
 uint8_t atk_md0700_init(void)
 {
     uint8_t pid;
     
-    atk_md0700_fsmc_init();             /* ATK-MD0700Ä£¿éFSMC½Ó¿Ú³õÊ¼»¯ */
-    pid = atk_md0700_get_pid();         /* »ñÈ¡ATK-MD0700Ä£¿éLCDÇı¶¯Æ÷PID */
+    atk_md0700_fsmc_init();             /* ATK-MD0700æ¨¡å—FSMCæ¥å£åˆå§‹åŒ– */
+    pid = atk_md0700_get_pid();         /* è·å–ATK-MD0700æ¨¡å—LCDé©±åŠ¨å™¨PID */
     if (pid != ATK_MD0700_PID)
     {
         return ATK_MD0700_ERROR;
@@ -289,9 +289,9 @@ uint8_t atk_md0700_init(void)
 }
 
 /**
- * @brief       »ñÈ¡ATK-MD0700Ä£¿éLCD¿í¶È
- * @param       ÎŞ
- * @retval      ATK-MD0700Ä£¿éLCD¿í¶È
+ * @brief       è·å–ATK-MD0700æ¨¡å—LCDå®½åº¦
+ * @param       æ— 
+ * @retval      ATK-MD0700æ¨¡å—LCDå®½åº¦
  */
 uint16_t atk_md0700_get_lcd_width(void)
 {
@@ -299,9 +299,9 @@ uint16_t atk_md0700_get_lcd_width(void)
 }
 
 /**
- * @brief       »ñÈ¡ATK-MD0700Ä£¿éLCD¸ß¶È
- * @param       ÎŞ
- * @retval      ATK-MD0700Ä£¿éLCD¸ß¶È
+ * @brief       è·å–ATK-MD0700æ¨¡å—LCDé«˜åº¦
+ * @param       æ— 
+ * @retval      ATK-MD0700æ¨¡å—LCDé«˜åº¦
  */
 uint16_t atk_md0700_get_lcd_height(void)
 {
@@ -309,9 +309,9 @@ uint16_t atk_md0700_get_lcd_height(void)
 }
 
 /**
- * @brief       ÉèÖÃATK-MD0700Ä£¿éLCD±³¹âÁÁ¶È
- * @param       pwm: LCD±³¹âÁÁ¶È£¬0£º×î°µ£»255£º×îÁÁ
- * @retval      ÎŞ
+ * @brief       è®¾ç½®ATK-MD0700æ¨¡å—LCDèƒŒå…‰äº®åº¦
+ * @param       pwm: LCDèƒŒå…‰äº®åº¦ï¼Œ0ï¼šæœ€æš—ï¼›255ï¼šæœ€äº®
+ * @retval      æ— 
  */
 void atk_md0700_backlight_config(uint8_t pwm)
 {
@@ -325,9 +325,9 @@ void atk_md0700_backlight_config(uint8_t pwm)
 }
 
 /**
- * @brief       ¿ªÆôATK-MD0700Ä£¿éLCDÏÔÊ¾
- * @param       ÎŞ
- * @retval      ÎŞ
+ * @brief       å¼€å¯ATK-MD0700æ¨¡å—LCDæ˜¾ç¤º
+ * @param       æ— 
+ * @retval      æ— 
  */
 void atk_md0700_display_on(void)
 {
@@ -335,9 +335,9 @@ void atk_md0700_display_on(void)
 }
 
 /**
- * @brief       ¹Ø±ÕATK-MD0700Ä£¿éLCDÏÔÊ¾
- * @param       ÎŞ
- * @retval      ÎŞ
+ * @brief       å…³é—­ATK-MD0700æ¨¡å—LCDæ˜¾ç¤º
+ * @param       æ— 
+ * @retval      æ— 
  */
 void atk_md0700_display_off(void)
 {
@@ -345,18 +345,18 @@ void atk_md0700_display_off(void)
 }
 
 /**
- * @brief       ÉèÖÃATK-MD0700Ä£¿éLCDÉ¨Ãè·½Ïò
- * @param       scan_dir: ATK_MD0700_LCD_SCAN_DIR_L2R_U2D: ´Ó×óµ½ÓÒ£¬´ÓÉÏµ½ÏÂ
- *                        ATK_MD0700_LCD_SCAN_DIR_L2R_D2U: ´Ó×óµ½ÓÒ£¬´ÓÏÂµ½ÉÏ
- *                        ATK_MD0700_LCD_SCAN_DIR_R2L_U2D: ´ÓÓÒµ½×ó£¬´ÓÉÏµ½ÏÂ
- *                        ATK_MD0700_LCD_SCAN_DIR_R2L_D2U: ´ÓÓÒµ½×ó£¬´ÓÏÂµ½ÉÏ
- *                        ATK_MD0700_LCD_SCAN_DIR_U2D_L2R: ´ÓÉÏµ½ÏÂ£¬´Ó×óµ½ÓÒ
- *                        ATK_MD0700_LCD_SCAN_DIR_U2D_R2L: ´ÓÉÏµ½ÏÂ£¬´ÓÓÒµ½×ó
- *                        ATK_MD0700_LCD_SCAN_DIR_D2U_L2R: ´ÓÏÂµ½ÉÏ£¬´Ó×óµ½ÓÒ
- *                        ATK_MD0700_LCD_SCAN_DIR_D2U_R2L: ´ÓÏÂµ½ÉÏ£¬´ÓÓÒµ½×ó
- * @retval      ATK_MD0700_EOK   : ÉèÖÃATK-MD0700Ä£¿éLCDÉ¨Ãè·½Ïò³É¹¦
- *              ATK_MD0700_ERROR : ÉèÖÃATK-MD0700Ä£¿éLCDÉ¨Ãè·½ÏòÊ§°Ü
-*               ATK_MD0700_EINVAL: ´«Èë²ÎÊı´íÎó
+ * @brief       è®¾ç½®ATK-MD0700æ¨¡å—LCDæ‰«ææ–¹å‘
+ * @param       scan_dir: ATK_MD0700_LCD_SCAN_DIR_L2R_U2D: ä»å·¦åˆ°å³ï¼Œä»ä¸Šåˆ°ä¸‹
+ *                        ATK_MD0700_LCD_SCAN_DIR_L2R_D2U: ä»å·¦åˆ°å³ï¼Œä»ä¸‹åˆ°ä¸Š
+ *                        ATK_MD0700_LCD_SCAN_DIR_R2L_U2D: ä»å³åˆ°å·¦ï¼Œä»ä¸Šåˆ°ä¸‹
+ *                        ATK_MD0700_LCD_SCAN_DIR_R2L_D2U: ä»å³åˆ°å·¦ï¼Œä»ä¸‹åˆ°ä¸Š
+ *                        ATK_MD0700_LCD_SCAN_DIR_U2D_L2R: ä»ä¸Šåˆ°ä¸‹ï¼Œä»å·¦åˆ°å³
+ *                        ATK_MD0700_LCD_SCAN_DIR_U2D_R2L: ä»ä¸Šåˆ°ä¸‹ï¼Œä»å³åˆ°å·¦
+ *                        ATK_MD0700_LCD_SCAN_DIR_D2U_L2R: ä»ä¸‹åˆ°ä¸Šï¼Œä»å·¦åˆ°å³
+ *                        ATK_MD0700_LCD_SCAN_DIR_D2U_R2L: ä»ä¸‹åˆ°ä¸Šï¼Œä»å³åˆ°å·¦
+ * @retval      ATK_MD0700_EOK   : è®¾ç½®ATK-MD0700æ¨¡å—LCDæ‰«ææ–¹å‘æˆåŠŸ
+ *              ATK_MD0700_ERROR : è®¾ç½®ATK-MD0700æ¨¡å—LCDæ‰«ææ–¹å‘å¤±è´¥
+*               ATK_MD0700_EINVAL: ä¼ å…¥å‚æ•°é”™è¯¯
  */
 uint8_t atk_md0700_set_scan_dir(atk_md0700_lcd_scan_dir_t scan_dir)
 {
@@ -494,13 +494,13 @@ uint8_t atk_md0700_set_scan_dir(atk_md0700_lcd_scan_dir_t scan_dir)
 }
 
 /**
- * @brief       ÉèÖÃATK-MD0700Ä£¿éLCDÏÔÊ¾·½Ïò
- * @param       disp_dir: ATK_MD0700_LCD_DISP_DIR_0  : LCDË³Ê±ÕëĞı×ª0¡ãÏÔÊ¾ÄÚÈİ
- *                        ATK_MD0700_LCD_DISP_DIR_90 : LCDË³Ê±ÕëĞı×ª90¡ãÏÔÊ¾ÄÚÈİ
- *                        ATK_MD0700_LCD_DISP_DIR_180: LCDË³Ê±ÕëĞı×ª180¡ãÏÔÊ¾ÄÚÈİ
- *                        ATK_MD0700_LCD_DISP_DIR_270: LCDË³Ê±ÕëĞı×ª270¡ãÏÔÊ¾ÄÚÈİ
- * @retval      ATK_MD0700_EOK   : ÉèÖÃATK-MD0700Ä£¿éLCDÏÔÊ¾·½Ïò³É¹¦
- *              ATK_MD0700_EINVAL: ´«Èë²ÎÊı´íÎó
+ * @brief       è®¾ç½®ATK-MD0700æ¨¡å—LCDæ˜¾ç¤ºæ–¹å‘
+ * @param       disp_dir: ATK_MD0700_LCD_DISP_DIR_0  : LCDé¡ºæ—¶é’ˆæ—‹è½¬0Â°æ˜¾ç¤ºå†…å®¹
+ *                        ATK_MD0700_LCD_DISP_DIR_90 : LCDé¡ºæ—¶é’ˆæ—‹è½¬90Â°æ˜¾ç¤ºå†…å®¹
+ *                        ATK_MD0700_LCD_DISP_DIR_180: LCDé¡ºæ—¶é’ˆæ—‹è½¬180Â°æ˜¾ç¤ºå†…å®¹
+ *                        ATK_MD0700_LCD_DISP_DIR_270: LCDé¡ºæ—¶é’ˆæ—‹è½¬270Â°æ˜¾ç¤ºå†…å®¹
+ * @retval      ATK_MD0700_EOK   : è®¾ç½®ATK-MD0700æ¨¡å—LCDæ˜¾ç¤ºæ–¹å‘æˆåŠŸ
+ *              ATK_MD0700_EINVAL: ä¼ å…¥å‚æ•°é”™è¯¯
  */
 uint8_t atk_md0700_set_disp_dir(atk_md0700_lcd_disp_dir_t disp_dir)
 {
@@ -543,9 +543,9 @@ uint8_t atk_md0700_set_disp_dir(atk_md0700_lcd_disp_dir_t disp_dir)
 }
 
 /**
- * @brief       »ñÈ¡ATK-MD0700Ä£¿éLCDÉ¨Ãè·½Ïò
- * @param       ÎŞ
- * @retval      ATK-MD0700Ä£¿éLCDÉ¨Ãè·½Ïò
+ * @brief       è·å–ATK-MD0700æ¨¡å—LCDæ‰«ææ–¹å‘
+ * @param       æ— 
+ * @retval      ATK-MD0700æ¨¡å—LCDæ‰«ææ–¹å‘
  */
 atk_md0700_lcd_scan_dir_t atk_md0700_get_scan_dir(void)
 {
@@ -553,9 +553,9 @@ atk_md0700_lcd_scan_dir_t atk_md0700_get_scan_dir(void)
 }
 
 /**
- * @brief       »ñÈ¡ATK-MD0700Ä£¿éLCDÏÔÊ¾·½Ïò
- * @param       ÎŞ
- * @retval      ATK-MD0700Ä£¿éLCDÏÔÊ¾·½Ïò
+ * @brief       è·å–ATK-MD0700æ¨¡å—LCDæ˜¾ç¤ºæ–¹å‘
+ * @param       æ— 
+ * @retval      ATK-MD0700æ¨¡å—LCDæ˜¾ç¤ºæ–¹å‘
  */
 atk_md0700_lcd_disp_dir_t atk_md0700_get_disp_dir(void)
 {
@@ -563,13 +563,13 @@ atk_md0700_lcd_disp_dir_t atk_md0700_get_disp_dir(void)
 }
 
 /**
- * @brief       ATK-MD0700Ä£¿éLCDÇøÓòÌî³ä
- * @param       xs   : ÇøÓòÆğÊ¼X×ø±ê
- *              ys   : ÇøÓòÆğÊ¼Y×ø±ê
- *              xe   : ÇøÓòÖÕÖ¹X×ø±ê
- *              ye   : ÇøÓòÖÕÖ¹Y×ø±ê
- *              color: ÇøÓòÌî³äÑÕÉ«
- * @retval      ÎŞ
+ * @brief       ATK-MD0700æ¨¡å—LCDåŒºåŸŸå¡«å……
+ * @param       xs   : åŒºåŸŸèµ·å§‹Xåæ ‡
+ *              ys   : åŒºåŸŸèµ·å§‹Yåæ ‡
+ *              xe   : åŒºåŸŸç»ˆæ­¢Xåæ ‡
+ *              ye   : åŒºåŸŸç»ˆæ­¢Yåæ ‡
+ *              color: åŒºåŸŸå¡«å……é¢œè‰²
+ * @retval      æ— 
  */
 void atk_md0700_fill(uint16_t xs, uint16_t ys, uint16_t xe, uint16_t ye, uint16_t* color, atk_md0700_lcd_fill_mode_t fill_mode)
 {
@@ -592,9 +592,9 @@ void atk_md0700_fill(uint16_t xs, uint16_t ys, uint16_t xe, uint16_t ye, uint16_
 }
 
 /**
- * @brief       ATK-MD0700Ä£¿éLCDÇåÆÁ
- * @param       color: ÇåÆÁÑÕÉ«
- * @retval      ÎŞ
+ * @brief       ATK-MD0700æ¨¡å—LCDæ¸…å±
+ * @param       color: æ¸…å±é¢œè‰²
+ * @retval      æ— 
  */
 void atk_md0700_clear(uint16_t color)
 {
@@ -602,11 +602,11 @@ void atk_md0700_clear(uint16_t color)
 }
 
 /**
- * @brief       ATK-MD0700Ä£¿éLCD»­µã
- * @param       x    : ´ı»­µãµÄX×ø±ê
- *              y    : ´ı»­µãµÄY×ø±ê
- *              color: ´ı»­µãµÄÑÕÉ«
- * @retval      ÎŞ
+ * @brief       ATK-MD0700æ¨¡å—LCDç”»ç‚¹
+ * @param       x    : å¾…ç”»ç‚¹çš„Xåæ ‡
+ *              y    : å¾…ç”»ç‚¹çš„Yåæ ‡
+ *              color: å¾…ç”»ç‚¹çš„é¢œè‰²
+ * @retval      æ— 
  */
 void atk_md0700_draw_point(uint16_t x, uint16_t y, uint16_t color)
 {
@@ -617,10 +617,10 @@ void atk_md0700_draw_point(uint16_t x, uint16_t y, uint16_t color)
 }
 
 /**
- * @brief       ATK-MD0700Ä£¿éLCD¶Áµã
- * @param       x    : ´ı¶ÁµãµÄX×ø±ê
- *              y    : ´ı¶ÁµãµÄY×ø±ê
- * @retval      ´ı¶ÁµãµÄÑÕÉ«
+ * @brief       ATK-MD0700æ¨¡å—LCDè¯»ç‚¹
+ * @param       x    : å¾…è¯»ç‚¹çš„Xåæ ‡
+ *              y    : å¾…è¯»ç‚¹çš„Yåæ ‡
+ * @retval      å¾…è¯»ç‚¹çš„é¢œè‰²
  */
 uint16_t atk_md0700_read_point(uint16_t x, uint16_t y)
 {
@@ -641,13 +641,13 @@ uint16_t atk_md0700_read_point(uint16_t x, uint16_t y)
 }
 
 /**
- * @brief       ATK-MD0700Ä£¿éLCD»­Ïß¶Î
- * @param       x1   : ´ı»­Ïß¶Î¶Ëµã1µÄX×ø±ê
- *              y1   : ´ı»­Ïß¶Î¶Ëµã1µÄY×ø±ê
- *              x2   : ´ı»­Ïß¶Î¶Ëµã2µÄX×ø±ê
- *              y2   : ´ı»­Ïß¶Î¶Ëµã2µÄY×ø±ê
- *              color: ´ı»­Ïß¶ÎµÄÑÕÉ«
- * @retval      ÎŞ
+ * @brief       ATK-MD0700æ¨¡å—LCDç”»çº¿æ®µ
+ * @param       x1   : å¾…ç”»çº¿æ®µç«¯ç‚¹1çš„Xåæ ‡
+ *              y1   : å¾…ç”»çº¿æ®µç«¯ç‚¹1çš„Yåæ ‡
+ *              x2   : å¾…ç”»çº¿æ®µç«¯ç‚¹2çš„Xåæ ‡
+ *              y2   : å¾…ç”»çº¿æ®µç«¯ç‚¹2çš„Yåæ ‡
+ *              color: å¾…ç”»çº¿æ®µçš„é¢œè‰²
+ * @retval      æ— 
  */
 void atk_md0700_draw_line(uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2, uint16_t color)
 {
@@ -686,13 +686,13 @@ void atk_md0700_draw_line(uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2, ui
 }
 
 /**
- * @brief       ATK-MD0700Ä£¿éLCD»­¾ØĞÎ¿ò
- * @param       x1   : ´ı»­¾ØĞÎ¿ò¶Ëµã1µÄX×ø±ê
- *              y1   : ´ı»­¾ØĞÎ¿ò¶Ëµã1µÄY×ø±ê
- *              x2   : ´ı»­¾ØĞÎ¿ò¶Ëµã2µÄX×ø±ê
- *              y2   : ´ı»­¾ØĞÎ¿ò¶Ëµã2µÄY×ø±ê
- *              color: ´ı»­¾ØĞÎ¿òµÄÑÕÉ«
- * @retval      ÎŞ
+ * @brief       ATK-MD0700æ¨¡å—LCDç”»çŸ©å½¢æ¡†
+ * @param       x1   : å¾…ç”»çŸ©å½¢æ¡†ç«¯ç‚¹1çš„Xåæ ‡
+ *              y1   : å¾…ç”»çŸ©å½¢æ¡†ç«¯ç‚¹1çš„Yåæ ‡
+ *              x2   : å¾…ç”»çŸ©å½¢æ¡†ç«¯ç‚¹2çš„Xåæ ‡
+ *              y2   : å¾…ç”»çŸ©å½¢æ¡†ç«¯ç‚¹2çš„Yåæ ‡
+ *              color: å¾…ç”»çŸ©å½¢æ¡†çš„é¢œè‰²
+ * @retval      æ— 
  */
 void atk_md0700_draw_rect(uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2, uint16_t color)
 {
@@ -703,12 +703,12 @@ void atk_md0700_draw_rect(uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2, ui
 }
 
 /**
- * @brief       ATK-MD0700Ä£¿éLCD»­Ô²ĞÎ¿ò
- * @param       x    : ´ı»­Ô²ĞÎ¿òÔ­µãµÄX×ø±ê
- *              y    : ´ı»­Ô²ĞÎ¿òÔ­µãµÄY×ø±ê
- *              r    : ´ı»­Ô²ĞÎ¿òµÄ°ë¾¶
- *              color: ´ı»­Ô²ĞÎ¿òµÄÑÕÉ«
- * @retval      ÎŞ
+ * @brief       ATK-MD0700æ¨¡å—LCDç”»åœ†å½¢æ¡†
+ * @param       x    : å¾…ç”»åœ†å½¢æ¡†åŸç‚¹çš„Xåæ ‡
+ *              y    : å¾…ç”»åœ†å½¢æ¡†åŸç‚¹çš„Yåæ ‡
+ *              r    : å¾…ç”»åœ†å½¢æ¡†çš„åŠå¾„
+ *              color: å¾…ç”»åœ†å½¢æ¡†çš„é¢œè‰²
+ * @retval      æ— 
  */
 void atk_md0700_draw_circle(uint16_t x, uint16_t y, uint16_t r, uint16_t color)
 {
@@ -747,13 +747,13 @@ void atk_md0700_draw_circle(uint16_t x, uint16_t y, uint16_t r, uint16_t color)
 }
 
 /**
- * @brief       ATK-MD0700Ä£¿éLCDÏÔÊ¾1¸ö×Ö·û
- * @param       x    : ´ıÏÔÊ¾×Ö·ûµÄX×ø±ê
- *              y    : ´ıÏÔÊ¾×Ö·ûµÄY×ø±ê
- *              ch   : ´ıÏÔÊ¾×Ö·û
- *              font : ´ıÏÔÊ¾×Ö·ûµÄ×ÖÌå
- *              color: ´ıÏÔÊ¾×Ö·ûµÄÑÕÉ«
- * @retval      ÎŞ
+ * @brief       ATK-MD0700æ¨¡å—LCDæ˜¾ç¤º1ä¸ªå­—ç¬¦
+ * @param       x    : å¾…æ˜¾ç¤ºå­—ç¬¦çš„Xåæ ‡
+ *              y    : å¾…æ˜¾ç¤ºå­—ç¬¦çš„Yåæ ‡
+ *              ch   : å¾…æ˜¾ç¤ºå­—ç¬¦
+ *              font : å¾…æ˜¾ç¤ºå­—ç¬¦çš„å­—ä½“
+ *              color: å¾…æ˜¾ç¤ºå­—ç¬¦çš„é¢œè‰²
+ * @retval      æ— 
  */
 void atk_md0700_show_char(uint16_t x, uint16_t y, char ch, atk_md0700_lcd_font_t font, uint16_t color)
 {
@@ -845,16 +845,16 @@ void atk_md0700_show_char(uint16_t x, uint16_t y, char ch, atk_md0700_lcd_font_t
 }
 
 /**
- * @brief       ATK-MD0700Ä£¿éLCDÏÔÊ¾×Ö·û´®
- * @note        »á×Ô¶¯»»ĞĞºÍ»»Ò³
- * @param       x     : ´ıÏÔÊ¾×Ö·û´®µÄX×ø±ê
- *              y     : ´ıÏÔÊ¾×Ö·û´®µÄY×ø±ê
- *              width : ´ıÏÔÊ¾×Ö·û´®µÄÏÔÊ¾¸ß¶È
- *              height: ´ıÏÔÊ¾×Ö·û´®µÄÏÔÊ¾¿í¶È
- *              str   : ´ıÏÔÊ¾×Ö·û´®
- *              font  : ´ıÏÔÊ¾×Ö·û´®µÄ×ÖÌå
- *              color : ´ıÏÔÊ¾×Ö·û´®µÄÑÕÉ«
- * @retval      ÎŞ
+ * @brief       ATK-MD0700æ¨¡å—LCDæ˜¾ç¤ºå­—ç¬¦ä¸²
+ * @note        ä¼šè‡ªåŠ¨æ¢è¡Œå’Œæ¢é¡µ
+ * @param       x     : å¾…æ˜¾ç¤ºå­—ç¬¦ä¸²çš„Xåæ ‡
+ *              y     : å¾…æ˜¾ç¤ºå­—ç¬¦ä¸²çš„Yåæ ‡
+ *              width : å¾…æ˜¾ç¤ºå­—ç¬¦ä¸²çš„æ˜¾ç¤ºé«˜åº¦
+ *              height: å¾…æ˜¾ç¤ºå­—ç¬¦ä¸²çš„æ˜¾ç¤ºå®½åº¦
+ *              str   : å¾…æ˜¾ç¤ºå­—ç¬¦ä¸²
+ *              font  : å¾…æ˜¾ç¤ºå­—ç¬¦ä¸²çš„å­—ä½“
+ *              color : å¾…æ˜¾ç¤ºå­—ç¬¦ä¸²çš„é¢œè‰²
+ * @retval      æ— 
  */
 void atk_md0700_show_string(uint16_t x, uint16_t y, uint16_t width, uint16_t height, char *str, atk_md0700_lcd_font_t font, uint16_t color)
 {
@@ -932,16 +932,16 @@ void atk_md0700_show_string(uint16_t x, uint16_t y, uint16_t width, uint16_t hei
 }
 
 /**
- * @brief       ATK-MD0700Ä£¿éLCDÏÔÊ¾Êı×Ö£¬¿É¿ØÖÆÏÔÊ¾¸ßÎ»0
- * @param       x    : ´ıÏÔÊ¾Êı×ÖµÄX×ø±ê
- *              y    : ´ıÏÔÊ¾Êı×ÖµÄY×ø±ê
- *              num  : ´ıÏÔÊ¾Êı×Ö
- *              len  : ´ıÏÔÊ¾Êı×ÖµÄÎ»Êı
- *              mode : ATK_MD0700_NUM_SHOW_NOZERO: Êı×Ö¸ßÎ»0²»ÏÔÊ¾
- *                     ATK_MD0700_NUM_SHOW_ZERO  : Êı×Ö¸ßÎ»0ÏÔÊ¾
- *              font : ´ıÏÔÊ¾Êı×ÖµÄ×ÖÌå
- *              color: ´ıÏÔÊ¾Êı×ÖµÄÑÕÉ«
- * @retval      ÎŞ
+ * @brief       ATK-MD0700æ¨¡å—LCDæ˜¾ç¤ºæ•°å­—ï¼Œå¯æ§åˆ¶æ˜¾ç¤ºé«˜ä½0
+ * @param       x    : å¾…æ˜¾ç¤ºæ•°å­—çš„Xåæ ‡
+ *              y    : å¾…æ˜¾ç¤ºæ•°å­—çš„Yåæ ‡
+ *              num  : å¾…æ˜¾ç¤ºæ•°å­—
+ *              len  : å¾…æ˜¾ç¤ºæ•°å­—çš„ä½æ•°
+ *              mode : ATK_MD0700_NUM_SHOW_NOZERO: æ•°å­—é«˜ä½0ä¸æ˜¾ç¤º
+ *                     ATK_MD0700_NUM_SHOW_ZERO  : æ•°å­—é«˜ä½0æ˜¾ç¤º
+ *              font : å¾…æ˜¾ç¤ºæ•°å­—çš„å­—ä½“
+ *              color: å¾…æ˜¾ç¤ºæ•°å­—çš„é¢œè‰²
+ * @retval      æ— 
  */
 void atk_md0700_show_xnum(uint16_t x, uint16_t y, uint32_t num, uint8_t len, atk_md0700_num_mode_t mode, atk_md0700_lcd_font_t font, uint16_t color)
 {
@@ -1026,14 +1026,14 @@ void atk_md0700_show_xnum(uint16_t x, uint16_t y, uint32_t num, uint8_t len, atk
 }
 
 /**
- * @brief       ATK-MD0700Ä£¿éLCDÏÔÊ¾Êı×Ö£¬²»ÏÔÊ¾¸ßÎ»0
- * @param       x    : ´ıÏÔÊ¾Êı×ÖµÄX×ø±ê
- *              y    : ´ıÏÔÊ¾Êı×ÖµÄY×ø±ê
- *              num  : ´ıÏÔÊ¾Êı×Ö
- *              len  : ´ıÏÔÊ¾Êı×ÖµÄÎ»Êı
- *              font : ´ıÏÔÊ¾Êı×ÖµÄ×ÖÌå
- *              color: ´ıÏÔÊ¾Êı×ÖµÄÑÕÉ«
- * @retval      ÎŞ
+ * @brief       ATK-MD0700æ¨¡å—LCDæ˜¾ç¤ºæ•°å­—ï¼Œä¸æ˜¾ç¤ºé«˜ä½0
+ * @param       x    : å¾…æ˜¾ç¤ºæ•°å­—çš„Xåæ ‡
+ *              y    : å¾…æ˜¾ç¤ºæ•°å­—çš„Yåæ ‡
+ *              num  : å¾…æ˜¾ç¤ºæ•°å­—
+ *              len  : å¾…æ˜¾ç¤ºæ•°å­—çš„ä½æ•°
+ *              font : å¾…æ˜¾ç¤ºæ•°å­—çš„å­—ä½“
+ *              color: å¾…æ˜¾ç¤ºæ•°å­—çš„é¢œè‰²
+ * @retval      æ— 
  */
 void atk_md0700_show_num(uint16_t x, uint16_t y, uint32_t num, uint8_t len, atk_md0700_lcd_font_t font, uint16_t color)
 {
@@ -1041,14 +1041,14 @@ void atk_md0700_show_num(uint16_t x, uint16_t y, uint32_t num, uint8_t len, atk_
 }
 
 /**
- * @brief       ATK-MD0700Ä£¿éLCDÍ¼Æ¬
- * @note        Í¼Æ¬È¡Ä£·½Ê½: Ë®Æ½É¨Ãè¡¢RGB565¡¢¸ßÎ»ÔÚÇ°
- * @param       x     : ´ıÏÔÊ¾Í¼Æ¬µÄX×ø±ê
- *              y     : ´ıÏÔÊ¾Í¼Æ¬µÄY×ø±ê
- *              width : ´ıÏÔÊ¾Í¼Æ¬µÄ¿í¶È
- *              height: ´ıÏÔÊ¾Í¼Æ¬µÄ¸ß¶È
- *              pic   : ´ıÏÔÊ¾Í¼Æ¬Êı×éÊ×µØÖ·
- * @retval      ÎŞ
+ * @brief       ATK-MD0700æ¨¡å—LCDå›¾ç‰‡
+ * @note        å›¾ç‰‡å–æ¨¡æ–¹å¼: æ°´å¹³æ‰«æã€RGB565ã€é«˜ä½åœ¨å‰
+ * @param       x     : å¾…æ˜¾ç¤ºå›¾ç‰‡çš„Xåæ ‡
+ *              y     : å¾…æ˜¾ç¤ºå›¾ç‰‡çš„Yåæ ‡
+ *              width : å¾…æ˜¾ç¤ºå›¾ç‰‡çš„å®½åº¦
+ *              height: å¾…æ˜¾ç¤ºå›¾ç‰‡çš„é«˜åº¦
+ *              pic   : å¾…æ˜¾ç¤ºå›¾ç‰‡æ•°ç»„é¦–åœ°å€
+ * @retval      æ— 
  */
 void atk_md0700_show_pic(uint16_t x, uint16_t y, uint16_t width, uint16_t height, uint8_t *pic)
 {

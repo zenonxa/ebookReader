@@ -114,7 +114,7 @@ uint8_t getSize(FontSize fontSize) {
 uint8_t check_font_header_once(void) {
 	uint8_t res = 0;
 	FontHeader fontHeader;
-	W25QXX_Read((uint8_t*)&fontHeader, FONT_HEADER_ADDR, sizeof(fontHeader));//¶Á³öFontHeader½á¹¹ÌåÊı¾İ
+	W25QXX_Read((uint8_t*)&fontHeader, FONT_HEADER_ADDR, sizeof(fontHeader));//è¯»å‡ºFontHeaderç»“æ„ä½“æ•°æ®
 	if(!(fontHeader.fontok == FLAG_OK) || !(fontHeader.ugbkok == FLAG_OK)) {
 		res = 1;
 	}
@@ -122,9 +122,9 @@ uint8_t check_font_header_once(void) {
 }
 
 
-//³õÊ¼»¯×ÖÌå
-//·µ»ØÖµ:0,×Ö¿âÍêºÃ.
-//		 ÆäËû,×Ö¿â¶ªÊ§
+//åˆå§‹åŒ–å­—ä½“
+//è¿”å›å€¼:0,å­—åº“å®Œå¥½.
+//		 å…¶ä»–,å­—åº“ä¸¢å¤±
 uint8_t check_font_header(uint8_t tryTimes)
 {
 	uint8_t t = 0, res = 0;

@@ -11,43 +11,43 @@
 #include "font.h"
 #include "log.h"
 //////////////////////////////////////////////////////////////////////////////////
-//±¾³ÌĞòÖ»¹©Ñ§Ï°Ê¹ÓÃ£¬Î´¾­×÷ÕßĞí¿É£¬²»µÃÓÃÓÚÆäËüÈÎºÎÓÃÍ¾
-//ALIENTEK STM32F103¿ª·¢°å
-//×Ö¿â¸üĞÂ Çı¶¯´úÂë
-//ÕıµãÔ­×Ó@ALIENTEK
-//¼¼ÊõÂÛÌ³:www.openedv.com
-//´´½¨ÈÕÆÚ:2017/6/1
-//°æ±¾£ºV1.0
-//°æÈ¨ËùÓĞ£¬µÁ°æ±Ø¾¿¡£
-//Copyright(C) ¹ãÖİÊĞĞÇÒíµç×Ó¿Æ¼¼ÓĞÏŞ¹«Ë¾ 2014-2024
+//æœ¬ç¨‹åºåªä¾›å­¦ä¹ ä½¿ç”¨ï¼Œæœªç»ä½œè€…è®¸å¯ï¼Œä¸å¾—ç”¨äºå…¶å®ƒä»»ä½•ç”¨é€”
+//ALIENTEK STM32F103å¼€å‘æ¿
+//å­—åº“æ›´æ–° é©±åŠ¨ä»£ç 
+//æ­£ç‚¹åŸå­@ALIENTEK
+//æŠ€æœ¯è®ºå›:www.openedv.com
+//åˆ›å»ºæ—¥æœŸ:2017/6/1
+//ç‰ˆæœ¬ï¼šV1.0
+//ç‰ˆæƒæ‰€æœ‰ï¼Œç›—ç‰ˆå¿…ç©¶ã€‚
+//Copyright(C) å¹¿å·å¸‚æ˜Ÿç¿¼ç”µå­ç§‘æŠ€æœ‰é™å…¬å¸ 2014-2024
 //All rights reserved
 //////////////////////////////////////////////////////////////////////////////////
 
-//×Ö¿âÇøÓòÕ¼ÓÃµÄ×ÜÉÈÇøÊı´óĞ¡(3¸ö×Ö¿â+unigbk±í+×Ö¿âĞÅÏ¢=3238700×Ö½Ú,Ô¼Õ¼791¸öW25QXXÉÈÇø)
+//å­—åº“åŒºåŸŸå ç”¨çš„æ€»æ‰‡åŒºæ•°å¤§å°(3ä¸ªå­—åº“+unigbkè¡¨+å­—åº“ä¿¡æ¯=3238700å­—èŠ‚,çº¦å 791ä¸ªW25QXXæ‰‡åŒº)
 /* One sector = 4 KB*/
 //#define FONTSECSIZE	 	791
-//×Ö¿â´æ·ÅÆğÊ¼µØÖ·
-//#define FONTINFOADDR 	1024*1024*12 					//Explorer STM32F4ÊÇ´Ó12MµØÖ·ÒÔºó¿ªÊ¼´æ·Å×Ö¿â
-														//Ç°Ãæ12M±»fatfsÕ¼ÓÃÁË.
-														//12MÒÔºó½ô¸ú3¸ö×Ö¿â+UNIGBK.BIN,×Ü´óĞ¡3.09M,±»×Ö¿âÕ¼ÓÃÁË,²»ÄÜ¶¯!
-														//15.10MÒÔºó,ÓÃ»§¿ÉÒÔ×ÔÓÉÊ¹ÓÃ.½¨ÒéÓÃ×îºóµÄ100K×Ö½Ú±È½ÏºÃ.
+//å­—åº“å­˜æ”¾èµ·å§‹åœ°å€
+//#define FONTINFOADDR 	1024*1024*12 					//Explorer STM32F4æ˜¯ä»12Måœ°å€ä»¥åå¼€å§‹å­˜æ”¾å­—åº“
+														//å‰é¢12Mè¢«fatfså ç”¨äº†.
+														//12Mä»¥åç´§è·Ÿ3ä¸ªå­—åº“+UNIGBK.BIN,æ€»å¤§å°3.09M,è¢«å­—åº“å ç”¨äº†,ä¸èƒ½åŠ¨!
+														//15.10Mä»¥å,ç”¨æˆ·å¯ä»¥è‡ªç”±ä½¿ç”¨.å»ºè®®ç”¨æœ€åçš„100Kå­—èŠ‚æ¯”è¾ƒå¥½.
 														
-//ÓÃÀ´±£´æ×Ö¿â»ù±¾ĞÅÏ¢£¬µØÖ·£¬´óĞ¡µÈ
+//ç”¨æ¥ä¿å­˜å­—åº“åŸºæœ¬ä¿¡æ¯ï¼Œåœ°å€ï¼Œå¤§å°ç­‰
 FontHeader fontHeader;
 
 //uint8_t font_flag;
 
-//×Ö¿â´æ·ÅÔÚ´ÅÅÌÖĞµÄÂ·¾¶
-//uint8_t*const GBK24_PATH="/SYSTEM/FONT/GBK24.FON";		//GBK24µÄ´æ·ÅÎ»ÖÃ
-//uint8_t*const GBK16_PATH="/SYSTEM/FONT/GBK16.FON";		//GBK16µÄ´æ·ÅÎ»ÖÃ
-//uint8_t*const GBK12_PATH="/SYSTEM/FONT/GBK12.FON";		//GBK12µÄ´æ·ÅÎ»ÖÃ
-//uint8_t*const UNIGBK_PATH="/SYSTEM/FONT/UNIGBK.BIN";	//UNIGBK.BINµÄ´æ·ÅÎ»ÖÃ
+//å­—åº“å­˜æ”¾åœ¨ç£ç›˜ä¸­çš„è·¯å¾„
+//uint8_t*const GBK24_PATH="/SYSTEM/FONT/GBK24.FON";		//GBK24çš„å­˜æ”¾ä½ç½®
+//uint8_t*const GBK16_PATH="/SYSTEM/FONT/GBK16.FON";		//GBK16çš„å­˜æ”¾ä½ç½®
+//uint8_t*const GBK12_PATH="/SYSTEM/FONT/GBK12.FON";		//GBK12çš„å­˜æ”¾ä½ç½®
+//uint8_t*const UNIGBK_PATH="/SYSTEM/FONT/UNIGBK.BIN";	//UNIGBK.BINçš„å­˜æ”¾ä½ç½®
 
-//ÏÔÊ¾µ±Ç°×ÖÌå¸üĞÂ½ø¶È
-//x,y:×ø±ê
-//size:×ÖÌå´óĞ¡
-//fsize:Õû¸öÎÄ¼ş´óĞ¡
-//pos:µ±Ç°ÎÄ¼şÖ¸ÕëÎ»ÖÃ
+//æ˜¾ç¤ºå½“å‰å­—ä½“æ›´æ–°è¿›åº¦
+//x,y:åæ ‡
+//size:å­—ä½“å¤§å°
+//fsize:æ•´ä¸ªæ–‡ä»¶å¤§å°
+//pos:å½“å‰æ–‡ä»¶æŒ‡é’ˆä½ç½®
 uint32_t fupd_prog(uint16_t x,uint16_t y,uint8_t size,uint32_t fsize,uint32_t pos)
 {
 	float prog;
@@ -59,7 +59,7 @@ uint32_t fupd_prog(uint16_t x,uint16_t y,uint8_t size,uint32_t fsize,uint32_t po
 		atk_md0700_show_string(x+3*size/2, y, 240, 320, "%", mapping_font_size(size), ATK_MD0700_BLACK);
 		t=prog;
 		if(t>100)t=100;
-		atk_md0700_show_num(x,y,t,3, mapping_font_size(size), ATK_MD0700_BLACK);//ÏÔÊ¾ÊıÖµ
+		atk_md0700_show_num(x,y,t,3, mapping_font_size(size), ATK_MD0700_BLACK);//æ˜¾ç¤ºæ•°å€¼
 	}
 	return 0;					    
 }
@@ -91,7 +91,7 @@ uint8_t updata_fontx(FontName fontName, FontSize fontSize)
 #if 0
 //	char font_update_log_buf[100];
 	uint8_t pos;
-	fftemp = (FIL*)mymalloc(SRAMIN,sizeof(FIL));	//·ÖÅäÄÚ´æ
+	fftemp = (FIL*)mymalloc(SRAMIN,sizeof(FIL));	//åˆ†é…å†…å­˜
 	if(fftemp==NULL) {
 // Test start
 		ERROR_THROW("fftemp == NULL : updata_fontx()");
@@ -99,7 +99,7 @@ uint8_t updata_fontx(FontName fontName, FontSize fontSize)
 		res = 1;
 	}
 	
-	tempbuf = mymalloc(SRAMIN,4096);					//·ÖÅä4096¸ö×Ö½Ú¿Õ¼ä
+	tempbuf = mymalloc(SRAMIN,4096);					//åˆ†é…4096ä¸ªå­—èŠ‚ç©ºé—´
 	if(tempbuf==NULL) {
 // Test start
 		ERROR_THROW("tempbuf == NULL : updata_fontx()");
@@ -125,9 +125,9 @@ uint8_t updata_fontx(FontName fontName, FontSize fontSize)
 //		pos = strlen (font_update_log_buf);
 		res = load_file_to_flash(fontPath, fontAddr);
 #if 0
-		while(res == FR_OK)//ËÀÑ­»·Ö´ĞĞ
+		while(res == FR_OK)//æ­»å¾ªç¯æ‰§è¡Œ
 		{
-	 		res = f_read(fftemp, tempbuf, 4096, (UINT*)&bread);			//¶ÁÈ¡Êı¾İ	 
+	 		res = f_read(fftemp, tempbuf, 4096, (UINT*)&bread);			//è¯»å–æ•°æ®	 
 			if(res!=FR_OK) {
 // Test start
 				while (1) {
@@ -135,9 +135,9 @@ uint8_t updata_fontx(FontName fontName, FontSize fontSize)
 					delay_ms(10);
 				}
 // Test end
-				break;									//Ö´ĞĞ´íÎó
+				break;									//æ‰§è¡Œé”™è¯¯
 			}
-			W25QXX_Write(tempbuf, fontAddr+offx, 4096);	//´Ó0¿ªÊ¼Ğ´Èë4096¸öÊı¾İ
+			W25QXX_Write(tempbuf, fontAddr+offx, 4096);	//ä»0å¼€å§‹å†™å…¥4096ä¸ªæ•°æ®
 	  		offx += bread;
 /* !! Maybe need a function to refactor the code ==> Start */
 			if (offx%(5*4096) == 0) {
@@ -147,7 +147,7 @@ uint8_t updata_fontx(FontName fontName, FontSize fontSize)
 			}
 /* !! Maybe need a function to refactor the code ==> End */
 			
-//			fupd_prog(x,y,size,fftemp->obj.objsize,offx);	 	//½ø¶ÈÏÔÊ¾
+//			fupd_prog(x,y,size,fftemp->obj.objsize,offx);	 	//è¿›åº¦æ˜¾ç¤º
 			if(bread!=4096) {
 // Test start
 //				while (1) {
@@ -162,7 +162,7 @@ uint8_t updata_fontx(FontName fontName, FontSize fontSize)
 					PRINTLN_MSG(font_update_log_buf);
 				}
 /* !! Maybe need a function to refactor the code ==> End */
-				break;								//¶ÁÍêÁË.
+				break;								//è¯»å®Œäº†.
 			}
 // Test	start	
 			printf("In infinite loop of updata_fontx...\r\n");
@@ -173,19 +173,19 @@ uint8_t updata_fontx(FontName fontName, FontSize fontSize)
 #endif
 //	}
 #if 0
-	myfree(SRAMIN,fftemp);	//ÊÍ·ÅÄÚ´æ
-	myfree(SRAMIN,tempbuf);	//ÊÍ·ÅÄÚ´æ
+	myfree(SRAMIN,fftemp);	//é‡Šæ”¾å†…å­˜
+	myfree(SRAMIN,tempbuf);	//é‡Šæ”¾å†…å­˜
 #endif
 	myfree(SRAMIN, fontPath);
 	return res;
 } 
-//¸üĞÂ×ÖÌåÎÄ¼ş,UNIGBK,GBK12,GBK16,GBK24Ò»Æğ¸üĞÂ
-//x,y:ÌáÊ¾ĞÅÏ¢µÄÏÔÊ¾µØÖ·
-//size:×ÖÌå´óĞ¡
-//src:×Ö¿âÀ´Ô´´ÅÅÌ."0:",SD¿¨;"1:",FLASHÅÌ,"2:",UÅÌ.
-//ÌáÊ¾ĞÅÏ¢×ÖÌå´óĞ¡										  
-//·µ»ØÖµ:0,¸üĞÂ³É¹¦;
-//		 ÆäËû,´íÎó´úÂë.
+//æ›´æ–°å­—ä½“æ–‡ä»¶,UNIGBK,GBK12,GBK16,GBK24ä¸€èµ·æ›´æ–°
+//x,y:æç¤ºä¿¡æ¯çš„æ˜¾ç¤ºåœ°å€
+//size:å­—ä½“å¤§å°
+//src:å­—åº“æ¥æºç£ç›˜."0:",SDå¡;"1:",FLASHç›˜,"2:",Uç›˜.
+//æç¤ºä¿¡æ¯å­—ä½“å¤§å°										  
+//è¿”å›å€¼:0,æ›´æ–°æˆåŠŸ;
+//		 å…¶ä»–,é”™è¯¯ä»£ç .
 /*
 * Declaration:
 * 	Update font lib, also including UNIGBK.bin.
@@ -209,16 +209,16 @@ uint8_t update_font(void)
 	
 	res = 0xff;
 #if 0
-//	pname = mymalloc(SRAMIN,100);	//ÉêÇë100×Ö½ÚÄÚ´æ  
-//	buf = mymalloc(SRAMIN,4096);	//ÉêÇë4K×Ö½ÚÄÚ´æ
-//	fftemp = (FIL*)mymalloc(SRAMIN, sizeof(FIL));	//·ÖÅäÄÚ´æ
+//	pname = mymalloc(SRAMIN,100);	//ç”³è¯·100å­—èŠ‚å†…å­˜  
+//	buf = mymalloc(SRAMIN,4096);	//ç”³è¯·4Kå­—èŠ‚å†…å­˜
+//	fftemp = (FIL*)mymalloc(SRAMIN, sizeof(FIL));	//åˆ†é…å†…å­˜
 	if(buf==NULL || pname==NULL || fftemp==NULL)
 	{
 		myfree(SRAMIN,fftemp);
 		myfree(SRAMIN,pname);
 		myfree(SRAMIN,buf);
 //		ERROR_THROW("Fail to malloc for buf, pname, fftemp.");
-		return 5;	//ÄÚ´æÉêÇëÊ§°Ü
+		return 5;	//å†…å­˜ç”³è¯·å¤±è´¥
 	}
 #endif
 	/* Check all the font file */
@@ -235,29 +235,29 @@ uint8_t update_font(void)
 	if (res != FR_OK) {
 		infinite_throw("Fail to check all font file.");
 	}
-//	myfree(SRAMIN,fftemp);//ÊÍ·ÅÄÚ´æ
+//	myfree(SRAMIN,fftemp);//é‡Šæ”¾å†…å­˜
 	
-	if(res == FR_OK)//×Ö¿âÎÄ¼ş¶¼´æÔÚ.
+	if(res == FR_OK)//å­—åº“æ–‡ä»¶éƒ½å­˜åœ¨.
 	{
 		log_n("%sErasing sectors...", ARROW_STRING);
 
-//		atk_md0700_show_string(x, y, 240, 320, "Erasing sectors... ", mapping_font_size(size), ATK_MD0700_BLACK);//ÌáÊ¾ÕıÔÚ²Á³ıÉÈÇø	
+//		atk_md0700_show_string(x, y, 240, 320, "Erasing sectors... ", mapping_font_size(size), ATK_MD0700_BLACK);//æç¤ºæ­£åœ¨æ“¦é™¤æ‰‡åŒº	
 //		printf("Erasing flash sector: %4d/%4d\r\n", 0, FONTSECSIZE);
 		Progress_Init(&logParam.progress, 0, FONTSECSIZE);
-		for(i=0; i<FONTSECSIZE; i++)	//ÏÈ²Á³ı×Ö¿âÇøÓò,Ìá¸ßĞ´ÈëËÙ¶È
+		for(i=0; i<FONTSECSIZE; i++)	//å…ˆæ“¦é™¤å­—åº“åŒºåŸŸ,æé«˜å†™å…¥é€Ÿåº¦
 		{
 			Progress_Update(&logParam.progress, i);
 			print_log(Flash_Erase_Log, &logParam);
-//			fupd_prog(x+20*size/2,y,size,FONTSECSIZE,i);//½ø¶ÈÏÔÊ¾
-			W25QXX_Read((uint8_t*)flash_buffer, ((FONT_OCCUPY_ALL/4096)+i)*4096, FLASH_BUFFER_SIZE);//¶Á³öÕû¸öÉÈÇøµÄÄÚÈİ
-			for(j=0; j<1024; j++)//Ğ£ÑéÊı¾İ
+//			fupd_prog(x+20*size/2,y,size,FONTSECSIZE,i);//è¿›åº¦æ˜¾ç¤º
+			W25QXX_Read((uint8_t*)flash_buffer, ((FONT_OCCUPY_ALL/4096)+i)*4096, FLASH_BUFFER_SIZE);//è¯»å‡ºæ•´ä¸ªæ‰‡åŒºçš„å†…å®¹
+			for(j=0; j<1024; j++)//æ ¡éªŒæ•°æ®
 			{
 				if(*((uint32_t*)flash_buffer+j) != 0XFFFFFFFF) {
-					break;//ĞèÒª²Á³ı
+					break;//éœ€è¦æ“¦é™¤
 				}
 			}
 			if(j!=1024) {
-				W25QXX_Erase_Sector((FONT_OCCUPY_ALL/4096)+i);	//ĞèÒª²Á³ıµÄÉÈÇø
+				W25QXX_Erase_Sector((FONT_OCCUPY_ALL/4096)+i);	//éœ€è¦æ“¦é™¤çš„æ‰‡åŒº
 			}
 //			/* Print erasing flash log */
 //			if ((i+1)%50 == 0) {
@@ -303,19 +303,19 @@ uint8_t update_font(void)
 // Test end
 			return 4;
 		}
-		//È«²¿¸üĞÂºÃÁË
+		//å…¨éƒ¨æ›´æ–°å¥½äº†
 		/* Prepare FontHeader OK */
 		fontHeader.fontok = FLAG_OK;
 		fontHeader.ugbkok = FLAG_OK;
 		
-		W25QXX_Write((uint8_t*)&fontHeader, FONT_HEADER_ADDR, sizeof(fontHeader));	//±£´æ×Ö¿âĞÅÏ¢
+		W25QXX_Write((uint8_t*)&fontHeader, FONT_HEADER_ADDR, sizeof(fontHeader));	//ä¿å­˜å­—åº“ä¿¡æ¯
 		log_n("Write fontHeader to flash ==> \r\n\
 		fontHeader.fontok = FLAG_OK, \r\n\b\
 		fontHeader.ugbkok = FLAG_OK");
 	}
-//	myfree(SRAMIN,pname);//ÊÍ·ÅÄÚ´æ 
+//	myfree(SRAMIN,pname);//é‡Šæ”¾å†…å­˜ 
 //	myfree(SRAMIN,buf);
-	return res;//ÎŞ´íÎó.			 
+	return res;//æ— é”™è¯¯.			 
 }
 
 

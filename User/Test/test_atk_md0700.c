@@ -10,21 +10,21 @@ void test_atk_md0700(void) {
 	char buffer[100];
 	uint16_t color;
 	
-    /* ³õÊ¼»¯ATK-MD0700Ä£¿é */
+    /* åˆå§‹åŒ–ATK-MD0700æ¨¡å— */
     ret = atk_md0700_init();
 
     if (ret != 0) {
         printf("ATK-MD0700 init failed!\r\n");
     } 
-    /* ATK-MD0700Ä£¿éLCDÇåÆÁ */
+    /* ATK-MD0700æ¨¡å—LCDæ¸…å± */
     atk_md0700_clear(ATK_MD0700_WHITE);
 	
 	x1 = x2 = 30;
 	y1 = y2 = 10;
-	/* ATK-MD0700Ä£¿éLCDÏÔÊ¾×Ö·û´® */
+	/* ATK-MD0700æ¨¡å—LCDæ˜¾ç¤ºå­—ç¬¦ä¸² */
 	atk_md0700_show_string(x1, y1, ATK_MD0700_LCD_WIDTH, 32, "TFT-LCD Module: ATK-MD0700", ATK_MD0700_LCD_FONT_32, ATK_MD0700_RED);
 	
-	/* »ñÈ¡ÆÁÄ»¿í¸ß */
+	/* è·å–å±å¹•å®½é«˜ */
 	y1 += 32;
 	sprintf(buffer, "Panel width: %d", atk_md0700_get_lcd_width());
     atk_md0700_show_string(x1, y1, ATK_MD0700_LCD_WIDTH, 24, buffer, ATK_MD0700_LCD_FONT_24, ATK_MD0700_BLUE);
@@ -32,7 +32,7 @@ void test_atk_md0700(void) {
 	sprintf(buffer, "Panel height: %d", atk_md0700_get_lcd_height());
 	atk_md0700_show_string(x1, y1, ATK_MD0700_LCD_WIDTH, 24, buffer, ATK_MD0700_LCD_FONT_24, ATK_MD0700_BLUE);
 	
-	/* ÇøÓòÌî³ä */
+	/* åŒºåŸŸå¡«å…… */
 	x1 = 0;
 	y1 += 24;
 	x2 = x1 + 160 - 1;
@@ -58,7 +58,7 @@ void test_atk_md0700(void) {
 		x2 += 160 - 1;
 	}
 	
-	/* »­µã */
+	/* ç”»ç‚¹ */
 	x1 = 30;
 	y1 = 300;
 	for (int i = 0; i < 3; i++) {
@@ -73,15 +73,15 @@ void test_atk_md0700(void) {
 		x1 += 10;
 	}
 	
-	/* »­Ïß */
+	/* ç”»çº¿ */
 	atk_md0700_draw_line(50, 330, 150, 330, ATK_MD0700_BLACK);
 	atk_md0700_draw_line(30, 330, 30, 380, ATK_MD0700_BLACK);
 	atk_md0700_draw_line(300, 330, 400, 380, ATK_MD0700_BLACK);
 	
-	/* »­Ô²ĞÎ¿ò */
+	/* ç”»åœ†å½¢æ¡† */
 	atk_md0700_draw_circle(240, 500, 100, ATK_MD0700_YELLOW);
 	
-	/* ASCII×Ö·ûÏÔÊ¾ */
+	/* ASCIIå­—ç¬¦æ˜¾ç¤º */
 	atk_md0700_show_char(30, 630, 'A', ATK_MD0700_LCD_FONT_16, ATK_MD0700_BROWN);
 	atk_md0700_show_num(50, 630, 68485783, 8, ATK_MD0700_LCD_FONT_16, ATK_MD0700_BRRED);
 	atk_md0700_show_xnum(50, 700, 894953, 10, ATK_MD0700_NUM_SHOW_ZERO, ATK_MD0700_LCD_FONT_16, ATK_MD0700_GRAY);
