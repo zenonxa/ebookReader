@@ -35,14 +35,14 @@ u8 mf_open(u8*path,u8 mode)
 {
 	u8 res;	 
 	printf("mode=%#x\r\n",mode);
-	res=f_open(file,(const TCHAR*)path,mode);//打开文件夹
+	res=f_open(main_file,(const TCHAR*)path,mode);//打开文件夹
 	return res;
 } 
 //关闭文件
 //返回值:执行结果
 u8 mf_close(void)
 {
-	f_close(file);
+	f_close(main_file);
 	return 0;
 }
 //读出数据
@@ -56,7 +56,7 @@ u8 mf_read(u16 len)
 	printf("\r\nRead file data is:\r\n");
 	for(i=0;i<len/512;i++)
 	{
-		res=f_read(file,fatbuf,512,&br);
+		res=f_read(main_file,fatbuf,512,&br);
 		if(res)
 		{
 			printf("Read Error:%d\r\n",res);
@@ -69,7 +69,7 @@ u8 mf_read(u16 len)
 	}
 	if(len%512)
 	{
-		res=f_read(file,fatbuf,len%512,&br);
+		res=f_read(main_file,fatbuf,len%512,&br);
 		if(res)	//读数据出错了
 		{
 			printf("\r\nRead Error:%d\r\n",res);   
@@ -93,7 +93,7 @@ u8 mf_write(u8*dat,u16 len)
 
 	printf("\r\nBegin Write file...\r\n");
 	printf("Write data len:%d\r\n",len);	 
-	res=f_write(file,dat,len,&bw);
+	res=f_write(main_file,dat,len,&bw);
 	if(res)
 	{
 		printf("Write Error:%d\r\n",res);   
@@ -205,19 +205,19 @@ u32 mf_showfree(u8 *drv)
 //返回值:执行结果.
 u8 mf_lseek(u32 offset)
 {
-	return f_lseek(file,offset);
+	return f_lseek(main_file,offset);
 }
 //读取文件当前读写指针的位置.
 //返回值:位置
 u32 mf_tell(void)
 {
-	return f_tell(file);
+	return f_tell(main_file);
 }
 //读取文件大小
 //返回值:文件大小
 u32 mf_size(void)
 {
-	return f_size(file);
+	return f_size(main_file);
 } 
 //创建目录
 //pname:目录路径+名字
@@ -297,7 +297,7 @@ void mf_setlabel(u8 *path)
 void mf_gets(u16 size)
 {
  	TCHAR* rbuf;
-	rbuf=f_gets((TCHAR*)fatbuf,size,file);
+	rbuf=f_gets((TCHAR*)fatbuf,size,main_file);
 	if(*rbuf==0)return  ;//没有数据读到
 	else
 	{
@@ -310,25 +310,12 @@ void mf_gets(u16 size)
 //返回值:执行结果
 u8 mf_putc(u8 c)
 {
-	return f_putc((TCHAR)c,file);
+	return f_putc((TCHAR)c,main_file);
 }
 //写字符串到文件
 //c:要写入的字符串
 //返回值:写入的字符串长度
 u8 mf_puts(u8*c)
 {
-	return f_puts((TCHAR*)c,file);
+	return f_puts((TCHAR*)c,main_file);
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
