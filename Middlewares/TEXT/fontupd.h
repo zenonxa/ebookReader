@@ -1,3 +1,11 @@
+/*
+ * @Author: KimKey 13829607886@163.com
+ * @Date: 2023-03-18 15:07:58
+ * @LastEditors: KimKey 13829607886@163.com
+ * @LastEditTime: 2023-03-31 19:05:13
+ * @FilePath: \ebookReader\Middlewares\TEXT\fontupd.h
+ * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
+ */
 #ifndef __FONTUPD_H__
 #define __FONTUPD_H__	 
 #include "SYSTEM/sys/sys.h"
@@ -31,7 +39,7 @@ typedef struct {
 extern FontHeader fontHeader;	//字库信息结构体
 
 uint32_t fupd_prog(uint16_t x,uint16_t y,uint8_t size,uint32_t fsize,uint32_t pos);	//显示更新进度
-uint8_t updata_fontx(FontName fontName, FontSize fontSize);						//更新指定字库
+uint8_t update_fontx(FontName fontName, FontSize fontSize);						//更新指定字库
 uint8_t update_font(void);														//更新全部字库
 uint8_t update_mapping_table(void);
 

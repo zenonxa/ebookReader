@@ -1,7 +1,7 @@
 #include "string.h"
 #include "FATFS/exfuns/exfuns.h"
 #include "FATFS/exfuns/fattester.h"	
-#include "malloc.h"
+#include "MALLOC/malloc.h"
 #include "SYSTEM/usart/usart.h"
 #include "SYSTEM/delay/delay.h"
 #include "FATFS/src/ff.h"
@@ -436,6 +436,7 @@ uint8_t load_file_to_flash(char* fname, uint32_t flash_addr) {
 							fname, "SD Card", "Flash");
 	print_log(Flash_Write_Log, &logParam);
 	//死循环执行
+	log_n("%sLoading [%s] start.", ARROW_STRING, fname);
 	while(res == FR_OK) {
 		res = f_read(temp_file, flash_buffer, FLASH_BUFFER_SIZE, &br); //读取数据
 		if(res != FR_OK) {

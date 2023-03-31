@@ -83,6 +83,9 @@ __packed typedef struct
 
 #define FLAG_OK				0xAA
 
+#define USE_DZK_GBK2312
+//#define USE_DZK_GBK
+
 #define FONT_HEADER_SIZE	64
 #define UNIGBK_SIZE			174344
 

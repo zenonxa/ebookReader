@@ -41,7 +41,6 @@ void print_log_normal(char* normal_log) {
 
 
 void print_log_erase_flash(Progress* progress) {
-	static uint8_t no_log = 1;
 	if (progress->cur_val == 0) {
 		sprintf((char*)log_buffer, "%s", "Erasing flash");
 	}

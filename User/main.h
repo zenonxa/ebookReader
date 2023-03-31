@@ -31,9 +31,9 @@
 /********************************************************/
 #include "FATFS/src/ff.h"
 #include "FATFS/exfuns/exfuns.h"
-#include "malloc.h"
+#include "MALLOC/malloc.h"
 #include "font.h"
-#include "fontupd.h"
+#include "TEXT/fontupd.h"
 #include "text.h"
 #include "log.h"
 /********************************************************/
@@ -43,6 +43,7 @@
 /*				include for Test						*/
 /********************************************************/
 #include "Test/test_atk_md0700.h"
+#include "gbk_string.h"
 /********************************************************/
 
 
@@ -50,10 +51,12 @@
 /*					Action command						*/
 /********************************************************/
 #define ACTION_ONCE	0
-#define ACTION_COMMAND	EraseFontHeader
+#define ACTION_COMMAND	WriteFontLib
 typedef enum {
 	WriteFontHeader = 1,	/* write FontHeader to Flash */
 	EraseFontHeader,		/* write OK flags of FontHeader in Flash */
+	WriteFontLib,			/* Rewrite a font library to Flash */
+	LoadFileToFlash,		/* Load a specified file to the flash */
 	SingleTest,				/* Set for a single test */
 } ActionCommand;
 /********************************************************/
@@ -97,6 +100,8 @@ do {											\
 /*									Function Declaration									*/
 /********************************************************************************************/
 /* Toggle state for LED0 and LED1  */
+void waiting_for_SD_Card(void);
+void mount_SD_Card(void);
 void LED_Toggle(void);
 void LED_flashing(uint16_t time_span_ms);	/* LED0 and LED1, flashing as the given time span */
 /********************************************************************************************/
