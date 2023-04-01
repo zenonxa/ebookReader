@@ -11,8 +11,8 @@ typedef enum {
 	Font_Name_Min 		= Font_SimSun,			/* Min */
 	Font_Name_Max 		= Font_SimHei,			/* Max */
 	Font_Name_Default 	= Font_Name_Min,		/* Default */
-	Font_Cnt 			= Font_Name_Max + 1,	/* The number of all */
-	Font_Name_None 		= Font_Cnt,				/* Invalid value */
+	Font_Name_Cnt		= Font_Name_Max + 1,	/* The number of all */
+	Font_Name_None 		= Font_Name_Cnt,		/* Invalid value */
 } FontName;
 
 typedef enum {
@@ -134,7 +134,7 @@ char* getFontPath(char* buffer, FontName fontName, FontSize fontSize);
 uint32_t getFontAddr(FontName fontName, FontSize fontSize);
 uint32_t getMappingTableAddr(void);
 void getMappingTablePath(uint8_t* pathBuf);
-uint8_t getSize(FontSize fontSize);
+uint8_t getSize(const FontSize fontSize);
 uint8_t check_font_header_once(void);
 uint8_t check_font_header(uint8_t tryTimes);
 uint8_t write_font_header(FontHeader* pFontHeader, uint8_t tryTimes);

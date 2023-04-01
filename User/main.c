@@ -10,6 +10,10 @@ extern UINT    br, bw;     // the number of byte really read or written
 extern FILINFO fileinfo;   // file information
 extern DIR     dir;        // directory
 
+uint8_t fontNameSelect = Font_Name_Min;
+uint8_t fontSizeSelect = Font_Size_Min;
+uint8_t needRerender   = 1;
+
 int main(void)
 {
     uint8_t    res;
@@ -24,9 +28,10 @@ int main(void)
     sys_stm32_clock_init(RCC_PLL_MUL9); /* Set clock: 72Mhz */
     delay_init(72);                     /* delay init */
     led_init();                         /* LED init */
-    //	key_init();                         /* KEY init */
-    usart_init(115200); /* Serial: 115200 */
-    atk_md0700_init();  /* LCD panel init */
+    key_init();                         /* KEY init */
+    EXTI_Init();                        /* external interrupt init */
+    usart_init(115200);                 /* Serial: 115200 */
+    atk_md0700_init();                  /* LCD panel init */
     SRAM_Init();
     W25QXX_Init();
     TIM3_Init(1000 - 1, 72 - 1);
@@ -52,22 +57,24 @@ int main(void)
             }
             break;
         case WriteFontLib: {
-            FontName fontName   = Font_SimSun;
-            FontSize fontSize_1 = PX12;
-            FontSize fontSize_2 = PX16;
+            FontName fontName = Font_SimHei;
+            uint8_t  i;
+            char     fontPath[60];
             waiting_for_SD_Card();
             mount_SD_Card();
-            res = update_fontx(fontName, fontSize_1);
+            res = update_fontx(Font_KaiTi, PX16);
             if (res) {
-                log_n("Fail to write font library to ex-flash",
-                      FontNameStr[fontName], FontSizeStr[fontSize_1]);
+                infinite_throw("Fail to load [%s:%s] to ex-Flash", Font_KaiTi,
+                               PX16);
             }
-            res = update_fontx(fontName, fontSize_2);
-            if (res) {
-                log_n("Fail to write font[%s:%s] library to ex-flash",
-                      FontNameStr[fontName], FontSizeStr[fontSize_2]);
-            }
-            infinite_throw("Writing font library to ex-flash done.");
+            // for (i = Font_Size_Min; i <= Font_Size_Max; i++) {
+            //     res = update_fontx(fontName, (FontSize)i);
+            //     if (res) {
+            //         infinite_throw("Fail to load [%s:%s] to ex-Flash",
+            //                        FontNameStr[fontName], FontSizeStr[i]);
+            //     }
+            // }
+            infinite_throw("Write font library to ex-Flash done.");
             break;
         }
         case LoadFileToFlash: {
@@ -95,7 +102,11 @@ int main(void)
     LED_flashing(1000);
 #else
     /* Detect SD Card and mount FATFS for SD Card */
-    FIL my_file;
+    FIL      my_file;
+    uint8_t* pc;
+    uint16_t textAreaWidth  = ATK_MD0700_LCD_WIDTH * 4 / 5;
+    uint16_t textAreaHeight = ATK_MD0700_LCD_HEIGHT * 4 / 5;
+
     waiting_for_SD_Card();
     mount_SD_Card();
     /* Check flag in Flash */
@@ -120,14 +131,36 @@ int main(void)
         infinite_throw("Open test file fail.");
     }
     f_read(&my_file, page_buffer[0], PAGE_SIZE, &br);
+    page_buffer[0][br] = '\0';
     if (res != FR_OK) {
         infinite_throw("Read test file fail.");
     }
     /* Test to show a string with Chinese character */
-    Show_Str(30, 30, ATK_MD0700_LCD_WIDTH/5*4, ATK_MD0700_LCD_HEIGHT/5*4, page_buffer[0], Font_SimSun, PX16, 1);
+    // BACKGROUND_COLOR = ATK_MD0700_GREEN;
+    // Show_Str((ATK_MD0700_LCD_WIDTH - textAreaWidth) / 2,
+    //               (ATK_MD0700_LCD_HEIGHT - textAreaHeight) / 2,
+    //               textAreaWidth, textAreaHeight, page_buffer[0], Font_SimSun,
+    //               PX12, 1);
+    // log_n("br: %d", br);
     f_close(&my_file);
     /* Unmount SD Card volume */
     f_mount(NULL, "0:", 1);
+    while (1) {
+        if (needRerender) {
+            log_n("Rerender LCD panel.");
+            atk_md0700_fill((ATK_MD0700_LCD_WIDTH - textAreaWidth) / 2,
+                            (ATK_MD0700_LCD_HEIGHT - textAreaHeight) / 2,
+                            (ATK_MD0700_LCD_WIDTH + textAreaWidth) / 2,
+                            (ATK_MD0700_LCD_HEIGHT + textAreaHeight) / 2,
+                            &BACKGROUND_COLOR, SINGLE_COLOR_BLOCK);
+            delay_ms(500);
+            Show_Str((ATK_MD0700_LCD_WIDTH - textAreaWidth) / 2,
+                     (ATK_MD0700_LCD_HEIGHT - textAreaHeight) / 2,
+                     textAreaWidth, textAreaHeight, page_buffer[0],
+                     fontNameSelect, fontSizeSelect, 1);
+            needRerender = 0;
+        }
+    }
 #endif
     while (1) {
         log_n("Main work finished. In infinite loop now...");

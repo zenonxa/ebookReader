@@ -8,7 +8,8 @@
 /* 				include for BSP							*/
 /********************************************************/
 #include "BSP/LED/led.h"
-//#include "BSP/KEY/key.h"
+#include "BSP/KEY/key.h"
+#include "BSP/EXTI/exti.h"
 #include "BSP/TIMER/timer.h"
 #include "BSP/SRAM/sram.h"
 #include "BSP/W25QXX/w25qxx.h"
@@ -75,8 +76,8 @@ typedef enum {
 /********************************************************************************************/
 /*									Macro													*/
 /********************************************************************************************/
-#define PAGE_NUM	3		// the number of cache page
-#define PAGE_SIZE	500		// the size of one cache page
+#define PAGE_NUM	3			// the number of cache page
+#define PAGE_SIZE	1700		// the size of one cache page
 
 #define SRAMEX_USER_BASE_ADDR	(0x68000000+(MY_DISP_HOR_RES)*(MY_DISP_VER_RES)*2)
 

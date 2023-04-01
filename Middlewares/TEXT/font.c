@@ -6,7 +6,7 @@
 
 #define ONE_SECTOR_SIZE		(4*1024)
 
-const uint32_t FONT_OCCUPY_ALL = FONT_HEADER_SIZE + UNIGBK_SIZE + FONT_SIZE_ALL*Font_Cnt;
+const uint32_t FONT_OCCUPY_ALL = FONT_HEADER_SIZE + UNIGBK_SIZE + FONT_SIZE_ALL*Font_Name_Cnt;
 
 const uint16_t FONTSECSIZE = FONT_OCCUPY_ALL/ONE_SECTOR_SIZE + ((FONT_OCCUPY_ALL%ONE_SECTOR_SIZE == 0) ? 0 : 1);
 
@@ -17,7 +17,7 @@ const char* const prefixStr[Prefix_Cnt] = {
 	"GBK"
 };
 const char* const underlineStr = "_";
-const char* const FontNameStr[Font_Cnt] = {
+const char* const FontNameStr[Font_Name_Cnt] = {
 	"SimSun",
 	"KaiTi",
 	"SimHei",
@@ -89,7 +89,7 @@ void getMappingTablePath(uint8_t* pathBuf) {
 }
 
 
-uint8_t getSize(FontSize fontSize) {
+uint8_t getSize(const FontSize fontSize) {
 	uint8_t size;
 	switch (fontSize) {
 		case PX12:

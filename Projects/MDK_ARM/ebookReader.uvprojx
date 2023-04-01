@@ -583,6 +583,11 @@
               <FileType>1</FileType>
               <FilePath>..\..\Drivers\BSP\SPI\spi.c</FilePath>
             </File>
+            <File>
+              <FileName>exti.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\Drivers\BSP\EXTI\exti.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
