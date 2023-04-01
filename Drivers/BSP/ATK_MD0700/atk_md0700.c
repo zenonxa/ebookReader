@@ -37,8 +37,8 @@
 #define ATK_MD0700_SCAN_DIR_D2U_R2L (0x00E0)
 
 //LCD的画笔颜色和背景色
-u16 POINT_COLOR=0x0000;         //画笔颜色
-u16 BACK_COLOR=0xFFFF;          //背景色 
+u16 FOREGROUND_COLOR=0x0000;         //画笔颜色
+u16 BACKGROUND_COLOR=0xFFFF;          //背景色 
 
 /* ATK-MD0700模块状态数据结构体 */
 static struct
@@ -1072,3 +1072,6 @@ void atk_md0700_show_pic(uint16_t x, uint16_t y, uint16_t width, uint16_t height
         }
     }
 }
+
+
+

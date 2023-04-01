@@ -52,6 +52,9 @@
 #include "./BSP/ATK_MD0700/atk_md0700_touch.h"
 #endif
 
+extern u16 FOREGROUND_COLOR;         //画笔颜色
+extern u16 BACKGROUND_COLOR;          //背景色 
+
 /* ATK-MD0700模块LCD扫描方向枚举 */
 typedef enum
 {

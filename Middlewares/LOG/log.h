@@ -28,6 +28,7 @@ extern LogParam logParam;
 #define LOG_BUFFER_SIZE	100
 
 #define LED_FLASH_IN_INFINITE_LOOP
+#define TEXT_RENDER_LOG_ENABLE		0
 
 #define log(format, ...)													\
 do {																		\
