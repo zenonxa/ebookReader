@@ -3,11 +3,11 @@
 #include "BSP/W25QXX/w25qxx.h"
 #include "SYSTEM/sys/sys.h"
 #include "SYSTEM/usart/usart.h"
+#include "exfuns/exfuns.h"
 #include "font.h"
 #include "fontupd.h"
 #include "log.h"
 #include "string.h"
-#include "exfuns/exfuns.h"
 //////////////////////////////////////////////////////////////////////////////////
 // 本程序只供学习使用，未经作者许可，不得用于其它任何用途
 // ALIENTEK STM32F103开发板
@@ -90,9 +90,9 @@ void Show_Font(uint16_t x,
                FontSize fontSize,
                uint8_t  mode)
 {
-    uint8_t        temp, t, t1;
-    uint16_t       y0       = y;
-    uint8_t size = getSize(fontSize);
+    uint8_t  temp, t, t1;
+    uint16_t y0   = y;
+    uint8_t  size = getSize(fontSize);
     // uint8_t dzk[MAX_DZK_SIZE];
 
     uint8_t csize = (size / 8 + ((size % 8) ? 1 : 0)) *
@@ -153,7 +153,7 @@ void moveCursorToNextLine(uint16_t* pX,
 }
 
 /**
- * @description:
+ * @description: Fill the space with background color.
  * @param {uint16_t} lineSpaceStartX
  * @param {uint16} lineSpaceStartY
  * @param {uint16_t} textAreaWidth
@@ -204,10 +204,6 @@ uint8_t* Show_Str(uint16_t x,
                 if (x > (x0 + width - size / 2)) {
                     /* New line */
                     moveCursorToNextLine(&x, &y, size, lineSpace, x0, &ls_y);
-                    // y += size;
-                    // ls_y = y;
-                    // y += lineSpace;
-                    // x = x0;
                 }
                 if (y > (y0 + height - size)) {
                     break;  // 越界返回
@@ -215,10 +211,6 @@ uint8_t* Show_Str(uint16_t x,
                 if (*str == 13)  // 换行符号
                 {
                     moveCursorToNextLine(&x, &y, size, lineSpace, x0, &ls_y);
-                    // y += size;
-                    // ls_y = y;
-                    // y += lineSpace;
-                    // x = x0;
                     str++;
                 } else {
                     atk_md0700_show_char(x, y, *(char*)str,
@@ -233,10 +225,6 @@ uint8_t* Show_Str(uint16_t x,
             bHz = 0;  // 有汉字库
             if (x > (x0 + width - size)) {
                 /* The space left in this line is not enough */
-                // y += size;
-                // ls_y = y;
-                // y += lineSpace;
-                // x = x0;
                 moveCursorToNextLine(&x, &y, size, lineSpace, x0, &ls_y);
             }
             if (y > (y0 + height - size)) {

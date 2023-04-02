@@ -8,10 +8,10 @@ void test_atk_md0700(void) {
 	uint16_t x1, x2;
 	uint16_t y1, y2;
 	char buffer[100];
-	uint16_t color;
+	uint16_t color = ATK_MD0700_WHITE;
 	
     /* 初始化ATK-MD0700模块 */
-    ret = atk_md0700_init();
+    ret = atk_md0700_init(&color);
 
     if (ret != 0) {
         printf("ATK-MD0700 init failed!\r\n");

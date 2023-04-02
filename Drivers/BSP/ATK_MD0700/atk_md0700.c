@@ -260,7 +260,7 @@ static uint32_t atk_md0700_pow(uint8_t x, uint8_t y)
  * @retval      ATK_MD0700_EOK  : ATK_MD0700模块初始化成功
  *              ATK_MD0700_ERROR: ATK_MD0700模块初始化失败
  */
-uint8_t atk_md0700_init(void)
+uint8_t atk_md0700_init(uint16_t* color)
 {
     uint8_t pid;
     
@@ -279,7 +279,7 @@ uint8_t atk_md0700_init(void)
     atk_md0700_reg_init();
     atk_md0700_backlight_config(UINT8_MAX);
 	atk_md0700_set_disp_dir(ATK_MD0700_LCD_DISP_DIR_0);
-	atk_md0700_clear(ATK_MD0700_WHITE);
+	atk_md0700_clear(*color);
     atk_md0700_display_on();
 #if (ATK_MD0700_USING_TOUCH != 0)
     atk_md0700_touch_init();

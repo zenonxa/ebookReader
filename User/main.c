@@ -20,6 +20,7 @@ int main(void)
     uint8_t    i;
     uint8_t    tmp_buf[PAGE_SIZE];
     FontHeader fontHeader = {FLAG_OK, FLAG_OK};
+    uint16_t   color      = ATK_MD0700_BLACK;
 
     page_buffer[0] = tmp_buf;
 
@@ -31,7 +32,7 @@ int main(void)
     key_init();                         /* KEY init */
     EXTI_Init();                        /* external interrupt init */
     usart_init(115200);                 /* Serial: 115200 */
-    atk_md0700_init();                  /* LCD panel init */
+    atk_md0700_init(&color);            /* LCD panel init */
     SRAM_Init();
     W25QXX_Init();
     TIM3_Init(1000 - 1, 72 - 1);
@@ -106,7 +107,10 @@ int main(void)
     uint8_t* pc;
     uint16_t textAreaWidth  = ATK_MD0700_LCD_WIDTH * 4 / 5;
     uint16_t textAreaHeight = ATK_MD0700_LCD_HEIGHT * 4 / 5;
-
+    /* Show Logo */
+    show_logo(NULL, 3000);
+    atk_md0700_fill(0, 0, ATK_MD0700_LCD_WIDTH - 1, ATK_MD0700_LCD_HEIGHT - 1,
+                    &BACKGROUND_COLOR, SINGLE_COLOR_BLOCK);
     waiting_for_SD_Card();
     mount_SD_Card();
     /* Check flag in Flash */
@@ -206,4 +210,18 @@ void mount_SD_Card(void)
     if (f_mount(fs[FAT_DRV_SDCARD], "0:", 1) != FR_OK) {
         infinite_throw("Fail to mount SD Card.");
     }
+}
+
+void show_logo(uint8_t* logoPicture, uint16_t delayTime_ms)
+{
+    uint16_t time = 0;
+    uint8_t  size = 32;
+    /* Show Logo */
+    if (logoPicture == NULL) {
+        atk_md0700_show_string(
+            (ATK_MD0700_LCD_WIDTH - size) / 2, (ATK_MD0700_LCD_HEIGHT) / 2,
+            size * 2, size, "LOGO", mapping_font_size(size), ATK_MD0700_WHITE);
+    }
+    /* Delay for Logo */
+    delay_ms(delayTime_ms);
 }
