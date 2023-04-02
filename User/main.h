@@ -1,6 +1,7 @@
 #ifndef __MAIN_H__
 #define __MAIN_H__
 
+// #include "math.h"
 #include "string.h"
 #include <stm32f1xx.h>
 
@@ -8,6 +9,7 @@
 /* 				include for BSP							*/
 /********************************************************/
 #include "BSP/ATK_MD0700/atk_md0700.h"
+#include "BSP/ATK_MD0700/atk_md0700_touch.h"
 #include "BSP/EXTI/exti.h"
 #include "BSP/KEY/key.h"
 #include "BSP/LED/led.h"

@@ -149,7 +149,31 @@ int main(void)
     f_close(&my_file);
     /* Unmount SD Card volume */
     f_mount(NULL, "0:", 1);
+
+    uint8_t touchState = NoEvent;
+    uint8_t touchStateFlag;
+    uint8_t slideDirestion;
+    // uint16_t dx, dy;
+    touchStateFlag = clearTouchStateFlag(touchStateFlag);
+
     while (1) {
+#    if 0
+        touchEventUpdate(&touchState, &touchStateFlag);
+        if (touchState == OnRelease) {
+            // dx = point_cur[0].x - point_prev[0].x;
+            // dy = point_cur[0].y - point_prev[0].y;
+            slideDirestion = getSlideDirection(point_prev[0].x, point_prev[0].y, point_cur[0].x, point_cur[0].y);
+            log_n("TouchEvent: %s", SlideDirectionStr[slideDirestion]);
+            touchState = NoEvent;
+    }
+#    else
+        if (atk_md0700_touch_scan(point_cur, ATK_MD0700_TOUCH_TP_ENABLE_CNT) >
+            0) {
+            log_n("X: %d, Y:%d", point_cur[0].x, point_cur[0].y);
+            delay_ms(1000);
+        }
+#    endif
+#    if 0
         if (needRerender) {
             log_n("Rerender LCD panel.");
             atk_md0700_fill((ATK_MD0700_LCD_WIDTH - textAreaWidth) / 2,
@@ -164,6 +188,7 @@ int main(void)
                      fontNameSelect, fontSizeSelect, 1);
             needRerender = 0;
         }
+#    endif
     }
 #endif
     while (1) {
