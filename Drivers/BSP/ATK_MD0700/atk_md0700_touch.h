@@ -69,9 +69,18 @@
 /* 触摸点坐标数据结构 */
 typedef struct
 {
-    uint16_t x; /* 触摸点X坐标 */
-    uint16_t y; /* 触摸点Y坐标 */
+    int16_t x; /* 触摸点X坐标 */
+    int16_t y; /* 触摸点Y坐标 */
 } atk_md0700_touch_point_t;
+
+/* Info of a rectangle area, including position o fstart point, width and height
+ */
+typedef struct
+{
+    atk_md0700_touch_point_t startPoint;
+    uint16_t                 width;
+    uint16_t                 height;
+} AreaInfo;
 
 typedef enum {
     Slide_To_Left = 0,
@@ -85,7 +94,7 @@ typedef enum {
     Slide_Direction_None    = Slide_Direction_Cnt,     /* Invalid value */
 } SlideDirection;
 
-extern char* SlideDirectionStr[Slide_Direction_Cnt];
+extern char* SlideDirectionStr[Slide_Direction_Cnt + 1];
 
 typedef enum {
     OnPress = 0,
@@ -112,15 +121,23 @@ typedef enum {
     Touch_Event_None    = Touch_Event_Cnt,     /* Invalid value */
 } TouchEvent;
 
+typedef enum {
+    MovingFlag = 0,
+    LongPressingFlag,
+    ShortPressingFlag,
+    Touch_Flag_Min     = MovingFlag,
+    Touch_Flag_Max     = ShortPressingFlag,  /* Max */
+    Touch_Flag_Default = Touch_Flag_Min,     /* Default */
+    Touch_Flag_Cnt     = Touch_Flag_Max + 1, /* The number of all */
+    Touch_Flag_None    = Touch_Flag_Cnt,     /* Invalid value */
+} TouchFlag;
+
 extern atk_md0700_touch_point_t point_prev[ATK_MD0700_TOUCH_TP_ENABLE_CNT];
 extern atk_md0700_touch_point_t point_cur[ATK_MD0700_TOUCH_TP_ENABLE_CNT];
 
-#    define TouchStateMovingFlag 0
-#    define TouchStateLongPressingFlag 1
-#    define TouchStateShortPressingFlag 2
-#    define setTouchStateFlag(state, flag) ((state) | (1 << (flag)))
-#    define getTouchStateFlag(state, flag) (((state) >> (flag)) & 0x01)
-#    define clearTouchStateFlag(state) ((state)&0x00)
+// #    define setTouchStateFlag(state, flag) ((state) | (1 << (flag)))
+// #    define getTouchStateFlag(state, flag) (((state) >> (flag)) & 0x01)
+// #    define clearTouchStateFlag(state) ((state)&0x00)
 
 /* 错误代码 */
 #    define ATK_MD0700_TOUCH_EOK 0   /* 没有错误 */
@@ -130,12 +147,17 @@ extern atk_md0700_touch_point_t point_cur[ATK_MD0700_TOUCH_TP_ENABLE_CNT];
 void    atk_md0700_touch_init(void); /* ATK-MD0700模块触摸初始化 */
 uint8_t atk_md0700_touch_scan(atk_md0700_touch_point_t* point,
                               uint8_t cnt); /* ATK-MD0700模块触摸扫描 */
+float   getSlideAngle(int16_t dy, int16_t dx);
 SlideDirection getSlideDirection(uint16_t startX,
                                  uint16_t startY,
                                  uint16_t endX,
                                  uint16_t endY);
-TouchState     touchEventUpdate(uint8_t* pTouchState, uint8_t* pTouchStateFlag);
+TouchState     touchEventUpdate(uint8_t* pState, uint8_t* pFlag);
+TouchEvent     getTouchEvent(uint8_t flag);
 
+uint8_t getTouchFlag(uint8_t flag, TouchFlag touchFlag);
+void setTouchFlag(uint8_t* flag, TouchFlag touchFlag);
+void clearTouchFlag(uint8_t* flag);
 #endif /* ATK_MD0700_USING_TOUCH */
 
 #endif

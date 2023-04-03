@@ -150,21 +150,32 @@ int main(void)
     /* Unmount SD Card volume */
     f_mount(NULL, "0:", 1);
 
-    uint8_t touchState = NoEvent;
-    uint8_t touchStateFlag;
+    uint8_t touchState = Touch_State_None;
+    uint8_t flag;
     uint8_t slideDirestion;
-    // uint16_t dx, dy;
-    touchStateFlag = clearTouchStateFlag(touchStateFlag);
+    int16_t dx, dy;
+    clearTouchFlag(&flag);
 
     while (1) {
-#    if 0
-        touchEventUpdate(&touchState, &touchStateFlag);
+#    if 1
+        touchEventUpdate(&touchState, &flag);
         if (touchState == OnRelease) {
             // dx = point_cur[0].x - point_prev[0].x;
             // dy = point_cur[0].y - point_prev[0].y;
+            // slideDirestion = getSlideDirection(point_prev[0].x, point_prev[0].y, point_cur[0].x, point_cur[0].y);
+            // log_n("TouchEvent: %d:%s", slideDirestion, SlideDirectionStr[slideDirestion]);
+            log_n("point_prev[0].x: %d, point_prev[0].y: %d", point_prev[0].x, point_prev[0].y);
+            log_n("point_cur[0].x: %d, point_cur[0].y: %d", point_cur[0].x, point_cur[0].y);
+            dy = point_cur[0].y - point_prev[0].y;
+            dx = point_cur[0].x - point_prev[0].x;
+            log_n("Touch state flag: %x", flag);
+            log_n("Angel: %.2f", getSlideAngle(dy, dx));
             slideDirestion = getSlideDirection(point_prev[0].x, point_prev[0].y, point_cur[0].x, point_cur[0].y);
-            log_n("TouchEvent: %s", SlideDirectionStr[slideDirestion]);
-            touchState = NoEvent;
+            log_n("Direction ===> %d:%s", slideDirestion, SlideDirectionStr[slideDirestion]);
+            log_n("TouchEvent: %d", getTouchEvent(flag));
+            log_n("");
+            clearTouchFlag(&flag);
+			touchState = Touch_State_None;
     }
 #    else
         if (atk_md0700_touch_scan(point_cur, ATK_MD0700_TOUCH_TP_ENABLE_CNT) >

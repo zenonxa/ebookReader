@@ -22,8 +22,8 @@
 #include "./BSP/ATK_MD0700/atk_md0700_touch_iic.h"
 #include "./SYSTEM/delay/delay.h"
 #include "./SYSTEM/usart/usart.h"
-#include <stdlib.h>
 #include <math.h>
+#include <stdlib.h>
 #include <string.h>
 
 #if (ATK_MD0700_USING_TOUCH != 0)
@@ -60,12 +60,13 @@ static const uint16_t g_atk_md0700_touch_tp_reg[ATK_MD0700_TOUCH_TP_MAX] = {
 atk_md0700_touch_point_t point_prev[ATK_MD0700_TOUCH_TP_ENABLE_CNT];
 atk_md0700_touch_point_t point_cur[ATK_MD0700_TOUCH_TP_ENABLE_CNT];
 
-char* SlideDirectionStr[Slide_Direction_Cnt] = {
-    "slide to left",
-    "slide to right",
-    "slide up",
-    "slide down",
+char* SlideDirectionStr[Slide_Direction_Cnt + 1] = {
+    "slide to left", "slide to right",    "slide up",
+    "slide down",    "Invalid direction",
 };
+
+SlideDirection flip_vertically(uint8_t* pSlideDirection);
+TouchEvent touchFlagMappingToEvent(TouchFlag touchFlag);
 
 /**
  * @brief       ATK-MD0700模块触摸硬件初始化
@@ -225,13 +226,32 @@ uint8_t atk_md0700_touch_scan(atk_md0700_touch_point_t* point, uint8_t cnt)
         return 0;
     }
 }
+
+uint8_t getTouchFlag(uint8_t flag, TouchFlag touchFlag)
+{
+    return (flag >> touchFlag) & 0x01;
+}
+
+void setTouchFlag(uint8_t* flag, TouchFlag touchFlag)
+{
+    *flag |= (0x01 << touchFlag);
+}
+
+void clearTouchFlag(uint8_t* flag)
+{
+    uint8_t i;
+    for (i = Touch_Flag_Min; i <= Touch_Flag_Max; ++i) {
+        *flag &= (~(0x01 << i));
+    }
+}
+
 /**
  * @description: Calculate the angle of the linked by two given points
- * @param {int} dx:  delta X
  * @param {int} dy:  delta Y
+ * @param {int} dx:  delta X
  * @return {float}  angle [0, 360]
  */
-float GetSlideAngle(int dx, int dy)
+float getSlideAngle(int16_t dy, int16_t dx)
 {
     return (atan2(dy, dx) * 180 / PI);
 }
@@ -258,84 +278,134 @@ SlideDirection getSlideDirection(uint16_t startX,
         return (SlideDirection)slideDirection;
     }
 
-    angle = GetSlideAngle(dy, dx);
+    angle = getSlideAngle(dy, dx);
     if (angle >= -45 && angle < 45) {
         slideDirection = Slide_To_Right;
     } else if (angle >= 45 && angle < 135) {
-        slideDirection = Slide_Down;
-    } else if (angle >= -135 && angle < -45) {
         slideDirection = Slide_Up;
+    } else if (angle >= -135 && angle < -45) {
+        slideDirection = Slide_Down;
     } else if ((angle >= 135 && angle <= 180) ||
                (angle >= -180 && angle < -135)) {
         slideDirection = Slide_To_Left;
     }
+    flip_vertically(&slideDirection);
     return (SlideDirection)slideDirection;
+}
+
+/**
+ * @description: Flip the SlideDirection vertically
+ * @param {uint8_t*} pSlideDirection Pointer to the SlideDirection
+ * @return {SlideDirection} The SlideDirection after fliping vertically
+ */
+SlideDirection flip_vertically(uint8_t* pSlideDirection)
+{
+    switch (*pSlideDirection) {
+        case Slide_Up: *pSlideDirection = Slide_Down; break;
+        case Slide_Down: *pSlideDirection = Slide_Up; break;
+        case Slide_To_Left:
+        case Slide_To_Right:
+        default: break;
+    }
+    return *pSlideDirection;
 }
 /**
  * @description: Update the state of the touch event
- * @param {uint8_t*} touchState: the current state of the touch event lifetime
- * @param {uint8_t*} touchStateFlag: the flag relate to the touchState
+ * @param {uint8_t*} pState: the current state of the touch event lifetime
+ * @param {uint8_t*} pFlag: the flag relate to the touchState
  * @return {*}
  */
-TouchState touchEventUpdate(uint8_t* pTouchState, uint8_t* pTouchStateFlag)
+TouchState touchEventUpdate(uint8_t* pState, uint8_t* pFlag)
 {
-    uint8_t                         tmp, touchPointCnt;
+    uint8_t tmp, touchPointCnt;
     tmp = atk_md0700_touch_scan(point_cur, ATK_MD0700_TOUCH_TP_ENABLE_CNT);
-    delay_ms(10);
-    touchPointCnt = atk_md0700_touch_scan(point_cur, ATK_MD0700_TOUCH_TP_ENABLE_CNT);
     /* Debounce for touch event */
-    if (touchPointCnt && (touchPointCnt == tmp)) {
+    delay_ms(10);
+    touchPointCnt =
+        atk_md0700_touch_scan(point_cur, ATK_MD0700_TOUCH_TP_ENABLE_CNT);
+    if ((touchPointCnt > 0) && (touchPointCnt == tmp)) {
         /* The first moment on press */
-        if (*pTouchState == NoEvent) {
-            *pTouchState  = OnPress;
+        if (*pState == Touch_State_None) {
+            *pState  = OnPress;
             point_prev->x = point_cur->x;
             point_prev->y = point_cur->y;
             /* ToDo: Reset timer for LongPress timing */
-            return (TouchState)*pTouchState;
+            return (TouchState)*pState;
         }
         /* Moving flag exists */
-        if (getTouchStateFlag(*pTouchStateFlag, TouchStateMovingFlag)) {
-            *pTouchState = Moving;
-            return (TouchState)*pTouchState;
+        if (getTouchFlag(*pFlag, MovingFlag)) {
+            *pState = Moving;
+            return (TouchState)*pState;
         }
         /* position offset is more than error value, need to set moving flag
          */
         if ((abs(point_cur->x - point_prev->x) > TouchOffsetErrorValue) ||
             (abs(point_cur->y - point_prev->y) > TouchOffsetErrorValue)) {
-            *pTouchStateFlag =
-                setTouchStateFlag(*pTouchStateFlag, TouchStateMovingFlag);
-            *pTouchState = Moving;
-            return (TouchState)*pTouchState;
+            setTouchFlag(pFlag, MovingFlag);
+            *pState = Moving;
+            return (TouchState)*pState;
         }
         /* longPressing flag exists */
-        if (getTouchStateFlag(*pTouchStateFlag, TouchStateLongPressingFlag)) {
-            *pTouchState = LongPressing;
-            return (TouchState)*pTouchState;
+        if (getTouchFlag(*pFlag, LongPressingFlag)) {
+            *pState = LongPressing;
+            return (TouchState)*pState;
         }
         /* The timing of the decider(timer) is greater than the decision value
          */
         if (0) {
-            *pTouchStateFlag =
-                setTouchStateFlag(*pTouchStateFlag, TouchStateLongPressingFlag);
-            return (TouchState)*pTouchState;
+            setTouchFlag(pFlag, LongPressingFlag);
+            return (TouchState)*pState;
         }
         /* ShortPressing flag exists */
-        if (getTouchStateFlag(*pTouchStateFlag, TouchStateShortPressingFlag)) {
-            *pTouchState = ShortPressing;
-            return (TouchState)*pTouchState;
+        if (getTouchFlag(*pFlag, ShortPressingFlag)) {
+            *pState = ShortPressing;
+            return (TouchState)*pState;
         }
         /* Set ShortPressing flag, and return the */
-        *pTouchStateFlag =
-            setTouchStateFlag(*pTouchStateFlag, TouchStateShortPressingFlag);
-        *pTouchState = ShortPressing;
-        return (TouchState)*pTouchState;
+        setTouchFlag(pFlag, ShortPressingFlag);
+        *pState = ShortPressing;
+        return (TouchState)*pState;
     } else {
-        if ((*pTouchState != NoEvent) && (*pTouchState != OnPress)) {
-            *pTouchState = OnRelease;
-            return (TouchState)*pTouchState;
+        if ((*pState != Touch_State_None) && (*pState != OnPress)) {
+            *pState = OnRelease;
+            return (TouchState)*pState;
         }
     }
-    return (TouchState)*pTouchState;
+    return (TouchState)*pState;
+}
+
+TouchEvent touchFlagMappingToEvent(TouchFlag touchFlag) {
+    uint8_t touchEvent;
+    switch (touchFlag)
+    {
+    case MovingFlag:
+        touchEvent = Move;
+        break;
+    case LongPressingFlag:
+        touchEvent = LongPress;
+        break;
+    case ShortPressingFlag:
+        touchEvent = ShortPress;
+        break;
+        break;
+    default:
+        touchEvent = NoEvent;
+        break;
+    }
+    return touchEvent;
+}
+
+TouchEvent getTouchEvent(uint8_t flag)
+{
+    uint8_t i = 0;
+    uint8_t touchEvent = NoEvent;
+    for (i = Touch_Flag_Min; i <= Touch_Flag_Max; ++i) {
+        if (getTouchFlag(flag, i)) {
+            touchEvent = touchFlagMappingToEvent(i);
+            break;
+        }
+    }
+    return touchEvent;
 }
 
 #endif /* ATK_MD0700_USING_TOUCH */

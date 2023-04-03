@@ -1072,6 +1072,3 @@ void atk_md0700_show_pic(uint16_t x, uint16_t y, uint16_t width, uint16_t height
         }
     }
 }
-
-
-
