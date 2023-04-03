@@ -81,12 +81,12 @@ u8 exfuns_init(void)
     fatbuf = (u8*)mymalloc(SRAMIN, 512);
 
     flash_buffer = (u8*)mymalloc(SRAMIN, FLASH_BUFFER_SIZE);
-    log_buffer   = (u8*)mymalloc(SRAMIN, LOG_BUFFER_SIZE);
+    logBuffer   = (u8*)mymalloc(SRAMIN, LOG_BUFFER_SIZE);
 
 	dzk = (u8*)mymalloc(SRAMIN, MAX_DZK_SIZE);
 
     if ((i == FF_VOLUMES) && main_file && vice_file && temp_file && fatbuf &&
-        flash_buffer && log_buffer && dzk) {
+        flash_buffer && logBuffer && dzk) {
         res = 0; /* All succeed. */
     } else {
         res = 1; /* Failure occur. */
@@ -491,10 +491,10 @@ uint8_t load_file_to_flash(char* fname, uint32_t flash_addr)
     //		ERROR_THROW("open and malloc succeed?");
     //		return 1;
     //	}
-    ProgressWithInfo_Init(&logParam.progressWithInfo, offset, f_size(temp_file),
+    ProgressWithInfo_Init(offset, f_size(temp_file),
                           fname, "SD Card", "Flash");
     log_n("%sLoading [%s] start.", ARROW_STRING, fname);
-    print_log(Flash_Write_Log, &logParam);
+    print_log(Flash_Write_Log);
     // 死循环执行
     while (res == FR_OK) {
         res = f_read(temp_file, flash_buffer, FLASH_BUFFER_SIZE,
@@ -510,8 +510,8 @@ uint8_t load_file_to_flash(char* fname, uint32_t flash_addr)
                      FLASH_BUFFER_SIZE);  // 从 0 开始写 4096 个数据
         offset += br;
         /* Show the update progress */
-        ProgressWithInfo_Update(&logParam.progressWithInfo, offset);
-        print_log(Flash_Write_Log, &logParam);
+        ProgressWithInfo_Update(offset);
+        print_log(Flash_Write_Log);
         if (br != FLASH_BUFFER_SIZE) {
             break; /* Finish loading */
         }

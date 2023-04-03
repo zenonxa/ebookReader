@@ -1,22 +1,48 @@
 #include "util.h"
+#include "log.h"
 
-void Progress_Init(Progress* progress, uint32_t cur_val, uint32_t dead_val) {
+Progress g_progress;
+ProgressWithInfo g_progressWithInfo;
+TouchEventInfo g_touchEventInfo;
+
+void Progress_Init(uint32_t cur_val, uint32_t dead_val) {
+    Progress* progress = logParam.progress;
     progress->cur_val = cur_val;
     progress->dead_val = dead_val;
 }
 
-void Progress_Update(Progress* progress, uint32_t cur_val) {
+void Progress_Update(uint32_t cur_val) {
+    Progress* progress = logParam.progress;
     progress->cur_val = cur_val;
 }
 
-void ProgressWithInfo_Init(ProgressWithInfo* progressWithInfo, 
-                uint32_t cur_val, uint32_t dead_val, char* info, char* src, char* dest) {
-    Progress_Init(&progressWithInfo->progress, cur_val, dead_val);
+void ProgressWithInfo_Init(uint32_t cur_val, uint32_t dead_val, char* info, char* src, char* dest) {
+    ProgressWithInfo* progressWithInfo = logParam.progressWithInfo;
+    Progress_Init(cur_val, dead_val);
     progressWithInfo->info = info;
     progressWithInfo->src = src;
     progressWithInfo->dest = dest;
 }
 
-void ProgressWithInfo_Update(ProgressWithInfo* progressWithInfo, uint32_t cur_val) {
-    Progress_Update(&progressWithInfo->progress, cur_val);
+void ProgressWithInfo_Update(uint32_t cur_val) {
+    // ProgressWithInfo* progressWithInfo = logParam.progressWithInfo;
+    Progress_Update(cur_val);
+}
+
+void TouchEventInfo_Init() {
+    // TouchEventInfo* touchEventInfo = logParam.touchEventInfo;
+    logParam.touchEventInfo->startPos = point_prev;
+    logParam.touchEventInfo->endPos = point_cur;
+    clearTouchFlag(&logParam.touchEventInfo->flag);
+    logParam.touchEventInfo->angle = 0.0;
+    logParam.touchEventInfo->slideDirection = Slide_Direction_None;
+    logParam.touchEventInfo->touchEvent = NoEvent;
+}
+
+void TouchEventInfo_Update(uint8_t flag, float angle, SlideDirection slideDirection, TouchEvent touchEvent) {
+    TouchEventInfo* touchEventInfo = logParam.touchEventInfo;
+    touchEventInfo->flag = flag;
+    touchEventInfo->angle = angle;
+    touchEventInfo->slideDirection = slideDirection;
+    touchEventInfo->touchEvent = touchEvent;
 }

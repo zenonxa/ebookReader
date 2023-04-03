@@ -254,11 +254,11 @@ uint8_t update_font(void)
         //		atk_md0700_show_string(x, y, 240, 320, "Erasing sectors... ",
         //mapping_font_size(size), ATK_MD0700_BLACK);//提示正在擦除扇区
         //		printf("Erasing flash sector: %4d/%4d\r\n", 0, FONTSECSIZE);
-        Progress_Init(&logParam.progress, 0, FONTSECSIZE);
+        Progress_Init(0, FONTSECSIZE);
         for (i = 0; i < FONTSECSIZE; i++)  // 先擦除字库区域,提高写入速度
         {
-            Progress_Update(&logParam.progress, i);
-            print_log(Flash_Erase_Log, &logParam);
+            Progress_Update(i);
+            print_log(Flash_Erase_Log);
             //			fupd_prog(x+20*size/2,y,size,FONTSECSIZE,i);//进度显示
             W25QXX_Read((uint8_t*)flash_buffer,
                         ((FONT_OCCUPY_ALL / 4096) + i) * 4096,

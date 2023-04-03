@@ -4,6 +4,7 @@
 #include "SYSTEM/sys/sys.h"
 #include "math.h"
 #include "float.h"
+#include "BSP/ATK_MD0700/atk_md0700.h"
 
 #define isFloatEqual(a, b) 	(fabs((a)-(b)) < 1e-6)
 #define isFloatZero(a) 		(fabs(a) < FLT_EPSILON)
@@ -23,13 +24,28 @@ typedef struct {
 //	char* info_third;	/* For dest */
 } ProgressWithInfo;
 
+typedef struct {
+	atk_md0700_touch_point_t* startPos;
+	atk_md0700_touch_point_t* endPos;
+	uint8_t flag;
+	float angle;
+	uint8_t slideDirection;
+	uint8_t touchEvent;
+} TouchEventInfo;
+
+extern Progress g_progress;
+extern ProgressWithInfo g_progressWithInfo;
+extern TouchEventInfo g_touchEventInfo;
+
 /* Init the param to prepare for the log function */
-void Progress_Init(Progress* progress, uint32_t cur_val, uint32_t dead_val);
-void ProgressWithInfo_Init(ProgressWithInfo* progressWithInfo, 
-                uint32_t cur_val, uint32_t dead_val, char* info, char* src, char* dest);
+void Progress_Init(uint32_t cur_val, uint32_t dead_val);
+void ProgressWithInfo_Init(uint32_t cur_val, uint32_t dead_val, char* info, char* src, char* dest);
 
 /* Update the param to pass to log function  */
-void Progress_Update(Progress* progress, uint32_t cur_val);
-void ProgressWithInfo_Update(ProgressWithInfo* progressWithInfo, uint32_t cur_val);
+void Progress_Update(uint32_t cur_val);
+void ProgressWithInfo_Update(uint32_t cur_val);
+
+void TouchEventInfo_Init(void);
+void TouchEventInfo_Update(uint8_t flag, float angle, SlideDirection slideDirection, TouchEvent touchEvent);
 
 #endif

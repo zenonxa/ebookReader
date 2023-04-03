@@ -22,6 +22,8 @@
 #include "./BSP/ATK_MD0700/atk_md0700_touch_iic.h"
 #include "./SYSTEM/delay/delay.h"
 #include "./SYSTEM/usart/usart.h"
+#include "util.h"
+#include "log.h"
 #include <math.h>
 #include <stdlib.h>
 #include <string.h>
@@ -65,8 +67,12 @@ char* SlideDirectionStr[Slide_Direction_Cnt + 1] = {
     "slide down",    "Invalid direction",
 };
 
+char* TouchEventStr[Touch_Event_Cnt + 1] = {
+    "No event", "ShortPress", "LongPress", "Move", "Invalid event",
+};
+
 SlideDirection flip_vertically(uint8_t* pSlideDirection);
-TouchEvent touchFlagMappingToEvent(TouchFlag touchFlag);
+TouchEvent     touchFlagMappingToEvent(TouchFlag touchFlag);
 
 /**
  * @brief       ATK-MD0700模块触摸硬件初始化
@@ -307,7 +313,7 @@ SlideDirection flip_vertically(uint8_t* pSlideDirection)
         case Slide_To_Right:
         default: break;
     }
-    return *pSlideDirection;
+    return (SlideDirection)*pSlideDirection;
 }
 /**
  * @description: Update the state of the touch event
@@ -326,7 +332,7 @@ TouchState touchEventUpdate(uint8_t* pState, uint8_t* pFlag)
     if ((touchPointCnt > 0) && (touchPointCnt == tmp)) {
         /* The first moment on press */
         if (*pState == Touch_State_None) {
-            *pState  = OnPress;
+            *pState       = OnPress;
             point_prev->x = point_cur->x;
             point_prev->y = point_cur->y;
             /* ToDo: Reset timer for LongPress timing */
@@ -374,36 +380,42 @@ TouchState touchEventUpdate(uint8_t* pState, uint8_t* pFlag)
     return (TouchState)*pState;
 }
 
-TouchEvent touchFlagMappingToEvent(TouchFlag touchFlag) {
+TouchEvent touchFlagMappingToEvent(TouchFlag touchFlag)
+{
     uint8_t touchEvent;
-    switch (touchFlag)
-    {
-    case MovingFlag:
-        touchEvent = Move;
-        break;
-    case LongPressingFlag:
-        touchEvent = LongPress;
-        break;
-    case ShortPressingFlag:
-        touchEvent = ShortPress;
-        break;
-        break;
-    default:
-        touchEvent = NoEvent;
-        break;
+    switch (touchFlag) {
+        case MovingFlag: touchEvent = Move; break;
+        case LongPressingFlag: touchEvent = LongPress; break;
+        case ShortPressingFlag:
+            touchEvent = ShortPress;
+            break;
+        default: touchEvent = NoEvent; break;
     }
     return touchEvent;
 }
 
 TouchEvent getTouchEvent(uint8_t flag)
 {
-    uint8_t i = 0;
-    uint8_t touchEvent = NoEvent;
+    uint8_t         i          = 0;
+    uint8_t         touchEvent = NoEvent;
+    static uint16_t dy;
+    static uint16_t dx;
+    static float    angle;
+    static uint8_t  slideDirestion;
     for (i = Touch_Flag_Min; i <= Touch_Flag_Max; ++i) {
         if (getTouchFlag(flag, i)) {
             touchEvent = touchFlagMappingToEvent(i);
             break;
         }
+    }
+    if (touchEvent != NoEvent) {
+        dy             = point_cur[0].y - point_prev[0].y;
+        dx             = point_cur[0].x - point_prev[0].x;
+        angle          = getSlideAngle(dy, dx);
+        slideDirestion = getSlideDirection(point_prev[0].x, point_prev[0].y,
+                                           point_cur[0].x, point_cur[0].y);
+        TouchEventInfo_Update(flag, angle, slideDirestion, touchEvent);
+        print_log(Touch_Event_Log);
     }
     return touchEvent;
 }

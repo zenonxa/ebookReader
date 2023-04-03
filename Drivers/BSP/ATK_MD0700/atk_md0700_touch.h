@@ -121,6 +121,8 @@ typedef enum {
     Touch_Event_None    = Touch_Event_Cnt,     /* Invalid value */
 } TouchEvent;
 
+extern char* TouchEventStr[Touch_Event_Cnt + 1];
+
 typedef enum {
     MovingFlag = 0,
     LongPressingFlag,
@@ -156,8 +158,8 @@ TouchState     touchEventUpdate(uint8_t* pState, uint8_t* pFlag);
 TouchEvent     getTouchEvent(uint8_t flag);
 
 uint8_t getTouchFlag(uint8_t flag, TouchFlag touchFlag);
-void setTouchFlag(uint8_t* flag, TouchFlag touchFlag);
-void clearTouchFlag(uint8_t* flag);
+void    setTouchFlag(uint8_t* flag, TouchFlag touchFlag);
+void    clearTouchFlag(uint8_t* flag);
 #endif /* ATK_MD0700_USING_TOUCH */
 
 #endif

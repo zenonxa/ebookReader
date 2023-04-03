@@ -40,6 +40,7 @@ int main(void)
     if (res) {
         infinite_throw("Fail to do exfuns_init()");
     }
+    LogParam_Init();
 #if ACTION_ONCE
     ActionCommand actionCommand = ACTION_COMMAND;
     switch (actionCommand) {
@@ -108,7 +109,7 @@ int main(void)
     uint16_t textAreaWidth  = ATK_MD0700_LCD_WIDTH * 4 / 5;
     uint16_t textAreaHeight = ATK_MD0700_LCD_HEIGHT * 4 / 5;
     /* Show Logo */
-    show_logo(NULL, 3000);
+    show_logo(NULL, 500);
     atk_md0700_fill(0, 0, ATK_MD0700_LCD_WIDTH - 1, ATK_MD0700_LCD_HEIGHT - 1,
                     &BACKGROUND_COLOR, SINGLE_COLOR_BLOCK);
     waiting_for_SD_Card();
@@ -153,9 +154,10 @@ int main(void)
     uint8_t touchState = Touch_State_None;
     uint8_t flag;
     uint8_t slideDirestion;
+    uint8_t touchEvent;
     int16_t dx, dy;
     clearTouchFlag(&flag);
-
+    TouchEventInfo_Init();
     while (1) {
 #    if 1
         touchEventUpdate(&touchState, &flag);
@@ -164,16 +166,18 @@ int main(void)
             // dy = point_cur[0].y - point_prev[0].y;
             // slideDirestion = getSlideDirection(point_prev[0].x, point_prev[0].y, point_cur[0].x, point_cur[0].y);
             // log_n("TouchEvent: %d:%s", slideDirestion, SlideDirectionStr[slideDirestion]);
-            log_n("point_prev[0].x: %d, point_prev[0].y: %d", point_prev[0].x, point_prev[0].y);
-            log_n("point_cur[0].x: %d, point_cur[0].y: %d", point_cur[0].x, point_cur[0].y);
-            dy = point_cur[0].y - point_prev[0].y;
-            dx = point_cur[0].x - point_prev[0].x;
-            log_n("Touch state flag: %x", flag);
-            log_n("Angel: %.2f", getSlideAngle(dy, dx));
-            slideDirestion = getSlideDirection(point_prev[0].x, point_prev[0].y, point_cur[0].x, point_cur[0].y);
-            log_n("Direction ===> %d:%s", slideDirestion, SlideDirectionStr[slideDirestion]);
-            log_n("TouchEvent: %d", getTouchEvent(flag));
-            log_n("");
+            // log_n("point_prev[0].x: %d, point_prev[0].y: %d", point_prev[0].x, point_prev[0].y);
+            // log_n("point_cur[0].x: %d, point_cur[0].y: %d", point_cur[0].x, point_cur[0].y);
+            // dy = point_cur[0].y - point_prev[0].y;
+            // dx = point_cur[0].x - point_prev[0].x;
+            // log_n("Touch state flag: %x", flag);
+            // log_n("Angel: %.2f", getSlideAngle(dy, dx));
+            // slideDirestion = getSlideDirection(point_prev[0].x, point_prev[0].y, point_cur[0].x, point_cur[0].y);
+            touchEvent = getTouchEvent(flag);
+            // log_n("Direction ===> %d:%s", slideDirestion, SlideDirectionStr[slideDirestion]);
+            // log_n("TouchEvent: %d", touchEvent);
+            // log_n("");
+            
             clearTouchFlag(&flag);
 			touchState = Touch_State_None;
     }
