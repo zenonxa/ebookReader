@@ -22,8 +22,9 @@
 #include "./BSP/ATK_MD0700/atk_md0700_touch_iic.h"
 #include "./SYSTEM/delay/delay.h"
 #include "./SYSTEM/usart/usart.h"
-#include "util.h"
+#include "BSP/TIMER/timer.h"
 #include "log.h"
+#include "util.h"
 #include <math.h>
 #include <stdlib.h>
 #include <string.h>
@@ -61,6 +62,8 @@ static const uint16_t g_atk_md0700_touch_tp_reg[ATK_MD0700_TOUCH_TP_MAX] = {
 
 atk_md0700_touch_point_t point_prev[ATK_MD0700_TOUCH_TP_ENABLE_CNT];
 atk_md0700_touch_point_t point_cur[ATK_MD0700_TOUCH_TP_ENABLE_CNT];
+
+uint8_t PressingTime_prev = 0;
 
 char* SlideDirectionStr[Slide_Direction_Cnt + 1] = {
     "slide to left", "slide to right",    "slide up",
@@ -336,6 +339,8 @@ TouchState touchEventUpdate(uint8_t* pState, uint8_t* pFlag)
             point_prev->x = point_cur->x;
             point_prev->y = point_cur->y;
             /* ToDo: Reset timer for LongPress timing */
+            PressingKeepingTime = 0;
+            __HAL_TIM_ENABLE(&TIM3_Handler);
             return (TouchState)*pState;
         }
         /* Moving flag exists */
@@ -358,8 +363,10 @@ TouchState touchEventUpdate(uint8_t* pState, uint8_t* pFlag)
         }
         /* The timing of the decider(timer) is greater than the decision value
          */
-        if (0) {
+        if (PressingKeepingTime >= LongPressingJudgeTime) {
             setTouchFlag(pFlag, LongPressingFlag);
+            __HAL_TIM_DISABLE(&TIM3_Handler);
+            PressingKeepingTime = 0;
             return (TouchState)*pState;
         }
         /* ShortPressing flag exists */
@@ -374,6 +381,11 @@ TouchState touchEventUpdate(uint8_t* pState, uint8_t* pFlag)
     } else {
         if ((*pState != Touch_State_None) && (*pState != OnPress)) {
             *pState = OnRelease;
+            __HAL_TIM_DISABLE(&TIM3_Handler);
+            if (PressingKeepingTime != 0) {
+                PressingTime_prev = PressingKeepingTime;
+            }
+            PressingKeepingTime = 0;
             return (TouchState)*pState;
         }
     }
@@ -386,9 +398,7 @@ TouchEvent touchFlagMappingToEvent(TouchFlag touchFlag)
     switch (touchFlag) {
         case MovingFlag: touchEvent = Move; break;
         case LongPressingFlag: touchEvent = LongPress; break;
-        case ShortPressingFlag:
-            touchEvent = ShortPress;
-            break;
+        case ShortPressingFlag: touchEvent = ShortPress; break;
         default: touchEvent = NoEvent; break;
     }
     return touchEvent;

@@ -35,7 +35,7 @@ int main(void)
     atk_md0700_init(&color);            /* LCD panel init */
     SRAM_Init();
     W25QXX_Init();
-    TIM3_Init(1000 - 1, 72 - 1);
+    TIM3_Init(10000 - 1, 72 - 1);
     res = exfuns_init();
     if (res) {
         infinite_throw("Fail to do exfuns_init()");
@@ -158,37 +158,16 @@ int main(void)
     int16_t dx, dy;
     clearTouchFlag(&flag);
     TouchEventInfo_Init();
+    __HAL_TIM_DISABLE(&TIM3_Handler);
     while (1) {
 #    if 1
         touchEventUpdate(&touchState, &flag);
         if (touchState == OnRelease) {
-            // dx = point_cur[0].x - point_prev[0].x;
-            // dy = point_cur[0].y - point_prev[0].y;
-            // slideDirestion = getSlideDirection(point_prev[0].x, point_prev[0].y, point_cur[0].x, point_cur[0].y);
-            // log_n("TouchEvent: %d:%s", slideDirestion, SlideDirectionStr[slideDirestion]);
-            // log_n("point_prev[0].x: %d, point_prev[0].y: %d", point_prev[0].x, point_prev[0].y);
-            // log_n("point_cur[0].x: %d, point_cur[0].y: %d", point_cur[0].x, point_cur[0].y);
-            // dy = point_cur[0].y - point_prev[0].y;
-            // dx = point_cur[0].x - point_prev[0].x;
-            // log_n("Touch state flag: %x", flag);
-            // log_n("Angel: %.2f", getSlideAngle(dy, dx));
-            // slideDirestion = getSlideDirection(point_prev[0].x, point_prev[0].y, point_cur[0].x, point_cur[0].y);
             touchEvent = getTouchEvent(flag);
-            // log_n("Direction ===> %d:%s", slideDirestion, SlideDirectionStr[slideDirestion]);
-            // log_n("TouchEvent: %d", touchEvent);
-            // log_n("");
-            
             clearTouchFlag(&flag);
-			touchState = Touch_State_None;
-    }
-#    else
-        if (atk_md0700_touch_scan(point_cur, ATK_MD0700_TOUCH_TP_ENABLE_CNT) >
-            0) {
-            log_n("X: %d, Y:%d", point_cur[0].x, point_cur[0].y);
-            delay_ms(1000);
+            touchState = Touch_State_None;
         }
-#    endif
-#    if 0
+#    else
         if (needRerender) {
             log_n("Rerender LCD panel.");
             atk_md0700_fill((ATK_MD0700_LCD_WIDTH - textAreaWidth) / 2,
@@ -205,7 +184,7 @@ int main(void)
         }
 #    endif
     }
-#endif
+#endif /* Action Once */
     while (1) {
         log_n("Main work finished. In infinite loop now...");
         LED_Toggle();

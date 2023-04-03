@@ -82,6 +82,8 @@ typedef struct
     uint16_t                 height;
 } AreaInfo;
 
+extern uint8_t PressingTime_prev;
+
 typedef enum {
     Slide_To_Left = 0,
     Slide_To_Right,

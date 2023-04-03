@@ -14,6 +14,7 @@
 ////////////////////////////////////////////////////////////////////////////////// 	
 
 TIM_HandleTypeDef TIM3_Handler;      //定时器句柄 
+extern uint8_t PressingKeepingTime = 0;
 
 //通用定时器3中断初始化
 //arr：自动重装值。
@@ -56,6 +57,8 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
     if(htim==(&TIM3_Handler))
     {
-        /* To Do */
+        if (PressingKeepingTime < LongPressingJudgeTime) {
+            ++PressingKeepingTime;
+        }
     }
 }

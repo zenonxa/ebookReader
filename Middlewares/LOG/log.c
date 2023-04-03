@@ -1,4 +1,5 @@
 #include "log.h"
+#include "BSP/TIMER/timer.h"
 #include "BSP/ATK_MD0700/atk_md0700_touch.h"
 #include "SYSTEM/usart/usart.h"
 #include "string.h"
@@ -150,11 +151,12 @@ void print_log_touch_event_press_base()
     sprintf(logParam.logBuffer, "[Event: %s]\r\n",
             TouchEventStr[touchEventInfo->touchEvent]);
     logBufferAppend(
-        "Position: (%3d, %3d)",
+        "Position: (%3d, %3d)\r\n",
         touchEventInfo->startPos[0].x +
             (touchEventInfo->endPos[0].x - touchEventInfo->startPos[0].x) / 2,
         touchEventInfo->startPos[0].y +
             (touchEventInfo->endPos[0].y - touchEventInfo->startPos[0].y) / 2);
+	logBufferAppend("PressingTime: %2d\r\n", PressingTime_prev);
     log_n("%s", logParam.logBuffer);
 	log_n("");
 }
