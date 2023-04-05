@@ -1,11 +1,3 @@
-/*
- * @Author: KimKey 13829607886@163.com
- * @Date: 2023-03-18 15:07:58
- * @LastEditors: KimKey 13829607886@163.com
- * @LastEditTime: 2023-03-31 19:05:13
- * @FilePath: \ebookReader\Middlewares\TEXT\fontupd.h
- * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
- */
 #ifndef __FONTUPD_H__
 #define __FONTUPD_H__	 
 #include "SYSTEM/sys/sys.h"
@@ -28,13 +20,6 @@
 //extern uint32_t FONTINFOADDR;
 //字库信息结构体定义
 //用来保存字库基本信息，地址，大小等
-
-#if 0
-/* Information of one font item, including address and size in flash */
-typedef struct {
-	uint32_t addr;	/* address in flash of the font library */
-} FontItem;
-#endif
 
 extern FontHeader fontHeader;	//字库信息结构体
 
