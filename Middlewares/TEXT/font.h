@@ -3,7 +3,7 @@
 
 #include "SYSTEM/sys/sys.h"
 
-/* The type of the font */
+/* The type of the font name */
 typedef enum {
 	Font_SimSun = 0,
 	Font_KaiTi,
@@ -15,6 +15,7 @@ typedef enum {
 	Font_Name_None 		= Font_Name_Cnt,		/* Invalid value */
 } FontName;
 
+/* The type of the font size */
 typedef enum {
 	PX12 = 0,
 	PX16,
@@ -28,6 +29,7 @@ typedef enum {
 } FontSize;
 
 
+#if 0
 typedef enum {
 	MAPPING_TABLE = 0,
 	FONT,
@@ -49,8 +51,10 @@ typedef struct {
 	FontFileType fontFileType;
 	FontInfo fontInfo;
 } FontFileInfo;
+#endif
 
 
+/* Type for the prefix fo the name of the font file */
 typedef enum {
 	UNIGBK 			= 0,
 	GBK,
@@ -62,6 +66,7 @@ typedef enum {
 } Prefix;
 
 
+/* Type for the suffix fo the name of the font file */
 typedef enum {
 	BIN = 0,
 	DZK,
@@ -73,6 +78,7 @@ typedef enum {
 } Suffix;
 
 
+/* Flags to recording if the mapping table and font library ok */
 __packed typedef struct 
 {
 	/* font flag ==> normal:0xAA; abnormal:!0xAA */
@@ -83,9 +89,11 @@ __packed typedef struct
 
 #define FLAG_OK				0xAA
 
+/* The encoding of the font library (.dzk), in which GBK is preferred */
 #define USE_DZK_GBK2312
 //#define USE_DZK_GBK
 
+/* The size of the font header and Unicode-GBK mapping table */
 #define FONT_HEADER_SIZE	64
 #define UNIGBK_SIZE			174344
 
