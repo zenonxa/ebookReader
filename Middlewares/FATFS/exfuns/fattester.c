@@ -187,14 +187,14 @@ u32 mf_showfree(u8 *drv)
 		if(tot_sect<20480)//总容量小于10M
 		{
 		    /* Print free space in unit of KB (assuming 512 bytes/sector) */
-		    printf("\r\n磁盘总容量:%d KB\r\n"
-		           "可用空间:%d KB\r\n",
+		    printf("\r\nDisk volume:%d KB\r\n"
+		           "Rest volume:%d KB\r\n",
 		           tot_sect>>1,fre_sect>>1);
 		}else
 		{
 		    /* Print free space in unit of KB (assuming 512 bytes/sector) */
-		    printf("\r\n磁盘总容量:%d MB\r\n"
-		           "可用空间:%d MB\r\n",
+		    printf("\r\nDisk volume:%d MB\r\n"
+		           "Rest volume:%d MB\r\n",
 		           tot_sect>>11,fre_sect>>11);
 		}
 	}
