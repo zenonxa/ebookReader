@@ -17,6 +17,7 @@ typedef enum {
     Log_Type_None    = 0xff,
 } LogType;
 
+/* A structure for parameter of log sub-system */
 typedef struct
 {
     char*             logInfo;          /* Param for Normal log */
@@ -34,6 +35,10 @@ extern LogParam logParam;
 #define LED_FLASH_IN_INFINITE_LOOP
 #define TEXT_RENDER_LOG_ENABLE 0
 
+/* Some string maybe usually used for log */
+#define ARROW_STRING " ========> "
+
+/* print the log to USART interface with no line break */
 #define log(format, ...)                                                       \
     do {                                                                       \
         while (__HAL_USART_GET_FLAG(&g_uart1_handle, USART_FLAG_TC) == RESET)  \
@@ -41,12 +46,15 @@ extern LogParam logParam;
         printf(format, ##__VA_ARGS__);                                         \
     } while (0)
 
+/* print the log to USART interface end with line break */
 #define log_n(format, ...)                                                     \
     do {                                                                       \
         log(format, ##__VA_ARGS__);                                            \
         printf("\r\n");                                                        \
     } while (0)
 
+/* Append the log to the tail of the log buffer, which need to send a line break
+ * char manually after this code block */
 #define logBufferAppend(format, ...)                                           \
     do {                                                                       \
         sprintf(logParam.logBuffer + strlen(logParam.logBuffer), format,       \
@@ -54,9 +62,6 @@ extern LogParam logParam;
     } while (0)
 
 #define TIME_SPAN_IN_INFINITE_LOOP 1000 /* ms */
-
-#define ARROW_STRING " ========> "
-
 #define infinite_throw(format, ...)                                            \
     do {                                                                       \
         log_n(format, ##__VA_ARGS__);                                          \

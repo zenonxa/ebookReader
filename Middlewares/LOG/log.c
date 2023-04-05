@@ -1,6 +1,6 @@
 #include "log.h"
-#include "BSP/TIMER/timer.h"
 #include "BSP/ATK_MD0700/atk_md0700_touch.h"
+#include "BSP/TIMER/timer.h"
 #include "SYSTEM/usart/usart.h"
 #include "string.h"
 #include <stm32f1xx.h>
@@ -8,6 +8,7 @@
 uint8_t* logBuffer;
 LogParam logParam;
 
+/* Internal interface, not open to external function */
 void print_log_normal(void);
 void print_log_erase_flash(void);
 void print_log_read_flash(void);
@@ -18,6 +19,10 @@ void print_log_touch_event_move(void);
 void print_log_touch_event_press_base(void);
 void print_log_touch_event(void);
 
+/**
+ * @description: Initialize the parameter structure of log sub-system.
+ * @return {void}
+ */
 void LogParam_Init(void)
 {
     logParam.progress         = &g_progress;
@@ -26,6 +31,12 @@ void LogParam_Init(void)
     logParam.logBuffer        = (char*)logBuffer;
 }
 
+/**
+ * @description: Open to external functions, used to print log according to the
+ * given LogType
+ * @param {LogType} logType: The type of log
+ * @return {void}
+ */
 void print_log(LogType logType)
 {
     // while(__HAL_USART_GET_FLAG(&g_uart1_handle, USART_FLAG_TC) == RESET);
@@ -41,12 +52,21 @@ void print_log(LogType logType)
     }
 }
 
+/**
+ * @description: Print the the log of plain char-string.
+ * @return {void}
+ */
 void print_log_normal()
 {
     char* normal_log = logParam.logInfo;
     log_n("%s", normal_log);
 }
 
+/**
+ * @description: Print the log of the operation of erasing ex-flash, showing the
+ * propgress with "x%"
+ * @return {void}
+ */
 void print_log_erase_flash()
 {
     Progress* progress = logParam.progress;
@@ -56,12 +76,22 @@ void print_log_erase_flash()
     print_log_progress();
 }
 
+/**
+ * @description: Print the log of the operation of reading ex-flash, showing the
+ * propgress with "x%"
+ * @return {void}
+ */
 void print_log_read_flash()
 {
     //    ProgressWithInfo* progressWithInfo = logParam.progressWithInfo;
     /* Maybe don't need to do anything */
 }
 
+/**
+ * @description: Print the log of the operation of writing ex-flash, showing the
+ * src and dest of the writing, and the propgress with "x%"
+ * @return {void}
+ */
 void print_log_write_flash()
 {
     ProgressWithInfo* progressWithInfo = logParam.progressWithInfo;
@@ -79,6 +109,10 @@ void print_log_write_flash()
     print_log_progress();
 }
 
+/**
+ * @description: Show the progress, with the format of "x%"
+ * @return {void}
+ */
 void print_log_progress()
 {
     static uint32_t val_record;
@@ -97,6 +131,12 @@ void print_log_progress()
     }
 }
 
+/**
+ * @description: The base operation of printing a piece log of the progress,
+ * memorizing the current value.
+ * @param {uint32_t*} record: A pointer to last value of the progress.
+ * @return {void}
+ */
 void print_log_progress_base(uint32_t* record)
 {
     Progress* progress = logParam.progress;
@@ -113,7 +153,7 @@ void print_log_progress_base(uint32_t* record)
 }
 
 /**
- * @description:
+ * @description: Handle the Print log of move event,
  * @return {*}
  */
 void print_log_touch_event()
@@ -128,6 +168,10 @@ void print_log_touch_event()
     }
 }
 
+/**
+ * @description: Print log of move event
+ * @return {void}
+ */
 void print_log_touch_event_move()
 {
     TouchEventInfo* touchEventInfo = logParam.touchEventInfo;
@@ -138,9 +182,13 @@ void print_log_touch_event_move()
     log_n("Angle: %.2f", touchEventInfo->angle);
     log_n("SlideDirection: %s",
           SlideDirectionStr[touchEventInfo->slideDirection]);
-	log_n("");
+    log_n("");
 }
 
+/**
+ * @description: Print log of press event, including ShortPress and LongPress.
+ * @return {void}
+ */
 void print_log_touch_event_press_base()
 {
     TouchEventInfo* touchEventInfo = logParam.touchEventInfo;
@@ -156,7 +204,7 @@ void print_log_touch_event_press_base()
             (touchEventInfo->endPos[0].x - touchEventInfo->startPos[0].x) / 2,
         touchEventInfo->startPos[0].y +
             (touchEventInfo->endPos[0].y - touchEventInfo->startPos[0].y) / 2);
-	logBufferAppend("PressingTime: %2d\r\n", PressingTime_prev);
+    logBufferAppend("PressingTime: %2d\r\n", PressingTime_prev);
     log_n("%s", logParam.logBuffer);
-	log_n("");
+    log_n("");
 }
