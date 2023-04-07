@@ -61,6 +61,8 @@ char* getFontPath(char* dest, FontName fontName, FontSize fontSize)
     }
     strcat(dest, dotStr);
     strcat(dest, (condition ? suffixStr[BIN] : suffixStr[DZK]));
+	
+	return dest;
 }
 
 /**
