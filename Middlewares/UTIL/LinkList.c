@@ -4,28 +4,28 @@
 #include "log.h"
 
 // 创建双向链表结点
-Node* create_node(ElemType data)
+LinkedNode* create_node(ElemType data)
 {
-    Node* node =
-        (Node*)mymalloc(LINKEDLIST_MALLOC_SOURCE, sizeof(Node));  // 申请内存
+    LinkedNode* node =
+        (LinkedNode*)mymalloc(LINKEDLIST_MALLOC_SOURCE, sizeof(LinkedNode));  // 申请内存
     node->data = data;
     node->prev = NULL;
     node->next = NULL;
     return node;
 }
 
-void init_LinkList(LinkedList* linkedlist)
+void init_LinkedList(LinkedList* linkedlist)
 {
     linkedlist->head = NULL;
     linkedlist->tail = NULL;
     linkedlist->size = 0;
 }
 
-void free_LinkList(LinkedList* linkedlist)
+void free_LinkedList(LinkedList* linkedlist)
 {
-    Node* tmp = NULL;
+    LinkedNode* tmp = NULL;
     while (linkedlist->size) {
-        Node* tmp        = linkedlist->head;
+        tmp        = linkedlist->head;
         linkedlist->head = linkedlist->head->next;
         myfree(LINKEDLIST_MALLOC_SOURCE, tmp);
         tmp = NULL;
@@ -34,13 +34,13 @@ void free_LinkList(LinkedList* linkedlist)
 }
 
 // 获取头结点
-Node* get_head(LinkedList* linkedlist)
+LinkedNode* get_head(LinkedList* linkedlist)
 {
     return linkedlist->head;
 }
 
 // 获取尾结点
-Node* get_tail(LinkedList* linkedlist)
+LinkedNode* get_tail(LinkedList* linkedlist)
 {
     return linkedlist->tail;
 }
@@ -53,7 +53,7 @@ size_t get_size(LinkedList* linkedlist)
 
 void show_LinkList(LinkedList* linkedlist)
 {
-    Node* node = linkedlist->head;
+    LinkedNode* node = linkedlist->head;
     for (int i = 0; i < linkedlist->size; ++i) {
         log_n("%d ", node->data);
         node = node->next;
@@ -63,7 +63,7 @@ void show_LinkList(LinkedList* linkedlist)
 // 插入头结点
 void push_head(LinkedList* linkedlist, ElemType data)
 {
-    Node* new_node = create_node(data);
+    LinkedNode* new_node = create_node(data);
 
     // 链表为空
     if (linkedlist->size == 0) {
@@ -85,7 +85,7 @@ void push_head(LinkedList* linkedlist, ElemType data)
 // 插入尾结点
 void push_tail(LinkedList* linkedlist, ElemType data)
 {
-    Node* new_node = create_node(data);
+    LinkedNode* new_node = create_node(data);
 
     // 链表为空
     if (linkedlist->size == 0) {
@@ -121,7 +121,7 @@ bool insert_node(LinkedList* linkedlist, int index, ElemType data)
         return true;
     }
 
-    Node* tmp = NULL;
+    LinkedNode* tmp = NULL;
     // 插入的位置如果小于等于中间位置，那插入的位置更靠近头结点
     // 从头结点开始往后遍历到插入的前一个位置
     if (index <= linkedlist->size / 2) {
@@ -139,7 +139,7 @@ bool insert_node(LinkedList* linkedlist, int index, ElemType data)
         }
     }
 
-    Node* new_node = create_node(data);
+    LinkedNode* new_node = create_node(data);
 
     tmp->next->prev = new_node;
     new_node->next  = tmp->next;
@@ -157,11 +157,11 @@ void del_head(LinkedList* linkedlist)
     }
     if (linkedlist->size == 1) {
         myfree(LINKEDLIST_MALLOC_SOURCE, linkedlist->head);  // 释放内存
-        init_list(linkedlist);
+        init_LinkedList(linkedlist);
         return;
     }
 
-    Node* tmp              = linkedlist->head;  // 保存头结点
+    LinkedNode* tmp              = linkedlist->head;  // 保存头结点
     linkedlist->head       = tmp->next;
     linkedlist->head->prev = NULL;
 
@@ -178,11 +178,11 @@ void del_tail(LinkedList* linkedlist)
     }
     if (linkedlist->size == 1) {
         myfree(LINKEDLIST_MALLOC_SOURCE, linkedlist->tail);  // 释放内存
-        init_list(linkedlist);
+        init_LinkedList(linkedlist);
         return;
     }
 
-    Node* tmp              = linkedlist->tail;  // 保存尾结点
+    LinkedNode* tmp              = linkedlist->tail;  // 保存尾结点
     linkedlist->tail       = tmp->prev;
     linkedlist->tail->next = NULL;
 
@@ -209,7 +209,7 @@ bool del_node(LinkedList* linkedlist, ElemType index)
         return true;
     }
 
-    Node* tmp = NULL;
+    LinkedNode* tmp = NULL;
 
     // 删除的位置如果小于中间位置
     if (index < linkedlist->size / 2) {
@@ -237,12 +237,12 @@ bool del_node(LinkedList* linkedlist, ElemType index)
 }
 
 // 获取任意位置结点
-Node* get_node(LinkedList* linkedlist, ElemType index)
+LinkedNode* get_node(LinkedList* linkedlist, ElemType index)
 {
     // 判断插入的位置是否超出链表的范围
     if (index < 0 || index > linkedlist->size)
         return NULL;
-    Node* node = NULL;
+    LinkedNode* node = NULL;
     // 目标结点的位置如果小于中间位置
     if (index < linkedlist->size / 2) {
         // 从头结点开始往后遍历到目标结点
@@ -262,11 +262,11 @@ Node* get_node(LinkedList* linkedlist, ElemType index)
     return node;
 }
 
-Node* find_data(LinkedList* linkedlist, ElemType data)
+LinkedNode* find_data(LinkedList* linkedlist, ElemType data)
 {
     if (linkedlist->size == 0)
         return NULL;
-    Node* node = linkedlist->head;
+    LinkedNode* node = linkedlist->head;
     while (node) {
         if (node->data == data)
             return node;
@@ -277,7 +277,7 @@ Node* find_data(LinkedList* linkedlist, ElemType data)
 
 bool modify_node(LinkedList* linkedlist, int index, ElemType data)
 {
-    Node* node = get_node(linkedlist, index);
+    LinkedNode* node = get_node(linkedlist, index);
     if (node) {
         node->data = data;
         return true;
@@ -287,7 +287,7 @@ bool modify_node(LinkedList* linkedlist, int index, ElemType data)
 
 bool modify_data(LinkedList* linkedlist, ElemType data, ElemType val)
 {
-    Node* node = find_data(linkedlist, data);
+    LinkedNode* node = find_data(linkedlist, data);
     if (node) {
         node->data = val;
         return true;

@@ -4,10 +4,11 @@
 #include "SYSTEM/sys/sys.h"
 #include "math.h"
 #include "float.h"
-#include "BSP/ATK_MD0700/atk_md0700.h"
+#include "BSP/ATK_MD0700/atk_md0700_touch.h"
 
 #define isFloatEqual(a, b) 	(fabs((a)-(b)) < 1e-6)
 #define isFloatZero(a) 		(fabs(a) < FLT_EPSILON)
+
 typedef struct {
 	uint32_t cur_val;	/* current value, start from 0*/
 	uint32_t dead_val;	/* target value */
@@ -25,8 +26,8 @@ typedef struct {
 } ProgressWithInfo;
 
 typedef struct {
-	atk_md0700_touch_point_t* startPos;
-	atk_md0700_touch_point_t* endPos;
+	Position* startPos;
+	Position* endPos;
 	uint8_t flag;
 	float angle;
 	uint8_t slideDirection;

@@ -41,5 +41,6 @@ void     Show_Str_Mid(uint16_t x,
                       uint8_t* str,
                       FontName fontName,
                       FontSize fontSize,
-                      uint8_t  len);
+                      uint8_t  len,
+                      uint8_t  mode);
 #endif

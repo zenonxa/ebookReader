@@ -60,8 +60,8 @@ static const uint16_t g_atk_md0700_touch_tp_reg[ATK_MD0700_TOUCH_TP_MAX] = {
     ATK_MD0700_TOUCH_REG_TP5,
 };
 
-atk_md0700_touch_point_t point_prev[ATK_MD0700_TOUCH_TP_ENABLE_CNT];
-atk_md0700_touch_point_t point_cur[ATK_MD0700_TOUCH_TP_ENABLE_CNT];
+Position point_prev[ATK_MD0700_TOUCH_TP_ENABLE_CNT];
+Position point_cur[ATK_MD0700_TOUCH_TP_ENABLE_CNT];
 
 uint8_t PressingTime_prev = 0;
 
@@ -169,14 +169,14 @@ void atk_md0700_touch_init(void)
  * @retval      0   : 没有扫描到触摸点
  *              其他: 实际获取到的触摸点信息数量
  */
-uint8_t atk_md0700_touch_scan(atk_md0700_touch_point_t* point, uint8_t cnt)
+uint8_t atk_md0700_touch_scan(Position* point, uint8_t cnt)
 {
     uint8_t                   tp_stat;
     uint8_t                   tp_cnt;
     uint8_t                   point_index;
     atk_md0700_lcd_disp_dir_t dir;
     uint8_t                   tpn_info[4];
-    atk_md0700_touch_point_t  point_raw;
+    Position  point_raw;
 
     if ((cnt == 0) || (cnt > ATK_MD0700_TOUCH_TP_MAX)) {
         return 0;
@@ -403,7 +403,7 @@ TouchEvent touchFlagMappingToEvent(TouchFlag touchFlag)
         case ShortPressingFlag: touchEvent = ShortPress; break;
         default: touchEvent = NoEvent; break;
     }
-    return touchEvent;
+    return (TouchEvent)touchEvent;
 }
 
 TouchEvent getTouchEvent(uint8_t flag)
@@ -413,10 +413,10 @@ TouchEvent getTouchEvent(uint8_t flag)
     static uint16_t dy;
     static uint16_t dx;
     static float    angle;
-    static uint8_t  slideDirestion;
+    static uint8_t  slideDirection;
     for (i = Touch_Flag_Min; i <= Touch_Flag_Max; ++i) {
-        if (getTouchFlag(flag, i)) {
-            touchEvent = touchFlagMappingToEvent(i);
+        if (getTouchFlag(flag, (TouchFlag)i)) {
+            touchEvent = touchFlagMappingToEvent((TouchFlag)i);
             break;
         }
     }
@@ -424,12 +424,12 @@ TouchEvent getTouchEvent(uint8_t flag)
         dy             = point_cur[0].y - point_prev[0].y;
         dx             = point_cur[0].x - point_prev[0].x;
         angle          = getSlideAngle(dy, dx);
-        slideDirestion = getSlideDirection(point_prev[0].x, point_prev[0].y,
+        slideDirection = getSlideDirection(point_prev[0].x, point_prev[0].y,
                                            point_cur[0].x, point_cur[0].y);
-        TouchEventInfo_Update(flag, angle, slideDirestion, touchEvent);
+        TouchEventInfo_Update(flag, angle, (SlideDirection)slideDirection, (TouchEvent)touchEvent);
         print_log(Touch_Event_Log);
     }
-    return touchEvent;
+    return (TouchEvent)touchEvent;
 }
 
 #endif /* ATK_MD0700_USING_TOUCH */

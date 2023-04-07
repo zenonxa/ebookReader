@@ -21,6 +21,8 @@ int main(void)
     uint8_t    tmp_buf[PAGE_SIZE];
     FontHeader fontHeader = {FLAG_OK, FLAG_OK};
     uint16_t   color      = ATK_MD0700_BLACK;
+    uint16_t   startX;
+    uint16_t   startY;
 
     page_buffer[0] = tmp_buf;
 
@@ -158,14 +160,33 @@ int main(void)
     int16_t dx, dy;
     clearTouchFlag(&flag);
     TouchEventInfo_Init();
-    __HAL_TIM_DISABLE(&TIM3_Handler);
+    //__HAL_TIM_DISABLE(&TIM3_Handler);
+    Button* pBtn = NewButton(100, 100, 120, 120, RGB888toRGB565(0xEEEEEE), 3);
+    pBtn->str    = "Hello world";
+    pBtn->DrawButton(pBtn);
+
+    startX = 0;
+    startY = ATK_MD0700_LCD_HEIGHT / 10 * 9;
+    color  = RGB888toRGB565(0XCCCCCC);
+    atk_md0700_fill(startX, startY, ATK_MD0700_LCD_WIDTH - 1,
+                    startY + LINE_WIDTH_DEFAULT, &color, SINGLE_COLOR_BLOCK);
     while (1) {
 #    if 1
         touchEventUpdate(&touchState, &flag);
         if (touchState == OnRelease) {
             touchEvent = getTouchEvent(flag);
+            /* Do things according the touch event */
+            if (GUI_isClicked((Obj*)pBtn, &point_cur[0])) {
+                pBtn->ispressed = !pBtn->ispressed;
+                pBtn->DrawButton(pBtn);
+            }
             clearTouchFlag(&flag);
             touchState = Touch_State_None;
+        } else if (touchState == OnPress) {
+            if (GUI_isClicked((Obj*)pBtn, &point_cur[0])) {
+                pBtn->ispressed = !pBtn->ispressed;
+                pBtn->DrawButton(pBtn);
+            }
         }
 #    else
         if (needRerender) {

@@ -20,8 +20,8 @@
 
 #ifndef __ATK_MD0700_TOUCH_H
 #define __ATK_MD0700_TOUCH_H
-
-#include "./BSP/ATK_MD0700/atk_md0700.h"
+#include "BSP/ATK_MD0700/atk_md0700_util.h"
+//#include "util.h"
 
 #if (ATK_MD0700_USING_TOUCH != 0)
 
@@ -65,21 +65,16 @@
                                   ATK_MD0700_TOUCH_CS_GPIO_PIN,                \
                                   GPIO_PIN_RESET);                             \
         } while (0)
-
-/* 触摸点坐标数据结构 */
-typedef struct
-{
-    int16_t x; /* 触摸点X坐标 */
-    int16_t y; /* 触摸点Y坐标 */
-} atk_md0700_touch_point_t;
+typedef Position atk_md0700_touch_point_t;
+//typedef struct atk_md0700_touch_point_t Position;
 
 /* Info of a rectangle area, including position o fstart point, width and height
  */
 typedef struct
 {
-    atk_md0700_touch_point_t startPoint;
-    uint16_t                 width;
-    uint16_t                 height;
+    Position startPoint;
+    uint16_t width;
+    uint16_t height;
 } AreaInfo;
 
 extern uint8_t PressingTime_prev;
@@ -136,8 +131,8 @@ typedef enum {
     Touch_Flag_None    = Touch_Flag_Cnt,     /* Invalid value */
 } TouchFlag;
 
-extern atk_md0700_touch_point_t point_prev[ATK_MD0700_TOUCH_TP_ENABLE_CNT];
-extern atk_md0700_touch_point_t point_cur[ATK_MD0700_TOUCH_TP_ENABLE_CNT];
+extern Position point_prev[ATK_MD0700_TOUCH_TP_ENABLE_CNT];
+extern Position point_cur[ATK_MD0700_TOUCH_TP_ENABLE_CNT];
 
 // #    define setTouchStateFlag(state, flag) ((state) | (1 << (flag)))
 // #    define getTouchStateFlag(state, flag) (((state) >> (flag)) & 0x01)
@@ -149,8 +144,8 @@ extern atk_md0700_touch_point_t point_cur[ATK_MD0700_TOUCH_TP_ENABLE_CNT];
 
 /* 操作函数 */
 void    atk_md0700_touch_init(void); /* ATK-MD0700模块触摸初始化 */
-uint8_t atk_md0700_touch_scan(atk_md0700_touch_point_t* point,
-                              uint8_t cnt); /* ATK-MD0700模块触摸扫描 */
+uint8_t atk_md0700_touch_scan(Position* point,
+                              uint8_t   cnt); /* ATK-MD0700模块触摸扫描 */
 float   getSlideAngle(int16_t dy, int16_t dx);
 SlideDirection getSlideDirection(uint16_t startX,
                                  uint16_t startY,

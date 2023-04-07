@@ -215,7 +215,7 @@ uint8_t* Show_Str(uint16_t x,
                 } else {
                     atk_md0700_show_char(x, y, *(char*)str,
                                          (atk_md0700_lcd_font_t)size,
-                                         ATK_MD0700_BLACK);  // 有效部分写入
+                                         FOREGROUND_COLOR);  // 有效部分写入
                 }
                 str++;
                 x += size / 2;  // 字符,为全字的一半
@@ -242,12 +242,13 @@ uint8_t* Show_Str(uint16_t x,
 // 在指定宽度的中间显示字符串
 // 如果字符长度超过了len,则用Show_Str显示
 // len:指定要显示的宽度
+// mode: 0:非叠加 1:叠加
 void Show_Str_Mid(uint16_t x,
                   uint16_t y,
                   uint8_t* str,
                   FontName fontName,
                   FontSize fontSize,
-                  uint8_t  len)
+                  uint8_t  len, uint8_t mode)
 {
     uint16_t strlenth = 0;
     uint8_t  size     = getSize(fontSize);
@@ -255,11 +256,11 @@ void Show_Str_Mid(uint16_t x,
     strlenth *= size / 2;
     if (strlenth > len) {
         Show_Str(x, y, ATK_MD0700_LCD_WIDTH, ATK_MD0700_LCD_HEIGHT, str,
-                 fontName, fontSize, 1);
+                 fontName, fontSize, mode);
     } else {
         strlenth = (len - strlenth) / 2;
         Show_Str(strlenth + x, y, ATK_MD0700_LCD_WIDTH, ATK_MD0700_LCD_HEIGHT,
-                 str, fontName, fontSize, 1);
+                 str, fontName, fontSize, mode);
     }
 }
 

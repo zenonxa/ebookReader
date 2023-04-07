@@ -2,6 +2,7 @@
 #define __LIST_H__
 
 #include "gui.h"
+#include "color.h"
 
 typedef struct List_struct
 {
