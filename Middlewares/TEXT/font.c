@@ -88,9 +88,9 @@ uint32_t getFontAddr(FontName fontName, FontSize fontSize)
     return addr;
 }
 
-
 /**
- * @description: Open to the external function to get the address of the Unicode-GBK mapping table.
+ * @description: Open to the external function to get the address of the
+ * Unicode-GBK mapping table.
  * @return {uint32_t} The address of the Unicode-GBK mapping table.
  */
 /**/
@@ -101,8 +101,10 @@ uint32_t getMappingTableAddr(void)
 
 /* Get path of [UNIGBK.BIN] */
 /**
- * @description: Open to the external function to get the path string of the Unicode-GBK mappint table.
- * @param {uint8_t*} pathBuf: the buffer to save the path string of Unicode-GBK mappint table
+ * @description: Open to the external function to get the path string of the
+ * Unicode-GBK mappint table.
+ * @param {uint8_t*} pathBuf: the buffer to save the path string of Unicode-GBK
+ * mappint table
  * @return {void}
  */
 void getMappingTablePath(uint8_t* pathBuf)
@@ -112,7 +114,6 @@ void getMappingTablePath(uint8_t* pathBuf)
     strcat((char*)pathBuf, dotStr);
     strcat((char*)pathBuf, suffixStr[BIN]);
 }
-
 
 /**
  * @description: Convert the fontSize from Enum type to uint8_t.
@@ -132,7 +133,6 @@ uint8_t getSize(const FontSize fontSize)
     return size;
 }
 
-
 /**
  * @description: Check the font header in ex-flash once.
  * @return {uint8_t} 0: success  1: fail
@@ -148,7 +148,6 @@ uint8_t check_font_header_once(void)
     }
     return res;
 }
-
 
 /**
  * @description: Check the font header in ex-flash, trying for the given times.
@@ -177,10 +176,10 @@ uint8_t check_font_header(uint8_t tryTimes)
     return res;
 }
 
-
 /**
  * @description: Write font header to ex-flash
- * @param {FontHeader*} pFontHeader: A pointer pointering to a structure FontHeader
+ * @param {FontHeader*} pFontHeader: A pointer pointering to a structure
+ * FontHeader
  * @param {uint8_t} tryTimes: the number of the time to try
  * @return {uint8_t} 0: success  1: fail
  */
@@ -209,7 +208,6 @@ uint8_t write_font_header(FontHeader* pFontHeader, uint8_t tryTimes)
     }
     return res;
 }
-
 
 #if 0
 uint8_t getFontFileType(FontName fontName, FontSize fontSize)
