@@ -15,6 +15,12 @@
 //////////////////////////////////////////////////////////////////////////////////
 
 #define LongPressingJudgeTime 80
+#define ENABLE 1
+#define DISABLE 0
+
+/* Flags related to whether the corresponding delay operation is performed. */
+extern uint8_t TimerDelay_Press;
+/* The incrementing variable for the deferred operation. */
 extern uint8_t PressingKeepingTime;
 
 extern TIM_HandleTypeDef TIM3_Handler;  // 定时器句柄

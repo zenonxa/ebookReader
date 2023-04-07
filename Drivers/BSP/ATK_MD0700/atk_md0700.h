@@ -103,8 +103,17 @@ typedef enum {
     MULTI_COLOR_BLOCK,
 } atk_md0700_lcd_fill_mode_t;
 
+#define R5_SIZE 32
+#define G6_SIZE 64
+#define B5_SIZE 32
+
+#define R8_SIZE 256
+#define G8_SIZE 256
+#define B8_SIZE 256
+
 #define RGB888toRGB565(R8, G8, B8)                                             \
-    ((0.299 * (R8) + 0.587 * (G8) + 0.114 * (B8)) / 255)
+    (((R8 * R5_SIZE / R8_SIZE) << 11) + ((G8 * G6_SIZE / G8_SIZE) << 5) +      \
+     ((B8 * B5_SIZE / B8_SIZE)))
 
 /* 常用颜色定义（RGB565） */
 #define ATK_MD0700_WHITE 0xFFFF

@@ -340,7 +340,8 @@ TouchState touchEventUpdate(uint8_t* pState, uint8_t* pFlag)
             point_prev->y = point_cur->y;
             /* ToDo: Reset timer for LongPress timing */
             PressingKeepingTime = 0;
-            __HAL_TIM_ENABLE(&TIM3_Handler);
+            //__HAL_TIM_ENABLE(&TIM3_Handler);
+            TimerDelay_Press = ENABLE;
             return (TouchState)*pState;
         }
         /* Moving flag exists */
@@ -365,8 +366,9 @@ TouchState touchEventUpdate(uint8_t* pState, uint8_t* pFlag)
          */
         if (PressingKeepingTime >= LongPressingJudgeTime) {
             setTouchFlag(pFlag, LongPressingFlag);
-            __HAL_TIM_DISABLE(&TIM3_Handler);
-            PressingKeepingTime = 0;
+            TimerDelay_Press = DISABLE;
+            //__HAL_TIM_DISABLE(&TIM3_Handler);
+            // PressingKeepingTime = 0;
             return (TouchState)*pState;
         }
         /* ShortPressing flag exists */
@@ -381,11 +383,11 @@ TouchState touchEventUpdate(uint8_t* pState, uint8_t* pFlag)
     } else {
         if ((*pState != Touch_State_None) && (*pState != OnPress)) {
             *pState = OnRelease;
-            __HAL_TIM_DISABLE(&TIM3_Handler);
-            if (PressingKeepingTime != 0) {
-                PressingTime_prev = PressingKeepingTime;
-            }
+            //__HAL_TIM_DISABLE(&TIM3_Handler);
+            PressingTime_prev = PressingKeepingTime;
+            TimerDelay_Press  = DISABLE;
             PressingKeepingTime = 0;
+            // PressingKeepingTime = 0;
             return (TouchState)*pState;
         }
     }
