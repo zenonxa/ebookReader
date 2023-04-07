@@ -1,6 +1,7 @@
 #ifndef __LOG_H__
 #define __LOG_H__
 
+#include "SYSTEM/usart/usart.h"
 #include "util.h"
 
 /* Types of log */
@@ -69,7 +70,7 @@ extern LogParam logParam;
     } while (1)
 
 /* Check the value */
-#define check_value_equal(actual, expect, log_format, ...)                           \
+#define check_value_equal(actual, expect, log_format, ...)                     \
     do {                                                                       \
         if (!((actual) == (expect))) {                                         \
             infinite_throw(log_format, ##__VA_ARGS__);                         \

@@ -8,6 +8,8 @@
 uint8_t* logBuffer;
 LogParam logParam;
 
+extern uint8_t PressingTime_prev;
+
 /* Internal interface, not open to external function */
 void print_log_normal(void);
 void print_log_erase_flash(void);
