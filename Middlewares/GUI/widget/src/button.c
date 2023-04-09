@@ -23,16 +23,16 @@ Button* NewButton(u16      xpos,
                   u16      width,
                   u16      height,
                   uint16_t fontColor,
-                  uint8_t  borderWidth,
-                  uint8_t  borderFlag)
+                  Border*  border)
 {
     Button* button = (Button*)mymalloc(GUI_MALLOC_SOURCE, sizeof(Button));
 
     button->ispressed      = UNPRESSED;
     button->str            = 0;
     button->fontColor      = fontColor;
-    button->borderWidth    = borderWidth;
-    button->borderFlag     = borderFlag;
+    button->borderWidth    = border->borderWidth;
+    button->borderFlag     = border->borderFlag;
+    button->borderColor    = border->borderColor;
     button->fontType       = GUI_FONT_TYPE_DEFAULT;
     button->fontSize       = GUI_FONT_SIZE_DEFAULT;
     ((Obj*)button)->height = height;
@@ -138,5 +138,11 @@ void ButtonSetFont(Button* button, const FontName fontName)
 void ButtonSetColor(Button* button, COLOR_DATTYPE fontColor)
 {
     button->fontColor = fontColor;
+    button->DrawButton(button);
+}
+
+void ButtonSetStr(Button* button, const char* str)
+{
+    button->str = str;
     button->DrawButton(button);
 }

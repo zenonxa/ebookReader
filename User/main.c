@@ -44,66 +44,7 @@ int main(void)
     }
     LogParam_Init();
 #if ACTION_ONCE
-    ActionCommand actionCommand = ACTION_COMMAND;
-    switch (actionCommand) {
-        case WriteFontHeader:
-            fontHeader.ugbkok = FLAG_OK;
-            fontHeader.fontok = FLAG_OK;
-            res               = write_font_header(&fontHeader, 10);
-            infinite_throw("Write FontHeader done.");
-            break;
-        case EraseFontHeader:
-            fontHeader.ugbkok = 0x00;
-            fontHeader.fontok = 0x00;
-            res               = write_font_header(&fontHeader, 10);
-            if (res) {
-                infinite_throw("Erase FontHeader done.");
-            }
-            break;
-        case WriteFontLib: {
-            FontName fontName = Font_SimHei;
-            uint8_t  i;
-            char     fontPath[60];
-            waiting_for_SD_Card();
-            mount_SD_Card();
-            res = update_fontx(Font_KaiTi, PX16);
-            if (res) {
-                infinite_throw("Fail to load [%s:%s] to ex-Flash", Font_KaiTi,
-                               PX16);
-            }
-            // for (i = Font_Size_Min; i <= Font_Size_Max; i++) {
-            //     res = update_fontx(fontName, (FontSize)i);
-            //     if (res) {
-            //         infinite_throw("Fail to load [%s:%s] to ex-Flash",
-            //                        FontNameStr[fontName], FontSizeStr[i]);
-            //     }
-            // }
-            infinite_throw("Write font library to ex-Flash done.");
-            break;
-        }
-        case LoadFileToFlash: {
-            char*    fileName = "";
-            uint32_t address  = getFontAddr(Font_SimSun, PX12);
-            // load_file_to_flash(fileName, address);
-            break;
-        }
-        case SingleTest: {
-            uint8_t i, j;
-            char    font_update_log_buf[100];
-            char    filePath[32];
-            for (i = Font_Name_Min; i <= Font_Name_Max; ++i) {
-                for (j = Font_Size_Min; j <= Font_Size_Max; ++j) {
-                    log_n("File path: %s, address in flash: %d",
-                          getFontPath(filePath, (FontName)i, (FontSize)j),
-                          getFontAddr(i, j));
-                    delay_ms(10);
-                }
-            }
-            break;
-        }
-        default: infinite_throw("Action once. In default of switch..."); break;
-    }
-    LED_flashing(1000);
+    excuteCommand();
 #else
     /* Detect SD Card and mount FATFS for SD Card */
     FIL      my_file;
@@ -166,31 +107,30 @@ int main(void)
     //     BORDER_ALL);
     // pBtn->str = "Hello world";
     // pBtn->DrawButton(pBtn);
-    const uint16_t menuWidth_1  = 400;
-    const uint16_t menuHeight_1 = 600;
-    Border         border       = {RGB888toRGB565(0x000000), 3,
-                                   BORDER_FLAG(BORDER_TOP) | BORDER_FLAG(BORDER_BOTTOM)};
-    List*          pList = NewList((ATK_MD0700_LCD_WIDTH - menuWidth_1) / 2,
-                                   (ATK_MD0700_LCD_HEIGHT -
-                           ATK_MD0700_LCD_HEIGHT / 10 / 2 - menuHeight_1) /
-                                       2,
-                                   menuWidth_1, menuHeight_1, &border, 70, 55, NULL, 1);
-    Button*        btn_1 =
-        NewButton(10, 10, 10, 10, RGB888toRGB565(0x000000), 3, BORDER_ALL);
-    Button* btn_2 =
-        NewButton(13, 10, 10, 10, RGB888toRGB565(0x000000), 3, BORDER_ALL);
-    Button* btn_3 =
-        NewButton(18, 10, 10, 10, RGB888toRGB565(0x000000), 3, BORDER_ALL);
-    Button* btn_4 =
-        NewButton(60, 13, 10, 10, RGB888toRGB565(0x000000), 3, BORDER_ALL);
-    // AppendSubList(pList);
+    const uint16_t menuWidth_1     = 400;
+    const uint16_t menuHeight_1    = 600;
+    Border         listBorder      = {.borderColor = RGB888toRGB565(0x000000),
+                                      .borderWidth = 3,
+                                      .borderFlag  = BORDER_FLAG(BORDER_TOP) |
+                                                    BORDER_FLAG(BORDER_BOTTOM)};
+    uint16_t       buttonFontColor = RGB888toRGB565(0x000000);
+    Border         buttonBorder    = {.borderColor = RGB888toRGB565(0x000000),
+                                      .borderWidth = 3,
+                                      .borderFlag  = BORDER_NULL};
+    List*          pList =
+        NewList((ATK_MD0700_LCD_WIDTH - menuWidth_1) / 2,
+                (ATK_MD0700_LCD_HEIGHT - ATK_MD0700_LCD_HEIGHT / 10 / 2 -
+                 menuHeight_1) /
+                    2,
+                menuWidth_1, menuHeight_1, &listBorder, 70, 55, NULL, 1);
+    Button* btn_1 = NewButton(10, 10, 10, 10, buttonFontColor, &buttonBorder);
+    Button* btn_2 = NewButton(13, 10, 10, 10, buttonFontColor, &buttonBorder);
+    Button* btn_3 = NewButton(18, 10, 10, 10, buttonFontColor, &buttonBorder);
+    Button* btn_4 = NewButton(60, 13, 10, 10, buttonFontColor, &buttonBorder);
     AppendSubListItem(pList, 0, (Obj*)btn_1);
-    // AppendSubList(pList);
     AppendSubListItem(pList, 1, (Obj*)btn_2);
-    // AppendSubList(pList);
     AppendSubListItem(pList, 2, (Obj*)btn_3);
     AppendSubListItem(pList, 2, (Obj*)btn_4);
-
     pList->DrawList(pList);
 
     startX = 0;
@@ -294,3 +234,70 @@ void show_logo(uint8_t* logoPicture, uint16_t delayTime_ms)
     /* Delay for Logo */
     delay_ms(delayTime_ms);
 }
+
+#if ACTION_ONCE
+void excuteCommand(void)
+{
+    uint8_t       res           = 0;
+    ActionCommand actionCommand = ACTION_COMMAND;
+    switch (actionCommand) {
+        case WriteFontHeader:
+            fontHeader.ugbkok = FLAG_OK;
+            fontHeader.fontok = FLAG_OK;
+            res               = write_font_header(&fontHeader, 10);
+            infinite_throw("Write FontHeader done.");
+            break;
+        case EraseFontHeader:
+            fontHeader.ugbkok = 0x00;
+            fontHeader.fontok = 0x00;
+            res               = write_font_header(&fontHeader, 10);
+            if (res) {
+                infinite_throw("Erase FontHeader done.");
+            }
+            break;
+        case WriteFontLib: {
+            FontName fontName = Font_SimHei;
+            uint8_t  i;
+            char     fontPath[60];
+            waiting_for_SD_Card();
+            mount_SD_Card();
+            res = update_fontx(Font_KaiTi, PX16);
+            if (res) {
+                infinite_throw("Fail to load [%s:%s] to ex-Flash", Font_KaiTi,
+                               PX16);
+            }
+            // for (i = Font_Size_Min; i <= Font_Size_Max; i++) {
+            //     res = update_fontx(fontName, (FontSize)i);
+            //     if (res) {
+            //         infinite_throw("Fail to load [%s:%s] to ex-Flash",
+            //                        FontNameStr[fontName], FontSizeStr[i]);
+            //     }
+            // }
+            infinite_throw("Write font library to ex-Flash done.");
+            break;
+        }
+        case LoadFileToFlash: {
+            char*    fileName = "";
+            uint32_t address  = getFontAddr(Font_SimSun, PX12);
+            // load_file_to_flash(fileName, address);
+            break;
+        }
+        case SingleTest: {
+            uint8_t i, j;
+            char    font_update_log_buf[100];
+            char    filePath[32];
+            for (i = Font_Name_Min; i <= Font_Name_Max; ++i) {
+                for (j = Font_Size_Min; j <= Font_Size_Max; ++j) {
+                    log_n("File path: %s, address in flash: %d",
+                          getFontPath(filePath, (FontName)i, (FontSize)j),
+                          getFontAddr(i, j));
+                    delay_ms(10);
+                }
+            }
+            break;
+        }
+        default: infinite_throw("Action once. In default of switch..."); break;
+    }
+    LED_flashing(1000);
+}
+#endif

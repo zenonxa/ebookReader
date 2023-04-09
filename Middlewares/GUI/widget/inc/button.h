@@ -16,6 +16,7 @@ typedef struct BT_struct
     bool          ispressed;  // 按下1，没按下0
     uint8_t       borderWidth;
     uint8_t       borderFlag;
+    uint8_t       borderColor;
     const char*   str;  // 字符串
 } Button;
 
@@ -30,6 +31,7 @@ Button* NewButton(u16      xpos,
                   u16      width,
                   u16      height,
                   uint16_t fontColor,
-                  uint8_t  borderWidth, uint8_t borderFlag);
+                  Border*  border);
+void    ButtonSetStr(Button* button, const char* str);
 
 #endif
