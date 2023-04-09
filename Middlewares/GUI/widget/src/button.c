@@ -23,7 +23,8 @@ Button* NewButton(u16      xpos,
                   u16      width,
                   u16      height,
                   uint16_t fontColor,
-                  uint8_t  borderWidth)
+                  uint8_t  borderWidth,
+                  uint8_t  borderFlag)
 {
     Button* button = (Button*)mymalloc(GUI_MALLOC_SOURCE, sizeof(Button));
 
@@ -31,12 +32,14 @@ Button* NewButton(u16      xpos,
     button->str            = 0;
     button->fontColor      = fontColor;
     button->borderWidth    = borderWidth;
+    button->borderFlag     = borderFlag;
     button->fontType       = GUI_FONT_TYPE_DEFAULT;
     button->fontSize       = GUI_FONT_SIZE_DEFAULT;
     ((Obj*)button)->height = height;
     ((Obj*)button)->width  = width;
     ((Obj*)button)->x      = xpos;
     ((Obj*)button)->y      = ypos;
+    ((Obj*)button)->type   = BUTTON;
     button->DrawButton     = &DrawButton;
     return button;
 }
@@ -85,19 +88,7 @@ void Obj_Skin_base(Obj* obj, COLOR_DATTYPE color)
 
 void draw_ButtonBorder(Button* button)
 {
-    uint8_t  i;
-    uint8_t  width  = button->obj.width;
-    uint8_t  height = button->obj.height;
-    uint16_t x      = button->obj.x;
-    uint16_t y      = button->obj.y;
-    for (i = 0; i < button->borderWidth; ++i) {
-        atk_md0700_draw_rect(x, y, x + width - 1, y + height - 1,
-                             ATK_MD0700_BLACK);
-        x--;
-        y--;
-        width += 2;
-        height += 2;
-    }
+    drawBorder((Obj*)button, button->borderWidth);
 }
 
 void BtDefaultText(Button* button)
@@ -114,9 +105,10 @@ void BtText(Button* button)
         GUI_SetFontSize(button->fontSize);
         length = strlen(button->str);
         if (button->ispressed == BT_PRESSED) {
-            button->fontColor = GUI_GetXORColor(button->fontColor);
+            GUI_setForeColor(GUI_GetXORColor(button->fontColor));
+        } else {
+            GUI_setForeColor(button->fontColor);
         }
-        GUI_setForeColor(button->fontColor);
         // Show_Str_Mid(((Obj*)button)->x, ((Obj*)button)->y,
         // (uint8_t*)(button->str),
         //              GUI_GetFontType(), GUI_GetFontSize(),

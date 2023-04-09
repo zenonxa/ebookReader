@@ -13,8 +13,9 @@ typedef struct BT_struct
     COLOR_DATTYPE fontColor;                // 字体颜色
     uint8_t       fontType;
     uint8_t       fontSize;
-    uint8_t       ispressed;  // 按下1，没按下0
+    bool          ispressed;  // 按下1，没按下0
     uint8_t       borderWidth;
+    uint8_t       borderFlag;
     const char*   str;  // 字符串
 } Button;
 
@@ -29,6 +30,6 @@ Button* NewButton(u16      xpos,
                   u16      width,
                   u16      height,
                   uint16_t fontColor,
-                  uint8_t  borderWidth);
+                  uint8_t  borderWidth, uint8_t borderFlag);
 
 #endif

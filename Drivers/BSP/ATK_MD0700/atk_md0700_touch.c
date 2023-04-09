@@ -246,11 +246,15 @@ void setTouchFlag(uint8_t* flag, TouchFlag touchFlag)
     *flag |= (0x01 << touchFlag);
 }
 
+void resetTouchFlag(uint8_t* flag, TouchFlag touchFlag) {
+    *flag &= (~(0x01 << touchFlag));
+}
+
 void clearTouchFlag(uint8_t* flag)
 {
     uint8_t i;
     for (i = Touch_Flag_Min; i <= Touch_Flag_Max; ++i) {
-        *flag &= (~(0x01 << i));
+        resetTouchFlag(flag, (TouchFlag)i);
     }
 }
 
@@ -346,6 +350,9 @@ TouchState touchEventUpdate(uint8_t* pState, uint8_t* pFlag)
         }
         /* Moving flag exists */
         if (getTouchFlag(*pFlag, MovingFlag)) {
+            // if (getTouchFlag(pFlag, FirstIntoMovingFlag)) {
+            //     resetTouchFlag(pFlag, FirstIntoMovingFlag);
+            // }
             *pState = Moving;
             return (TouchState)*pState;
         }
@@ -353,6 +360,10 @@ TouchState touchEventUpdate(uint8_t* pState, uint8_t* pFlag)
          */
         if ((abs(point_cur->x - point_prev->x) > TouchOffsetErrorValue) ||
             (abs(point_cur->y - point_prev->y) > TouchOffsetErrorValue)) {
+            //clearTouchFlag(pFlag);
+            // if (!getTouchFlag(pFlag, FirstIntoMovingFlag)) {
+            //     setTouchFlag(pFlag, FirstIntoMovingFlag);
+            // }
             setTouchFlag(pFlag, MovingFlag);
             *pState = Moving;
             return (TouchState)*pState;
@@ -365,6 +376,7 @@ TouchState touchEventUpdate(uint8_t* pState, uint8_t* pFlag)
         /* The timing of the decider(timer) is greater than the decision value
          */
         if (PressingKeepingTime >= LongPressingJudgeTime) {
+            //clearTouchFlag(pFlag);
             setTouchFlag(pFlag, LongPressingFlag);
             TimerDelay_Press = DISABLE;
             //__HAL_TIM_DISABLE(&TIM3_Handler);
@@ -377,6 +389,7 @@ TouchState touchEventUpdate(uint8_t* pState, uint8_t* pFlag)
             return (TouchState)*pState;
         }
         /* Set ShortPressing flag, and return the */
+        //clearTouchFlag(pFlag);
         setTouchFlag(pFlag, ShortPressingFlag);
         *pState = ShortPressing;
         return (TouchState)*pState;

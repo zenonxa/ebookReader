@@ -1,4 +1,5 @@
 #include "gui.h"
+#include "BSP/ATK_MD0700/atk_md0700.h"
 #include "text.h"
 #include "util.h"
 #include "widget/inc/button.h"
@@ -56,16 +57,76 @@ void GUI_DrawStr(Obj* obj, const char* str)
                  obj->width, 1);
 }
 
-bool GUI_isClicked(Obj* obj, Position* point)
+bool GUI_isTarget(Obj* obj, Position* point)
 {
-    bool res = false;
+    bool     res  = false;
     uint16_t xMin = obj->x;
     uint16_t xMax = obj->x + obj->width - 1;
     uint16_t yMin = obj->y;
     uint16_t yMax = obj->y + obj->height - 1;
     if ((point_cur[0].x >= xMin) && (point_cur[0].x <= xMax) &&
-        (point_cur[0].x >= yMin) && (point_cur[0].x <= yMax)) {
-            res = true;
-        }
+        (point_cur[0].y >= yMin) && (point_cur[0].y <= yMax)) {
+        res = true;
+    }
     return res;
+}
+
+bool GUI_GetBorderFlag(Obj* obj, BorderFlagBit botderFlagBit)
+{
+    bool flag = 0;
+    switch (obj->type) {
+        case BUTTON: flag = ((Button*)obj)->borderFlag; break;
+        case LIST: flag = ((List*)obj)->border.borderFlag; break;
+        case WINDOW: break;
+    }
+    flag = (flag >> botderFlagBit) & 0x01;
+    return flag;
+}
+
+void draw_widget(Obj* obj)
+{
+    switch (obj->type) {
+        case BUTTON: ((Button*)obj)->DrawButton((Button*)obj); break;
+        default: break;
+    }
+}
+
+void drawBorder(Obj* obj, uint8_t borderWidth)
+{
+    uint16_t borderColor = ATK_MD0700_BLACK;
+    if (GUI_GetBorderFlag(obj, BORDER_TOP)) {
+        atk_md0700_fill(obj->x - borderWidth, obj->y - borderWidth,
+                        obj->x + obj->width + borderWidth - 1, obj->y - 1,
+                        &borderColor, SINGLE_COLOR_BLOCK);
+    }
+    if (GUI_GetBorderFlag(obj, BORDER_LEFT)) {
+        atk_md0700_fill(obj->x - borderWidth, obj->y - borderWidth, obj->x - 1,
+                        obj->y + obj->height + borderWidth - 1, &borderColor,
+                        SINGLE_COLOR_BLOCK);
+    }
+    if (GUI_GetBorderFlag(obj, BORDER_RIGHT)) {
+        atk_md0700_fill(obj->x + obj->width, obj->y - borderWidth,
+                        obj->x + obj->width + borderWidth - 1,
+                        obj->y + obj->height + borderWidth - 1, &borderColor,
+                        SINGLE_COLOR_BLOCK);
+    }
+    if (GUI_GetBorderFlag(obj, BORDER_BOTTOM)) {
+        atk_md0700_fill(obj->x - borderWidth, obj->y + obj->height,
+                        obj->x + obj->width + borderWidth - 1,
+                        obj->y + obj->height + borderWidth - 1, &borderColor,
+                        SINGLE_COLOR_BLOCK);
+    }
+}
+
+bool checkBoundary(uint16_t x,
+                   uint16_t y,
+                   uint16_t width,
+                   uint16_t height,
+                   Obj*     obj)
+{
+    if ((obj->x < x) || ((obj->x + obj->width - 1) > (x + width - 1)) ||
+        (obj->y < y) || ((obj->y + obj->height - 1) > (y + height - 1))) {
+        return false;
+    }
+    return true;
 }

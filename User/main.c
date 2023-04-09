@@ -161,30 +161,51 @@ int main(void)
     clearTouchFlag(&flag);
     TouchEventInfo_Init();
     //__HAL_TIM_DISABLE(&TIM3_Handler);
-    Button* pBtn = NewButton(100, 100, 120, 120, RGB888toRGB565(0xEEEEEE), 3);
-    pBtn->str    = "Hello world";
+    Button* pBtn =
+        NewButton(100, 100, 120, 120, RGB888toRGB565(0x000000), 3, BORDER_ALL);
+    pBtn->str = "Hello world";
     pBtn->DrawButton(pBtn);
+    Border  border = {RGB888toRGB565(0x000000), 3, BORDER_ALL};
+    List*   pList  = NewList(250, 430, 90, 150, &border, 40, 30, NULL, 1);
+    Button* btn_1 =
+        NewButton(255, 477, 10, 10, RGB888toRGB565(0x000000), 3, BORDER_ALL);
+    Button* btn_2 =
+        NewButton(260, 505, 10, 10, RGB888toRGB565(0x000000), 3, BORDER_ALL);
+    Button* btn_3 =
+        NewButton(265, 534, 10, 10, RGB888toRGB565(0x000000), 3, BORDER_ALL);
+    Button* btn_4 =
+        NewButton(285, 539, 10, 10, RGB888toRGB565(0x000000), 3, BORDER_ALL);
+    AppendSubList(pList);
+    AppendSubListItem(pList, (Obj*)btn_1);
+    AppendSubList(pList);
+    AppendSubListItem(pList, (Obj*)btn_2);
+    AppendSubList(pList);
+    AppendSubListItem(pList, (Obj*)btn_3);
+    AppendSubListItem(pList, (Obj*)btn_4);
+
+    pList->DrawList(pList);
 
     startX = 0;
     startY = ATK_MD0700_LCD_HEIGHT / 10 * 9;
     color  = RGB888toRGB565(0XCCCCCC);
     atk_md0700_fill(startX, startY, ATK_MD0700_LCD_WIDTH - 1,
                     startY + LINE_WIDTH_DEFAULT, &color, SINGLE_COLOR_BLOCK);
+    BORDER_ALL;
     while (1) {
 #    if 1
         touchEventUpdate(&touchState, &flag);
         if (touchState == OnRelease) {
             touchEvent = getTouchEvent(flag);
             /* Do things according the touch event */
-            if (GUI_isClicked((Obj*)pBtn, &point_cur[0])) {
-                pBtn->ispressed = !pBtn->ispressed;
+            if (pBtn->ispressed) {
+                pBtn->ispressed = BT_UNPRESSED;
                 pBtn->DrawButton(pBtn);
             }
             clearTouchFlag(&flag);
             touchState = Touch_State_None;
         } else if (touchState == OnPress) {
-            if (GUI_isClicked((Obj*)pBtn, &point_cur[0])) {
-                pBtn->ispressed = !pBtn->ispressed;
+            if (GUI_isTarget((Obj*)pBtn, &point_cur[0])) {
+                pBtn->ispressed = BT_PRESSED;
                 pBtn->DrawButton(pBtn);
             }
         }

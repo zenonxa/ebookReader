@@ -21,7 +21,7 @@
 #ifndef __ATK_MD0700_TOUCH_H
 #define __ATK_MD0700_TOUCH_H
 #include "BSP/ATK_MD0700/atk_md0700_util.h"
-//#include "util.h"
+// #include "util.h"
 
 #if (ATK_MD0700_USING_TOUCH != 0)
 
@@ -66,7 +66,7 @@
                                   GPIO_PIN_RESET);                             \
         } while (0)
 typedef Position atk_md0700_touch_point_t;
-//typedef struct atk_md0700_touch_point_t Position;
+// typedef struct atk_md0700_touch_point_t Position;
 
 /* Info of a rectangle area, including position o fstart point, width and height
  */
@@ -124,6 +124,9 @@ typedef enum {
     MovingFlag = 0,
     LongPressingFlag,
     ShortPressingFlag,
+    // FirstIntoMovingFlag,
+    // FirstIntoLongPressingFlag,
+    // FirstIntoShortPressingFlag,
     Touch_Flag_Min     = MovingFlag,
     Touch_Flag_Max     = ShortPressingFlag,  /* Max */
     Touch_Flag_Default = Touch_Flag_Min,     /* Default */

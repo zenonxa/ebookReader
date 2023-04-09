@@ -39,6 +39,7 @@
 #include "text.h"
 #include "gui.h"
 #include "widget/inc/button.h"
+#include "widget/inc/list.h"
 /********************************************************/
 
 /********************************************************/

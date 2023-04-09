@@ -1,14 +1,14 @@
 // #include <stdio.h>
-#include "LinkList.h"
+#include "LinkedList.h"
 #include "MALLOC/malloc.h"
 #include "log.h"
 
 // 创建双向链表结点
-LinkedNode* create_node(ElemType data)
+LinkedNode* create_node(ElemType* data)
 {
     LinkedNode* node =
         (LinkedNode*)mymalloc(LINKEDLIST_MALLOC_SOURCE, sizeof(LinkedNode));  // 申请内存
-    node->data = data;
+    node->nodeData = *data;
     node->prev = NULL;
     node->next = NULL;
     return node;
@@ -55,13 +55,13 @@ void show_LinkList(LinkedList* linkedlist)
 {
     LinkedNode* node = linkedlist->head;
     for (int i = 0; i < linkedlist->size; ++i) {
-        log_n("%d ", node->data);
+        //log_n("%d ", node->data);
         node = node->next;
     }
 }
 
 // 插入头结点
-void push_head(LinkedList* linkedlist, ElemType data)
+void push_head(LinkedList* linkedlist, ElemType* data)
 {
     LinkedNode* new_node = create_node(data);
 
@@ -83,7 +83,7 @@ void push_head(LinkedList* linkedlist, ElemType data)
 }
 
 // 插入尾结点
-void push_tail(LinkedList* linkedlist, ElemType data)
+void push_tail(LinkedList* linkedlist, ElemType* data)
 {
     LinkedNode* new_node = create_node(data);
 
@@ -104,7 +104,7 @@ void push_tail(LinkedList* linkedlist, ElemType data)
     linkedlist->size++;
 }
 
-bool insert_node(LinkedList* linkedlist, int index, ElemType data)
+bool insert_node(LinkedList* linkedlist, int index, ElemType* data)
 {
     // 插入的位置超出链表的范围
     if (index < 0 || index > linkedlist->size) {
@@ -192,7 +192,7 @@ void del_tail(LinkedList* linkedlist)
 }
 
 // 删除任意位置结点
-bool del_node(LinkedList* linkedlist, ElemType index)
+bool del_node(LinkedList* linkedlist, int index)
 {
     // 判断插入的位置是否超出链表的范围
     if (index < 0 || index > linkedlist->size) {
@@ -237,7 +237,7 @@ bool del_node(LinkedList* linkedlist, ElemType index)
 }
 
 // 获取任意位置结点
-LinkedNode* get_node(LinkedList* linkedlist, ElemType index)
+LinkedNode* get_node(LinkedList* linkedlist, int index)
 {
     // 判断插入的位置是否超出链表的范围
     if (index < 0 || index > linkedlist->size)
@@ -261,8 +261,8 @@ LinkedNode* get_node(LinkedList* linkedlist, ElemType index)
     }
     return node;
 }
-
-LinkedNode* find_data(LinkedList* linkedlist, ElemType data)
+#if LINKEDLIST_FIND_ENABLE
+LinkedNode* find_data(LinkedList* linkedlist, ElemType* data)
 {
     if (linkedlist->size == 0)
         return NULL;
@@ -274,8 +274,10 @@ LinkedNode* find_data(LinkedList* linkedlist, ElemType data)
     }
     return NULL;
 }
+#endif
 
-bool modify_node(LinkedList* linkedlist, int index, ElemType data)
+#if LINKEDLIST_MODIFY_ENABLE
+bool modify_node(LinkedList* linkedlist, int index, ElemType* data)
 {
     LinkedNode* node = get_node(linkedlist, index);
     if (node) {
@@ -285,7 +287,7 @@ bool modify_node(LinkedList* linkedlist, int index, ElemType data)
     return false;
 }
 
-bool modify_data(LinkedList* linkedlist, ElemType data, ElemType val)
+bool modify_data(LinkedList* linkedlist, ElemType* data, ElemType* val)
 {
     LinkedNode* node = find_data(linkedlist, data);
     if (node) {
@@ -294,3 +296,4 @@ bool modify_data(LinkedList* linkedlist, ElemType data, ElemType val)
     }
     return false;
 }
+#endif
