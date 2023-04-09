@@ -5,6 +5,8 @@
 #include "color.h"
 #include "gui.h"
 
+#define RELATIVE_LOCATE_ENABLE 1
+
 typedef struct List_struct
 {
     Obj         obj;
@@ -12,9 +14,9 @@ typedef struct List_struct
     Border      border;
     LinkedNode* headItem;
     LinkedList* itemList;
-    uint8_t     dividingLineWidth;
-    uint8_t     headlineHeight;
-    uint8_t     itemHeight;
+    uint16_t    headlineHeight;
+    uint16_t    itemHeight;
+    uint8_t     dividingLineHeight;
     void (*DrawList)(struct List_struct*);
 } List;
 
@@ -25,11 +27,11 @@ List* NewList(uint16_t xpos,
               uint16_t width,
               uint16_t height,
               Border*  border,
-              uint8_t  headlineWidth,
+              uint16_t headlineHeight,
               uint16_t itemHeight,
               Obj*     scroller,
               uint8_t  lineWidth);
-void  AppendSubListItem(List* list, Obj* obj);
+void  AppendSubListItem(List* list, uint16_t index, Obj* obj);
 void  AppendSubList(List* list);
 
 #endif

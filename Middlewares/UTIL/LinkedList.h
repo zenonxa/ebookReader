@@ -7,6 +7,8 @@
 #define LINKEDLIST_MALLOC_SOURCE SRAMEX
 #define ElemType LinkedNodeData
 
+#define MENU_SIZE_LIMIT 10
+
 #define LINKEDLIST_FIND_ENABLE 0
 #define LINKEDLIST_MODIFY_ENABLE 0
 
@@ -14,18 +16,30 @@
 typedef struct LinkedNode LinkedNode;
 typedef struct LinkedList LinkedList;
 
+typedef enum {
+    NodeDataType_Data = 0,
+    NodeDataType_Obj,
+    NodeDataType_LinkedList,
+    NodeDataType_Min     = NodeDataType_Data,
+    NodeDataType_Max     = NodeDataType_LinkedList, /* Max */
+    NodeDataType_Default = NodeDataType_Min,        /* Default */
+    NodeDataType_Cnt     = NodeDataType_Max + 1,    /* The number of all */
+    NodeDataType_None    = BorderFlagCnt,           /* Invalid value */
+} NodeDataType;
+
 struct LinkedList
 {
-    LinkedNode* head;
-    LinkedNode* tail;
-    uint32_t    size; /* Count for the number of the Node in LinkedList*/
+    NodeDataType nodeDataType;
+    LinkedNode*  head;
+    LinkedNode*  tail;
+    uint32_t     size; /* Count for the number of the Node in LinkedList*/
 };
 
 typedef union LinkedNodeData
 {
     int               data;
     Obj*              obj;
-   struct LinkedList subList;
+    struct LinkedList subList;
 } LinkedNodeData;
 
 /* Link node for double direction linked list*/
@@ -36,9 +50,9 @@ struct LinkedNode
     struct LinkedNode* next; /* Pointer pointing to the next node */
 };
 
-
-LinkedNode* create_node(ElemType* data);       /* Create a linkedlist node */
-void        init_LinkedList(LinkedList* list); /* Create a empty linkedlist */
+LinkedNode* create_node(ElemType* data); /* Create a linkedlist node */
+void        init_LinkedList(LinkedList*  linkedlist,
+                            NodeDataType nodeDataType); /* Create a empty linkedlist */
 void        free_LinkedList(LinkedList* list); /* Delete a linkedlist */
 LinkedNode* get_head(LinkedList* list);
 LinkedNode* get_tail(LinkedList* list);

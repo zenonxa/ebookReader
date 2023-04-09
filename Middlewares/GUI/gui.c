@@ -91,7 +91,7 @@ void draw_widget(Obj* obj)
     }
 }
 
-void drawBorder(Obj* obj, uint8_t borderWidth)
+void drawBorder(Obj* obj, uint16_t borderWidth)
 {
     uint16_t borderColor = ATK_MD0700_BLACK;
     if (GUI_GetBorderFlag(obj, BORDER_TOP)) {

@@ -161,27 +161,35 @@ int main(void)
     clearTouchFlag(&flag);
     TouchEventInfo_Init();
     //__HAL_TIM_DISABLE(&TIM3_Handler);
-    Button* pBtn =
-        NewButton(100, 100, 120, 120, RGB888toRGB565(0x000000), 3, BORDER_ALL);
-    pBtn->str = "Hello world";
-    pBtn->DrawButton(pBtn);
-    Border  border = {RGB888toRGB565(0x000000), 3, BORDER_ALL};
-    List*   pList  = NewList(250, 430, 90, 150, &border, 40, 30, NULL, 1);
-    Button* btn_1 =
-        NewButton(255, 477, 10, 10, RGB888toRGB565(0x000000), 3, BORDER_ALL);
+    // Button* pBtn =
+    //     NewButton(100, 100, 120, 120, RGB888toRGB565(0x000000), 3,
+    //     BORDER_ALL);
+    // pBtn->str = "Hello world";
+    // pBtn->DrawButton(pBtn);
+    const uint16_t menuWidth_1  = 400;
+    const uint16_t menuHeight_1 = 600;
+    Border         border       = {RGB888toRGB565(0x000000), 3,
+                                   BORDER_FLAG(BORDER_TOP) | BORDER_FLAG(BORDER_BOTTOM)};
+    List*          pList = NewList((ATK_MD0700_LCD_WIDTH - menuWidth_1) / 2,
+                                   (ATK_MD0700_LCD_HEIGHT -
+                           ATK_MD0700_LCD_HEIGHT / 10 / 2 - menuHeight_1) /
+                                       2,
+                                   menuWidth_1, menuHeight_1, &border, 70, 55, NULL, 1);
+    Button*        btn_1 =
+        NewButton(10, 10, 10, 10, RGB888toRGB565(0x000000), 3, BORDER_ALL);
     Button* btn_2 =
-        NewButton(260, 505, 10, 10, RGB888toRGB565(0x000000), 3, BORDER_ALL);
+        NewButton(13, 10, 10, 10, RGB888toRGB565(0x000000), 3, BORDER_ALL);
     Button* btn_3 =
-        NewButton(265, 534, 10, 10, RGB888toRGB565(0x000000), 3, BORDER_ALL);
+        NewButton(18, 10, 10, 10, RGB888toRGB565(0x000000), 3, BORDER_ALL);
     Button* btn_4 =
-        NewButton(285, 539, 10, 10, RGB888toRGB565(0x000000), 3, BORDER_ALL);
-    AppendSubList(pList);
-    AppendSubListItem(pList, (Obj*)btn_1);
-    AppendSubList(pList);
-    AppendSubListItem(pList, (Obj*)btn_2);
-    AppendSubList(pList);
-    AppendSubListItem(pList, (Obj*)btn_3);
-    AppendSubListItem(pList, (Obj*)btn_4);
+        NewButton(60, 13, 10, 10, RGB888toRGB565(0x000000), 3, BORDER_ALL);
+    // AppendSubList(pList);
+    AppendSubListItem(pList, 0, (Obj*)btn_1);
+    // AppendSubList(pList);
+    AppendSubListItem(pList, 1, (Obj*)btn_2);
+    // AppendSubList(pList);
+    AppendSubListItem(pList, 2, (Obj*)btn_3);
+    AppendSubListItem(pList, 2, (Obj*)btn_4);
 
     pList->DrawList(pList);
 
@@ -197,17 +205,17 @@ int main(void)
         if (touchState == OnRelease) {
             touchEvent = getTouchEvent(flag);
             /* Do things according the touch event */
-            if (pBtn->ispressed) {
-                pBtn->ispressed = BT_UNPRESSED;
-                pBtn->DrawButton(pBtn);
-            }
+            // if (pBtn->ispressed) {
+            //     pBtn->ispressed = BT_UNPRESSED;
+            //     pBtn->DrawButton(pBtn);
+            // }
             clearTouchFlag(&flag);
             touchState = Touch_State_None;
         } else if (touchState == OnPress) {
-            if (GUI_isTarget((Obj*)pBtn, &point_cur[0])) {
-                pBtn->ispressed = BT_PRESSED;
-                pBtn->DrawButton(pBtn);
-            }
+            // if (GUI_isTarget((Obj*)pBtn, &point_cur[0])) {
+            //     pBtn->ispressed = BT_PRESSED;
+            //     pBtn->DrawButton(pBtn);
+            // }
         }
 #    else
         if (needRerender) {

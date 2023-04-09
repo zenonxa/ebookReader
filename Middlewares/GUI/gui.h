@@ -89,7 +89,7 @@ void     GUI_DrawStr(Obj* obj, const char* str);
 bool     GUI_isTarget(Obj* obj, Position* point);
 bool     GUI_GetBorderFlag(Obj* obj, BorderFlagBit botderFlagBit);
 void     draw_widget(Obj* obj);
-void     drawBorder(Obj* obj, uint8_t borderWidth);
+void     drawBorder(Obj* obj, uint16_t borderWidth);
 bool     checkBoundary(uint16_t x,
                        uint16_t y,
                        uint16_t width,

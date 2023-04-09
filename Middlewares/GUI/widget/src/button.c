@@ -98,12 +98,11 @@ void BtDefaultText(Button* button)
 
 void BtText(Button* button)
 {
-    u16 length;
-
+    // u16 length;
     if (button->str != 0) {
-        GUI_SetFontType(button->fontType);
-        GUI_SetFontSize(button->fontSize);
-        length = strlen(button->str);
+        GUI_SetFontType((FontName)button->fontType);
+        GUI_SetFontSize((FontSize)button->fontSize);
+        // length = strlen(button->str);
         if (button->ispressed == BT_PRESSED) {
             GUI_setForeColor(GUI_GetXORColor(button->fontColor));
         } else {

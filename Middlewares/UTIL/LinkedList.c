@@ -14,8 +14,9 @@ LinkedNode* create_node(ElemType* data)
     return node;
 }
 
-void init_LinkedList(LinkedList* linkedlist)
+void init_LinkedList(LinkedList* linkedlist, NodeDataType nodeDataType)
 {
+    linkedlist->nodeDataType = nodeDataType;
     linkedlist->head = NULL;
     linkedlist->tail = NULL;
     linkedlist->size = 0;
@@ -157,7 +158,7 @@ void del_head(LinkedList* linkedlist)
     }
     if (linkedlist->size == 1) {
         myfree(LINKEDLIST_MALLOC_SOURCE, linkedlist->head);  // 释放内存
-        init_LinkedList(linkedlist);
+        init_LinkedList(linkedlist, linkedlist->nodeDataType);
         return;
     }
 
@@ -178,7 +179,7 @@ void del_tail(LinkedList* linkedlist)
     }
     if (linkedlist->size == 1) {
         myfree(LINKEDLIST_MALLOC_SOURCE, linkedlist->tail);  // 释放内存
-        init_LinkedList(linkedlist);
+        init_LinkedList(linkedlist, linkedlist->nodeDataType);
         return;
     }
 
@@ -237,6 +238,7 @@ bool del_node(LinkedList* linkedlist, int index)
 }
 
 // 获取任意位置结点
+/* Index start from 0 to size-1 */
 LinkedNode* get_node(LinkedList* linkedlist, int index)
 {
     // 判断插入的位置是否超出链表的范围

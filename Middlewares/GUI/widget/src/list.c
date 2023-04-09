@@ -9,23 +9,25 @@ void DrawList(List* list);
 void DrawListDefault(List* list);
 void drawDividingLineOnCursor(List* list, uint16_t x, uint16_t y);
 void drawDividingLine(List* list, uint16_t* pX, uint16_t* pY, uint8_t height);
+uint8_t getSubListCntLimit(List* list);
 
 List* NewList(uint16_t xpos,
               uint16_t ypos,
               uint16_t width,
               uint16_t height,
               Border*  border,
-              uint8_t  headlineWidth,
+              uint16_t headlineHeight,
               uint16_t itemHeight,
               Obj*     scroller,
               uint8_t  lineWidth)
 {
-    List* list     = (List*)mymalloc(GUI_MALLOC_SOURCE, sizeof(List));
+    uint8_t cnt    = 0;
+    List*   list   = (List*)mymalloc(GUI_MALLOC_SOURCE, sizeof(List));
     list->itemList = (LinkedList*)mymalloc(SRAMEX, sizeof(LinkedList));
-    init_LinkedList(list->itemList);
+    init_LinkedList(list->itemList, NodeDataType_LinkedList);
     list->headItem           = list->itemList->head;
-    list->headlineHeight     = headlineWidth;
-    list->dividingLineWidth  = lineWidth;
+    list->headlineHeight     = headlineHeight;
+    list->dividingLineHeight  = lineWidth;
     list->itemHeight         = itemHeight;
     list->scroller           = *scroller;
     list->border.borderColor = border->borderColor;
@@ -37,6 +39,12 @@ List* NewList(uint16_t xpos,
     ((Obj*)list)->y          = ypos;
     ((Obj*)list)->type       = LIST;
     list->DrawList           = &DrawList;
+    cnt = getSubListCntLimit(list);
+    LinkedNodeData data;
+    init_LinkedList(&data.subList, NodeDataType_LinkedList);
+    while (cnt--) {
+        push_tail(list->itemList, &data);
+    }
     return list;
 }
 
@@ -56,6 +64,10 @@ void DrawListDefault(List* list)
     drawDividingLine(list, &x, &y, list->headlineHeight);
     while (subList) {
         while (node) {
+#if RELATIVE_LOCATE_ENABLE
+            node->nodeData.obj->x += x;
+            node->nodeData.obj->y += y;
+#endif
             if (!checkBoundary(x, y, ((Obj*)list)->width, list->itemHeight,
                                node->nodeData.obj)) {
                 /* Reset boundary */
@@ -91,7 +103,7 @@ void DrawListDefault(List* list)
         }
     }
 
-    while (y + list->itemHeight + list->dividingLineWidth <
+    while (y + list->itemHeight + list->dividingLineHeight <
            (((Obj*)list)->y + ((Obj*)list)->height - 1)) {
         drawDividingLine(list, &x, &y, list->itemHeight);
     }
@@ -100,39 +112,52 @@ void DrawListDefault(List* list)
 void AppendSubList(List* list)
 {
     LinkedNodeData data;
-    init_LinkedList(&data.subList);
+    init_LinkedList(&data.subList, NodeDataType_LinkedList);
     push_tail(list->itemList, &data);
 }
 
-void AppendSubListItem(List* list, Obj* obj)
+void AppendSubListItem(List* list, uint16_t index, Obj* obj)
 {
     LinkedNodeData data;
+    LinkedNode* node = get_node(list->itemList, index);
     data.obj = obj;
-    push_tail(&list->itemList->tail->nodeData.subList, &data);
+    push_tail(&node->nodeData.subList, &data);
 }
 
 void drawDividingLineOnCursor(List* list, uint16_t x, uint16_t y)
 {
-    if (list->dividingLineWidth > 0) {
+    if (list->dividingLineHeight > 0) {
         uint16_t color = RGB888toRGB565(0x325543);
         atk_md0700_fill(x, y, x + ((Obj*)list)->width - 1,
-                        y + list->dividingLineWidth - 1, &color,
+                        y + list->dividingLineHeight - 1, &color,
                         SINGLE_COLOR_BLOCK);
     }
-    // log_n("x_left: %d", x);
-    // log_n("y_left: %d", y);
-    // log_n("x_right: %d", x + ((Obj*)list)->width - 1);
-    // log_n("y_right: %d", y + list->lineWidth - 1);
 }
 
 void drawDividingLine(List* list, uint16_t* pX, uint16_t* pY, uint8_t height)
 {
     *pY += height;
-    if (list->dividingLineWidth > 0) {
+    if (list->dividingLineHeight > 0) {
         uint16_t color = RGB888toRGB565(0x325543);
         atk_md0700_fill(*pX, *pY, *pX + ((Obj*)list)->width - 1,
-                        *pY + list->dividingLineWidth - 1, &color,
+                        *pY + list->dividingLineHeight - 1, &color,
                         SINGLE_COLOR_BLOCK);
-        *pY += list->dividingLineWidth;
+        *pY += list->dividingLineHeight;
     }
+}
+
+uint8_t getSubListCntLimit(List* list)
+{
+    // uint16_t x      = ((Obj*)list)->x;
+    uint16_t y = ((Obj*)list)->y + list->headlineHeight + list->dividingLineHeight;
+    uint16_t endY   = ((Obj*)list)->y + ((Obj*)list)->height - 1;
+    // uint16_t width  = ((Obj*)list)->width;
+    // uint16_t height = ((Obj*)list)->height;
+    uint8_t cnt = 0;
+    while ((y + list->itemHeight-1) <= endY) {
+        cnt++;
+        y += list->itemHeight;
+        y += list->dividingLineHeight;
+    }
+    return cnt;
 }
