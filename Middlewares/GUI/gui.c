@@ -142,27 +142,74 @@ void drawBorder(Obj* obj, Border* border)
 {
     uint16_t borderColor = border->borderColor;
     uint16_t borderWidth = border->borderWidth;
+    int16_t  startX, startY;
+    int16_t  endX, endY;
+    // int16_t  width = 0, height = 0;
     if (GUI_GetBorderFlag(obj, BORDER_TOP)) {
-        atk_md0700_fill(obj->x - borderWidth, obj->y - borderWidth,
-                        obj->x + obj->width + borderWidth - 1, obj->y - 1,
-                        &borderColor, SINGLE_COLOR_BLOCK);
+        if (obj->y > 0) {
+            startX = ((obj->x - borderWidth) >= 0) ? (obj->x - borderWidth) : 0;
+            startY = ((obj->y - borderWidth) >= 0) ? (obj->y - borderWidth) : 0;
+            endX =
+                ((obj->x + obj->width + borderWidth) <= ATK_MD0700_LCD_WIDTH) ?
+                    (obj->x + obj->width + borderWidth) :
+                    (ATK_MD0700_LCD_WIDTH - 1);
+            endY = obj->y - 1;
+            atk_md0700_fill(startX, startY, endX, endY, &borderColor,
+                            SINGLE_COLOR_BLOCK);
+        }
     }
     if (GUI_GetBorderFlag(obj, BORDER_LEFT)) {
-        atk_md0700_fill(obj->x - borderWidth, obj->y - borderWidth, obj->x - 1,
-                        obj->y + obj->height + borderWidth - 1, &borderColor,
-                        SINGLE_COLOR_BLOCK);
+        if (obj->x > 0) {
+            startX = ((obj->x - borderWidth) >= 0) ? (obj->x - borderWidth) : 0;
+            startY = ((obj->y - borderWidth) >= 0) ? (obj->y - borderWidth) : 0;
+            endX   = obj->x - 1;
+            endY   = ((obj->y + obj->height + borderWidth) <=
+                    ATK_MD0700_LCD_HEIGHT) ?
+                         ((obj->y + obj->height + borderWidth)) :
+                         (ATK_MD0700_LCD_HEIGHT - 1);
+            atk_md0700_fill(startX, startY, endX, endY, &borderColor,
+                            SINGLE_COLOR_BLOCK);
+        }
     }
     if (GUI_GetBorderFlag(obj, BORDER_RIGHT)) {
-        atk_md0700_fill(obj->x + obj->width, obj->y - borderWidth,
-                        obj->x + obj->width + borderWidth - 1,
-                        obj->y + obj->height + borderWidth - 1, &borderColor,
-                        SINGLE_COLOR_BLOCK);
+        if (obj->x + obj->width <= ATK_MD0700_LCD_WIDTH) {
+            startX = obj->x + obj->width;
+            startY = ((obj->y - borderWidth) >= 0) ? (obj->y - borderWidth) : 0;
+            endX =
+                ((obj->x + obj->width + borderWidth) <= ATK_MD0700_LCD_WIDTH) ?
+                    (obj->x + obj->width + borderWidth) :
+                    (ATK_MD0700_LCD_WIDTH - 1);
+            endY = ((obj->y + obj->height + borderWidth) <=
+                    ATK_MD0700_LCD_HEIGHT) ?
+                       ((obj->y + obj->height + borderWidth)) :
+                       (ATK_MD0700_LCD_HEIGHT - 1);
+            atk_md0700_fill(startX, startY, endX, endY, &borderColor,
+                            SINGLE_COLOR_BLOCK);
+            // atk_md0700_fill(obj->x + obj->width, obj->y - borderWidth,
+            //                 obj->x + obj->width + borderWidth - 1,
+            //                 obj->y + obj->height + borderWidth - 1,
+            //                 &borderColor, SINGLE_COLOR_BLOCK);
+        }
     }
     if (GUI_GetBorderFlag(obj, BORDER_BOTTOM)) {
-        atk_md0700_fill(obj->x - borderWidth, obj->y + obj->height,
-                        obj->x + obj->width + borderWidth - 1,
-                        obj->y + obj->height + borderWidth - 1, &borderColor,
-                        SINGLE_COLOR_BLOCK);
+        if (obj->y + obj->height <= ATK_MD0700_LCD_HEIGHT) {
+            startX = ((obj->x - borderWidth) >= 0) ? (obj->x - borderWidth) : 0;
+            startY = obj->y + obj->height;
+            endX =
+                ((obj->x + obj->width + borderWidth) <= ATK_MD0700_LCD_WIDTH) ?
+                    (obj->x + obj->width + borderWidth) :
+                    (ATK_MD0700_LCD_WIDTH - 1);
+            endY = ((obj->y + obj->height + borderWidth) <=
+                    ATK_MD0700_LCD_HEIGHT) ?
+                       ((obj->y + obj->height + borderWidth)) :
+                       (ATK_MD0700_LCD_HEIGHT - 1);
+            atk_md0700_fill(startX, startY, endX, endY, &borderColor,
+                            SINGLE_COLOR_BLOCK);
+            // atk_md0700_fill(obj->x - borderWidth, obj->y + obj->height,
+            //                 obj->x + obj->width + borderWidth - 1,
+            //                 obj->y + obj->height + borderWidth - 1,
+            //                 &borderColor, SINGLE_COLOR_BLOCK);
+        }
     }
 }
 

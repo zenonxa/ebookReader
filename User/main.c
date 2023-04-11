@@ -113,28 +113,31 @@ int main(void)
     const uint16_t menuWidth_1   = 400;
     const uint16_t menuHeight_1  = 600;
     const uint8_t  listItemLimit = 4;
-    Border         listBorder    = {
-                   .borderColor = RGB888toRGB565(0x000000),
-                   .borderWidth = 3,
-                   .borderFlag = BORDER_FLAG(BORDER_TOP) | BORDER_FLAG(BORDER_BOTTOM),
-    };
-    uint16_t buttonFontColor = RGB888toRGB565(0x000000);
-    Border   buttonBorder    = {
-             .borderColor = RGB888toRGB565(0x000000),
-             .borderWidth = 3,
-             .borderFlag  = BORDER_NULL,
-    };
-    Font buttonFont = {
-        .fontName  = Font_SimSun,
-        .fontSize  = PX24,
-        .fontColor = RGB888toRGB565(0x000000),
-    };
+    // Border         listBorder    = {
+    //                .borderColor = RGB888toRGB565(0x000000),
+    //                .borderWidth = 3,
+    //                .borderFlag = BORDER_FLAG(BORDER_TOP) |
+    //                BORDER_FLAG(BORDER_BOTTOM),
+    // };
+    // uint16_t buttonFontColor = RGB888toRGB565(0x000000);
+    // Border   buttonBorder    = {
+    //          .borderColor = RGB888toRGB565(0x000000),
+    //          .borderWidth = 3,
+    //          .borderFlag  = BORDER_NULL,
+    // };
+    // Font buttonFont = {
+    //     .fontName  = Font_SimSun,
+    //     .fontSize  = PX24,
+    //     .fontColor = RGB888toRGB565(0x000000),
+    // };
+    setPublicBorder(RGB888toRGB565(0x000000), 3,
+                    BORDER_FLAG(BORDER_TOP) | BORDER_FLAG(BORDER_BOTTOM));
     List* bookshelf =
         NewList((ATK_MD0700_LCD_WIDTH - menuWidth_1) / 2,
                 (ATK_MD0700_LCD_HEIGHT - ATK_MD0700_LCD_HEIGHT / 10 / 2 -
                  menuHeight_1) /
                     2,
-                menuWidth_1, menuHeight_1, &listBorder, 70, 55, NULL, 1);
+                menuWidth_1, menuHeight_1, &publicBorder, 70, 55, NULL, 1);
     publicElemData.obj = (Obj*)bookshelf;
     push_tail(&touchQueryQueue, &publicElemData);
     setPublicFont(Font_SimSun, PX24, RGB888toRGB565(0x000000));
@@ -154,7 +157,7 @@ int main(void)
     publicElemData.obj = (Obj*)navigationBar;
     push_tail(&touchQueryQueue, &publicElemData);
     setPublicFont(Font_SimSun, PX24, RGB888toRGB565(0x000000));
-    setPublicBorder(RGB888toRGB565(0x000000), 3, BORDER_NULL);
+    setPublicBorder(RGB888toRGB565(0xcccccc), 5, BORDER_FLAG(BORDER_TOP));
     setPublicAlignType(AlignHorizonalType_CENTER, AlignVerticalType_MIDDLE);
     Button* buttonBack =
         NewButton(0, 0, 160, navigationBar->itemHeight, &publicFont,
@@ -178,10 +181,12 @@ int main(void)
     char    str[listItemLimit][30];
     /* Create button */
     setPublicAlignType(AlignHorizonalType_LEFT, AlignVerticalType_MIDDLE);
+    setPublicBorder(RGB888toRGB565(0x000000), 3, BORDER_NULL);
+    setPublicFont(Font_SimSun, PX24, RGB888toRGB565(0x000000));
     for (i = 0; i < listItemLimit; ++i) {
         btn[i] =
             NewButton(0, 0, ((Obj*)bookshelf)->width, bookshelf->itemHeight,
-                      &buttonFont, &buttonBorder, &publicAlignType);
+                      &publicFont, &publicBorder, &publicAlignType);
     }
     /* Append button to sublist */
     for (i = 0; i < listItemLimit; ++i) {
@@ -204,11 +209,11 @@ int main(void)
         ++i;
     }
     bookshelf->DrawList(bookshelf);
-    startX = 0;
-    startY = ATK_MD0700_LCD_HEIGHT / 10 * 9;
-    color  = RGB888toRGB565(0XCCCCCC);
-    atk_md0700_fill(startX, startY, ATK_MD0700_LCD_WIDTH - 1,
-                    startY + LINE_WIDTH_DEFAULT, &color, SINGLE_COLOR_BLOCK);
+    // startX = 0;
+    // startY = ATK_MD0700_LCD_HEIGHT / 10 * 9;
+    // color  = RGB888toRGB565(0XCCCCCC);
+    // atk_md0700_fill(startX, startY, ATK_MD0700_LCD_WIDTH - 1,
+    //                 startY + LINE_WIDTH_DEFAULT, &color, SINGLE_COLOR_BLOCK);
     BORDER_ALL;
     Obj* cur_target = NULL;
     // log_n("     %sCnt of queryQueue %d", ARROW_STRING, touchQueryQueue.size);
