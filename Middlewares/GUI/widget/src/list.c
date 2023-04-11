@@ -19,7 +19,7 @@ List* NewList(uint16_t xpos,
               uint16_t headlineHeight,
               uint16_t itemHeight,
               Obj*     scroller,
-              uint8_t  lineWidth)
+              uint8_t  dividingLineHeight)
 {
     uint8_t cnt    = 0;
     List*   list   = (List*)mymalloc(GUI_MALLOC_SOURCE, sizeof(List));
@@ -27,7 +27,8 @@ List* NewList(uint16_t xpos,
     init_LinkedList(list->itemList, NodeDataType_LinkedList);
     list->headItem           = list->itemList->head;
     list->headlineHeight     = headlineHeight;
-    list->dividingLineHeight  = lineWidth;
+    list->headlineTextarea   = NULL;
+    list->dividingLineHeight = dividingLineHeight;
     list->itemHeight         = itemHeight;
     list->scroller           = *scroller;
     list->border.borderColor = border->borderColor;
@@ -37,11 +38,11 @@ List* NewList(uint16_t xpos,
     ((Obj*)list)->width      = width;
     ((Obj*)list)->x          = xpos;
     ((Obj*)list)->y          = ypos;
-    ((Obj*)list)->type       = LIST;
+    ((Obj*)list)->type       = Obj_Type_List;
     list->DrawList           = &DrawList;
-    cnt = getSubListCntLimit(list);
+    cnt                      = getSubListCntLimit(list);
     LinkedNodeData data;
-    init_LinkedList(&data.subList, NodeDataType_LinkedList);
+    init_LinkedList(&data.subList, NodeDataType_Obj);
     while (cnt--) {
         push_tail(list->itemList, &data);
     }
@@ -59,9 +60,34 @@ void DrawListDefault(List* list)
     uint16_t    x       = ((Obj*)list)->x;
     uint16_t    y       = ((Obj*)list)->y;
     LinkedNode* subList = list->itemList->head;
-    drawBorder((Obj*)list, list->border.borderWidth);
+    drawBorder((Obj*)list, &list->border);
     LinkedNode* node = subList->nodeData.subList.head;
+    if (list->headlineTextarea) {
+#if RELATIVE_LOCATE_ENABLE
+        ((Obj*)list->headlineTextarea)->x += x;
+        ((Obj*)list->headlineTextarea)->y += y;
+#endif
+        if (!checkBoundary(x, y, ((Obj*)list)->width, list->headlineHeight,
+                           (Obj*)list->headlineTextarea)) {
+            ((Obj*)list->headlineTextarea)->x = x;
+            ((Obj*)list->headlineTextarea)->y = y;
+            if (((Obj*)list->headlineTextarea)->width > ((Obj*)list)->width) {
+                ((Obj*)list->headlineTextarea)->width = ((Obj*)list)->width;
+            }
+            if (((Obj*)list->headlineTextarea)->height > list->itemHeight) {
+                ((Obj*)list->headlineTextarea)->height = list->itemHeight;
+            }
+        }
+        /* Save the background color and restore it after drawing textarea in
+         headline */
+        COLOR_DATTYPE backColor = GUI_getBackColor();
+        GUI_setBackColor(list->headlineTextarea->backColor);
+        setPublicAlignType(AlignHorizonalType_CENTER, AlignVerticalType_MIDDLE);
+        list->headlineTextarea->DrawTextarea(list->headlineTextarea);
+        GUI_setBackColor(backColor);
+    }
     drawDividingLine(list, &x, &y, list->headlineHeight);
+    setPublicAlignType(AlignHorizonalType_LEFT, AlignVerticalType_MIDDLE);
     while (subList) {
         while (node) {
 #if RELATIVE_LOCATE_ENABLE
@@ -119,8 +145,8 @@ void AppendSubList(List* list)
 void AppendSubListItem(List* list, uint16_t index, Obj* obj)
 {
     LinkedNodeData data;
-    LinkedNode* node = get_node(list->itemList, index);
-    data.obj = obj;
+    LinkedNode*    node = get_node(list->itemList, index);
+    data.obj            = obj;
     push_tail(&node->nodeData.subList, &data);
 }
 
@@ -149,15 +175,22 @@ void drawDividingLine(List* list, uint16_t* pX, uint16_t* pY, uint8_t height)
 uint8_t getSubListCntLimit(List* list)
 {
     // uint16_t x      = ((Obj*)list)->x;
-    uint16_t y = ((Obj*)list)->y + list->headlineHeight + list->dividingLineHeight;
-    uint16_t endY   = ((Obj*)list)->y + ((Obj*)list)->height - 1;
+    uint16_t y =
+        ((Obj*)list)->y + list->headlineHeight + list->dividingLineHeight;
+    uint16_t endY = ((Obj*)list)->y + ((Obj*)list)->height - 1;
     // uint16_t width  = ((Obj*)list)->width;
     // uint16_t height = ((Obj*)list)->height;
     uint8_t cnt = 0;
-    while ((y + list->itemHeight-1) <= endY) {
+    while ((y + list->itemHeight - 1) <= endY) {
         cnt++;
         y += list->itemHeight;
         y += list->dividingLineHeight;
     }
     return cnt;
+}
+
+void SetListHeadlineTextarea(List* list, Textarea* textarea)
+{
+    list->headlineTextarea = textarea;
+    list->DrawList(list);
 }

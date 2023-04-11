@@ -92,7 +92,7 @@ int main(void)
     // log_n("br: %d", br);
     f_close(&my_file);
     /* Unmount SD Card volume */
-    f_mount(NULL, "0:", 1);
+    // f_mount(NULL, "0:", 1);
 
     uint8_t touchState = Touch_State_None;
     uint8_t flag;
@@ -107,44 +107,128 @@ int main(void)
     //     BORDER_ALL);
     // pBtn->str = "Hello world";
     // pBtn->DrawButton(pBtn);
-    const uint16_t menuWidth_1     = 400;
-    const uint16_t menuHeight_1    = 600;
-    Border         listBorder      = {.borderColor = RGB888toRGB565(0x000000),
-                                      .borderWidth = 3,
-                                      .borderFlag  = BORDER_FLAG(BORDER_TOP) |
-                                                    BORDER_FLAG(BORDER_BOTTOM)};
-    uint16_t       buttonFontColor = RGB888toRGB565(0x000000);
-    Border         buttonBorder    = {.borderColor = RGB888toRGB565(0x000000),
-                                      .borderWidth = 3,
-                                      .borderFlag  = BORDER_NULL};
-    List*          pList =
+    LinkedList touchQueryQueue; /* Queue for querying of touch operation */
+    init_LinkedList(&touchQueryQueue, NodeDataType_Obj);
+
+    const uint16_t menuWidth_1   = 400;
+    const uint16_t menuHeight_1  = 600;
+    const uint8_t  listItemLimit = 4;
+    Border         listBorder    = {
+                   .borderColor = RGB888toRGB565(0x000000),
+                   .borderWidth = 3,
+                   .borderFlag = BORDER_FLAG(BORDER_TOP) | BORDER_FLAG(BORDER_BOTTOM),
+    };
+    uint16_t buttonFontColor = RGB888toRGB565(0x000000);
+    Border   buttonBorder    = {
+             .borderColor = RGB888toRGB565(0x000000),
+             .borderWidth = 3,
+             .borderFlag  = BORDER_NULL,
+    };
+    Font buttonFont = {
+        .fontName  = Font_SimSun,
+        .fontSize  = PX24,
+        .fontColor = RGB888toRGB565(0x000000),
+    };
+    List* bookshelf =
         NewList((ATK_MD0700_LCD_WIDTH - menuWidth_1) / 2,
                 (ATK_MD0700_LCD_HEIGHT - ATK_MD0700_LCD_HEIGHT / 10 / 2 -
                  menuHeight_1) /
                     2,
                 menuWidth_1, menuHeight_1, &listBorder, 70, 55, NULL, 1);
-    Button* btn_1 = NewButton(10, 10, 10, 10, buttonFontColor, &buttonBorder);
-    Button* btn_2 = NewButton(13, 10, 10, 10, buttonFontColor, &buttonBorder);
-    Button* btn_3 = NewButton(18, 10, 10, 10, buttonFontColor, &buttonBorder);
-    Button* btn_4 = NewButton(60, 13, 10, 10, buttonFontColor, &buttonBorder);
-    AppendSubListItem(pList, 0, (Obj*)btn_1);
-    AppendSubListItem(pList, 1, (Obj*)btn_2);
-    AppendSubListItem(pList, 2, (Obj*)btn_3);
-    AppendSubListItem(pList, 2, (Obj*)btn_4);
-    pList->DrawList(pList);
-
+    publicElemData.obj = (Obj*)bookshelf;
+    push_tail(&touchQueryQueue, &publicElemData);
+    setPublicFont(Font_SimSun, PX24, RGB888toRGB565(0x000000));
+    setPublicBorder(RGB888toRGB565(0x000000), 3, BORDER_NULL);
+    Textarea* bookshelfHeadline =
+        NewTextarea(0, 0, ((Obj*)bookshelf)->width, bookshelf->headlineHeight,
+                    &publicFont, &publicBorder, RGB888toRGB565(0xcccccc));
+    bookshelfHeadline->str      = bookshelfHeadlineStr;
+    bookshelf->headlineTextarea = bookshelfHeadline;
+    /**********************/
+    /* Navigation Bar */
+    setPublicBorder(RGB888toRGB565(0x000000), 3, BORDER_NULL);
+    List* navigationBar =
+        NewList(0, ATK_MD0700_LCD_HEIGHT / 10 * 9, ATK_MD0700_LCD_WIDTH,
+                ATK_MD0700_LCD_HEIGHT / 10, &publicBorder, 0,
+                ATK_MD0700_LCD_HEIGHT / 10, NULL, 0);
+    publicElemData.obj = (Obj*)navigationBar;
+    push_tail(&touchQueryQueue, &publicElemData);
+    setPublicFont(Font_SimSun, PX24, RGB888toRGB565(0x000000));
+    setPublicBorder(RGB888toRGB565(0x000000), 3, BORDER_NULL);
+    setPublicAlignType(AlignHorizonalType_CENTER, AlignVerticalType_MIDDLE);
+    Button* buttonBack =
+        NewButton(0, 0, 160, navigationBar->itemHeight, &publicFont,
+                  &publicBorder, &publicAlignType);
+    Button* buttonHome =
+        NewButton(160, 0, 160, navigationBar->itemHeight, &publicFont,
+                  &publicBorder, &publicAlignType);
+    Button* buttonSetting =
+        NewButton(320, 0, 160, navigationBar->itemHeight, &publicFont,
+                  &publicBorder, &publicAlignType);
+    buttonBack->str    = navigationBarString[0];
+    buttonHome->str    = navigationBarString[1];
+    buttonSetting->str = navigationBarString[2];
+    AppendSubListItem(navigationBar, 0, (Obj*)buttonBack);
+    AppendSubListItem(navigationBar, 0, (Obj*)buttonHome);
+    AppendSubListItem(navigationBar, 0, (Obj*)buttonSetting);
+    navigationBar->DrawList(navigationBar);
+    /* Navigation Bar */
+    /**********************/
+    Button* btn[listItemLimit];
+    char    str[listItemLimit][30];
+    /* Create button */
+    setPublicAlignType(AlignHorizonalType_LEFT, AlignVerticalType_MIDDLE);
+    for (i = 0; i < listItemLimit; ++i) {
+        btn[i] =
+            NewButton(0, 0, ((Obj*)bookshelf)->width, bookshelf->itemHeight,
+                      &buttonFont, &buttonBorder, &publicAlignType);
+    }
+    /* Append button to sublist */
+    for (i = 0; i < listItemLimit; ++i) {
+        AppendSubListItem(bookshelf, i, (Obj*)btn[i]);
+    }
+    res = f_opendir(&dir, "0:/BOOK");
+    check_value_equal(res, FR_OK, "Open dir fail");
+    i = 0;
+    /* Read the directory and copy the fileName path string to the char array
+     * pointed by button[i]*/
+    while (res == FR_OK) {
+        res = f_readdir(&dir, &fileinfo);
+        if ((i >= listItemLimit) || (*fileinfo.fname == 0)) {
+            break;
+        }
+        check_value_equal(res, FR_OK, "read dir fail");
+        log_n("File name: %s, altname: %s", fileinfo.fname, fileinfo.altname);
+        strcpy(str[i], fileinfo.fname);
+        btn[i]->str = str[i];
+        ++i;
+    }
+    bookshelf->DrawList(bookshelf);
     startX = 0;
     startY = ATK_MD0700_LCD_HEIGHT / 10 * 9;
     color  = RGB888toRGB565(0XCCCCCC);
     atk_md0700_fill(startX, startY, ATK_MD0700_LCD_WIDTH - 1,
                     startY + LINE_WIDTH_DEFAULT, &color, SINGLE_COLOR_BLOCK);
     BORDER_ALL;
+    Obj* cur_target = NULL;
+    // log_n("     %sCnt of queryQueue %d", ARROW_STRING, touchQueryQueue.size);
     while (1) {
 #    if 1
+        Obj* obj = NULL;
         touchEventUpdate(&touchState, &flag);
         if (touchState == OnRelease) {
             touchEvent = getTouchEvent(flag);
             /* Do things according the touch event */
+            switch (cur_target->type) {
+                case Obj_Type_Button:
+                    if (((Button*)cur_target)->ispressed == BT_PRESSED) {
+                        ((Button*)cur_target)->ispressed = BT_UNPRESSED;
+                        ((Button*)cur_target)->DrawButton((Button*)cur_target);
+                    }
+                    break;
+                default: break;
+            }
+            cur_target = NULL;
             // if (pBtn->ispressed) {
             //     pBtn->ispressed = BT_UNPRESSED;
             //     pBtn->DrawButton(pBtn);
@@ -152,11 +236,27 @@ int main(void)
             clearTouchFlag(&flag);
             touchState = Touch_State_None;
         } else if (touchState == OnPress) {
+            cur_target =
+                touchQueryForWidget(&touchQueryQueue, &point_cur[0], OnPress);
+            // obj = touchQuery(&touchQueryQueue, &point_cur[0]);
+            // if (obj && (obj->type == Obj_Type_List)) {
+            //     obj = touchSubQuery(((List*)obj)->itemList, &point_cur[0]);
+            //     if (obj) {
+            //         switch (obj->type) {
+            //             case Obj_Type_Button:
+            //                 ((Button*)obj)->ispressed = BT_PRESSED;
+            //                 ((Button*)obj)->DrawButton((Button*)obj);
+            //                 break;
+            //             default: break;
+            //         }
+            //     }
+            // }
             // if (GUI_isTarget((Obj*)pBtn, &point_cur[0])) {
             //     pBtn->ispressed = BT_PRESSED;
             //     pBtn->DrawButton(pBtn);
             // }
         }
+        obj = NULL;
 #    else
         if (needRerender) {
             log_n("Rerender LCD panel.");
@@ -233,6 +333,80 @@ void show_logo(uint8_t* logoPicture, uint16_t delayTime_ms)
     }
     /* Delay for Logo */
     delay_ms(delayTime_ms);
+}
+
+void fillMainArea(void)
+{
+    fillArea(0, 0, ATK_MD0700_LCD_WIDTH, ATK_MD0700_LCD_HEIGHT / 10 * 9 - 1,
+             GUI_getBackColor());
+}
+
+Obj* touchQuery(LinkedList* queryQueue, Position* pos)
+{
+    Obj*        target = NULL;
+    Obj*        obj;
+    LinkedNode* node;
+    if (queryQueue->nodeDataType == NodeDataType_Obj) {
+        node = queryQueue->head;
+        while (node) {
+            obj = node->nodeData.obj;
+            if (GUI_isTarget(obj, pos)) {
+                target = obj;
+                break;
+            }
+            node = node->next;
+        }
+    }
+    return target;
+}
+
+Obj* touchSubQuery(LinkedList* querySubQueue, Position* pos)
+{
+    LinkedNode* lineNode;
+    LinkedNode* node;
+    Obj*        obj    = NULL;
+    Obj*        target = NULL;
+    lineNode           = querySubQueue->head;
+    while (lineNode) {
+        node = lineNode->nodeData.subList.head;
+        while (node) {
+            obj = node->nodeData.obj;
+            if (GUI_isTarget(obj, pos)) {
+                target = obj;
+                break;
+            }
+            node = node->next;
+        }
+        lineNode = lineNode->next;
+    }
+    return target;
+}
+
+Obj* touchQueryForWidget(LinkedList* touchQueryQueue,
+                         Position*   pos,
+                         TouchState  state)
+{
+    Obj*    obj        = NULL;
+    uint8_t BT_pressed = UNPRESSED;
+    obj                = touchQuery(touchQueryQueue, pos);
+    if (obj && (obj->type == Obj_Type_List)) {
+        obj = touchSubQuery(((List*)obj)->itemList, pos);
+        if (obj) {
+            if (state == OnPress) {
+                BT_pressed = BT_UNPRESSED;
+            } else if (state == OnRelease) {
+                BT_pressed = BT_UNPRESSED;
+            }
+            switch (obj->type) {
+                case Obj_Type_Button:
+                    ((Button*)obj)->ispressed = BT_PRESSED;
+                    ((Button*)obj)->DrawButton((Button*)obj);
+                    break;
+                default: break;
+            }
+        }
+    }
+    return obj;
 }
 
 #if ACTION_ONCE

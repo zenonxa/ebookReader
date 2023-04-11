@@ -365,7 +365,7 @@
               <MiscControls></MiscControls>
               <Define>USE_HAL_DRIVER,STM32F103xE</Define>
               <Undefine></Undefine>
-              <IncludePath>..\..\Drivers\CMSIS\Device\ST\STM32F1xx\Include;..\..\Drivers\STM32F1xx_HAL_Driver\Inc;..\..\Drivers\CMSIS\Include;..\..\Drivers\;..\..\Middlewares;..\..\User;..\..\Middlewares\MALLOC;..\..\Middlewares\TEXT;..\..\Middlewares\FATFS;..\..\Middlewares\LOG;..\..\Middlewares\UTIL</IncludePath>
+              <IncludePath>..\..\Drivers\CMSIS\Device\ST\STM32F1xx\Include;..\..\Drivers\STM32F1xx_HAL_Driver\Inc;..\..\Drivers\CMSIS\Include;..\..\Drivers\;..\..\Middlewares;..\..\User;..\..\Middlewares\MALLOC;..\..\Middlewares\TEXT;..\..\Middlewares\FATFS;..\..\Middlewares\LOG;..\..\Middlewares\UTIL;..\..\Middlewares\GUI</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -663,6 +663,11 @@
               <FileType>1</FileType>
               <FilePath>..\..\Middlewares\UTIL\util.c</FilePath>
             </File>
+            <File>
+              <FileName>LinkedList.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\Middlewares\UTIL\LinkedList.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -672,6 +677,36 @@
               <FileName>log.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\..\Middlewares\LOG\log.c</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>Middlewares/GUI</GroupName>
+          <Files>
+            <File>
+              <FileName>gui.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\Middlewares\GUI\gui.c</FilePath>
+            </File>
+            <File>
+              <FileName>window.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\Middlewares\GUI\widget\src\window.c</FilePath>
+            </File>
+            <File>
+              <FileName>list.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\Middlewares\GUI\widget\src\list.c</FilePath>
+            </File>
+            <File>
+              <FileName>button.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\Middlewares\GUI\widget\src\button.c</FilePath>
+            </File>
+            <File>
+              <FileName>textarea.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\Middlewares\GUI\widget\src\textarea.c</FilePath>
             </File>
           </Files>
         </Group>

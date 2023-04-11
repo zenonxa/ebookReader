@@ -5,12 +5,18 @@
 #include "SYSTEM/SYS/sys.h"
 #include "font.h"
 
-typedef uint16_t COLOR_DATTYPE;
+typedef uint16_t         COLOR_DATTYPE;
+typedef struct Font      Font;
+typedef struct Border    Border;
+typedef struct AlignType AlignType;
 
-extern uint8_t   GUI_FONT_TYPE;
+extern uint8_t   GUI_FONT_NAME;
 extern uint8_t   GUI_FONT_SIZE;
 extern uint16_t* pGUI_FOREGROUND_COLOR;
 extern uint16_t* pGUI_BACKGROUND_COLOR;
+extern Font      publicFont;
+extern Border    publicBorder;
+extern AlignType publicAlignType;
 
 #define GUI_MALLOC_SOURCE SRAMEX
 #define LINE_WIDTH_DEFAULT 5
@@ -18,11 +24,12 @@ extern uint16_t* pGUI_BACKGROUND_COLOR;
 #define GUI_FONT_SIZE_DEFAULT PX12
 
 typedef enum {
-    BUTTON = 0,
-    LIST,
-    WINDOW,
-    Obj_Type_Min     = BUTTON,
-    Obj_Type_Max     = WINDOW,           /* Max */
+    Obj_Type_Button = 0,
+    Obj_Type_List,
+    Obj_Type_Textarea,
+    Obj_Type_Window,
+    Obj_Type_Min     = Obj_Type_Button,
+    Obj_Type_Max     = Obj_Type_Window,  /* Max */
     Obj_Type_Default = Obj_Type_Min,     /* Default */
     Obj_Type_Cnt     = Obj_Type_Max + 1, /* The number of all */
     Obj_Type_None    = Obj_Type_Cnt,     /* Invalid value */
@@ -40,12 +47,19 @@ typedef struct Obj_struct
     /* void (*Response)(void*); */
 } Obj;
 
-typedef struct
+typedef struct Border
 {
     uint16_t borderColor;
     uint8_t  borderWidth;
     uint8_t  borderFlag;
 } Border;
+
+typedef struct Font
+{
+    uint8_t       fontName;
+    uint8_t       fontSize;
+    COLOR_DATTYPE fontColor;
+} Font;
 
 #define BORDER_FLAG(borderFlagBit) (0x01 << (borderFlagBit))
 
@@ -68,6 +82,34 @@ typedef enum {
     BorderFlagNone    = BorderFlagCnt,     /* Invalid value */
 } BorderFlagBit;
 
+typedef enum {
+    AlignHorizonalType_LEFT = 0,
+    AlignHorizonalType_RIGHT,
+    AlignHorizonalType_CENTER,
+    AlignHorizonalType_Min     = AlignHorizonalType_LEFT,
+    AlignHorizonalType_Max     = AlignHorizonalType_CENTER, /* Max */
+    AlignHorizonalType_Default = AlignHorizonalType_Min,    /* Default */
+    AlignHorizonalType_Cnt = AlignHorizonalType_Max + 1, /* The number of all */
+    AlignHorizonalType_None = AlignHorizonalType_Cnt,    /* Invalid value */
+} AlignHorizonalType;
+
+typedef enum {
+    AlignVerticalType_TOP = 0,
+    AlignVerticalType_BOTTOM,
+    AlignVerticalType_MIDDLE,
+    AlignVerticalType_Min     = AlignVerticalType_TOP,
+    AlignVerticalType_Max     = AlignVerticalType_MIDDLE, /* Max */
+    AlignVerticalType_Default = AlignVerticalType_Min,    /* Default */
+    AlignVerticalType_Cnt  = AlignVerticalType_Max + 1, /* The number of all */
+    AlignVerticalType_None = AlignVerticalType_Cnt,     /* Invalid value */
+} AlignVerticalType;
+
+typedef struct AlignType
+{
+    uint8_t horizonal;
+    uint8_t vertical;
+} AlignType;
+
 #define InitOBJParam(pObj, xPos, yPos, objWidth, objHeight, draw)              \
     do {                                                                       \
         ((Obj*)pObj)->x      = xPos;                                           \
@@ -78,21 +120,35 @@ typedef enum {
         /*((Obj*)pObj)->Response = &response;*/                                \
     } while (0)
 
-FontName GUI_GetFontType(void);
-FontSize GUI_GetFontSize(void);
-void     GUI_SetFontType(FontName fontName);
-void     GUI_SetFontSize(FontSize fontSize);
-void     GUI_setForeColor(COLOR_DATTYPE color);
-void     GUI_setBackColor(COLOR_DATTYPE color);
-uint16_t GUI_GetXORColor(uint16_t color);
-void     GUI_DrawStr(Obj* obj, const char* str);
-bool     GUI_isTarget(Obj* obj, Position* point);
-bool     GUI_GetBorderFlag(Obj* obj, BorderFlagBit botderFlagBit);
-void     draw_widget(Obj* obj);
-void     drawBorder(Obj* obj, uint16_t borderWidth);
-bool     checkBoundary(uint16_t x,
-                       uint16_t y,
-                       uint16_t width,
-                       uint16_t height,
-                       Obj*     obj);
+FontName      GUI_GetFontName(void);
+FontSize      GUI_GetFontSize(void);
+void          GUI_SetFontName(FontName fontName);
+void          GUI_SetFontSize(FontSize fontSize);
+void          GUI_setForeColor(COLOR_DATTYPE color);
+COLOR_DATTYPE GUI_getForeColor(void);
+void          GUI_setBackColor(COLOR_DATTYPE color);
+COLOR_DATTYPE GUI_getBackColor(void);
+uint16_t      GUI_GetXORColor(uint16_t color);
+void          GUI_DrawStr(Obj* obj, const char* str);
+bool          GUI_isTarget(Obj* obj, Position* point);
+bool          GUI_GetBorderFlag(Obj* obj, BorderFlagBit botderFlagBit);
+void          draw_widget(Obj* obj);
+void          drawBorder(Obj* obj, Border* border);
+bool          checkBoundary(uint16_t x,
+                            uint16_t y,
+                            uint16_t width,
+                            uint16_t height,
+                            Obj*     obj);
+void          setPublicFont(FontName      fontName,
+                            FontSize      fontSize,
+                            COLOR_DATTYPE fontColor);
+void          setPublicBorder(COLOR_DATTYPE borderColor,
+                              uint8_t       borderWidth,
+                              uint8_t       borderFlag);
+AlignType*    getPublicAlignType(void);
+void          setPublicAlignType(AlignHorizonalType horizonal,
+                                 AlignVerticalType  vertical);
+Border*       getObjBorder(Obj* obj);
+void          ObjSkin(Obj* obj);
+void fillArea(u16 x, u16 y, u16 width, u16 height, COLOR_DATTYPE color);
 #endif

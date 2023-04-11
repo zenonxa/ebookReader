@@ -3,30 +3,32 @@
 #include "MALLOC/malloc.h"
 #include "log.h"
 
+ElemType publicElemData;
+
 // 创建双向链表结点
 LinkedNode* create_node(ElemType* data)
 {
-    LinkedNode* node =
-        (LinkedNode*)mymalloc(LINKEDLIST_MALLOC_SOURCE, sizeof(LinkedNode));  // 申请内存
-    node->nodeData = *data;
-    node->prev = NULL;
-    node->next = NULL;
+    LinkedNode* node = (LinkedNode*)mymalloc(LINKEDLIST_MALLOC_SOURCE,
+                                             sizeof(LinkedNode));  // 申请内存
+    node->nodeData   = *data;
+    node->prev       = NULL;
+    node->next       = NULL;
     return node;
 }
 
 void init_LinkedList(LinkedList* linkedlist, NodeDataType nodeDataType)
 {
     linkedlist->nodeDataType = nodeDataType;
-    linkedlist->head = NULL;
-    linkedlist->tail = NULL;
-    linkedlist->size = 0;
+    linkedlist->head         = NULL;
+    linkedlist->tail         = NULL;
+    linkedlist->size         = 0;
 }
 
 void free_LinkedList(LinkedList* linkedlist)
 {
     LinkedNode* tmp = NULL;
     while (linkedlist->size) {
-        tmp        = linkedlist->head;
+        tmp              = linkedlist->head;
         linkedlist->head = linkedlist->head->next;
         myfree(LINKEDLIST_MALLOC_SOURCE, tmp);
         tmp = NULL;
@@ -56,7 +58,7 @@ void show_LinkList(LinkedList* linkedlist)
 {
     LinkedNode* node = linkedlist->head;
     for (int i = 0; i < linkedlist->size; ++i) {
-        //log_n("%d ", node->data);
+        // log_n("%d ", node->data);
         node = node->next;
     }
 }
@@ -162,7 +164,7 @@ void del_head(LinkedList* linkedlist)
         return;
     }
 
-    LinkedNode* tmp              = linkedlist->head;  // 保存头结点
+    LinkedNode* tmp        = linkedlist->head;  // 保存头结点
     linkedlist->head       = tmp->next;
     linkedlist->head->prev = NULL;
 
@@ -183,7 +185,7 @@ void del_tail(LinkedList* linkedlist)
         return;
     }
 
-    LinkedNode* tmp              = linkedlist->tail;  // 保存尾结点
+    LinkedNode* tmp        = linkedlist->tail;  // 保存尾结点
     linkedlist->tail       = tmp->prev;
     linkedlist->tail->next = NULL;
 
@@ -299,3 +301,28 @@ bool modify_data(LinkedList* linkedlist, ElemType* data, ElemType* val)
     return false;
 }
 #endif
+
+// LinkedNode*
+// queryLinkedList(LinkedList* linkedList,
+//                 ElemType*   data,
+//                 bool (*condition)(NodeDataType, ElemType*, ElemType*))
+// {
+//     if (linkedList->size == 0) {
+//         return NULL;
+//     }
+//     LinkedNode* node = linkedList->head;
+//     while (node) {
+//         if (condition(linkedList->nodeDataType, &node->nodeData, data)) {
+//             return node;
+//         }
+//         node = node->next;
+//     }
+//     return NULL;
+// }
+// // bool (*condition)(ElemType* elemInLinkedList, ElemType* elemToQuery)
+// bool linkedNodeCmp(NodeDataType nodeDataType,
+//                    ElemType*    elemInLinkedList,
+//                    ElemType*    elemToQuery)
+// {
+//     return false;
+// }

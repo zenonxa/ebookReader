@@ -42,6 +42,8 @@ typedef union LinkedNodeData
     struct LinkedList subList;
 } LinkedNodeData;
 
+extern ElemType publicElemData;
+
 /* Link node for double direction linked list*/
 struct LinkedNode
 {
@@ -49,6 +51,15 @@ struct LinkedNode
     struct LinkedNode* prev; /* Pointer pointing to the previous node */
     struct LinkedNode* next; /* Pointer pointing to the next node */
 };
+
+// typedef enum {
+//     QueryCommand_TouchQuery = 0,
+//     QueryCommand_Min        = QueryCommand_TouchQuery,
+//     QueryCommand_Max        = QueryCommand_TouchQuery, /* Max */
+//     QueryCommand_Default    = QueryCommand_Min,        /* Default */
+//     QueryCommand_Cnt        = QueryCommand_Max + 1,    /* The number of all */
+//     QueryCommand_None       = QueryCommand_Cnt,        /* Invalid value */
+// } QueryCommand;
 
 LinkedNode* create_node(ElemType* data); /* Create a linkedlist node */
 void        init_LinkedList(LinkedList*  linkedlist,

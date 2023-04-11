@@ -4,6 +4,7 @@
 #include "LinkedList.h"
 #include "color.h"
 #include "gui.h"
+#include "widget/inc/textarea.h"
 
 #define RELATIVE_LOCATE_ENABLE 1
 
@@ -14,6 +15,7 @@ typedef struct List_struct
     Border      border;
     LinkedNode* headItem;
     LinkedList* itemList;
+    Textarea*   headlineTextarea;
     uint16_t    headlineHeight;
     uint16_t    itemHeight;
     uint8_t     dividingLineHeight;
@@ -30,8 +32,9 @@ List* NewList(uint16_t xpos,
               uint16_t headlineHeight,
               uint16_t itemHeight,
               Obj*     scroller,
-              uint8_t  lineWidth);
+              uint8_t  dividingLineHeight);
 void  AppendSubListItem(List* list, uint16_t index, Obj* obj);
 void  AppendSubList(List* list);
+void  SetListHeadlineTextarea(List* list, Textarea* textarea);
 
 #endif

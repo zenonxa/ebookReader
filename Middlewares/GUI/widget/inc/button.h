@@ -10,13 +10,10 @@ typedef struct BT_struct
     void (*DrawButton)(struct BT_struct*);  // 画出按键
     COLOR_DATTYPE BKcolor_unpressed;        // 未按下时的背景色
     COLOR_DATTYPE BKcolor_pressed;          // 按下时的背景色
-    COLOR_DATTYPE fontColor;                // 字体颜色
-    uint8_t       fontType;
-    uint8_t       fontSize;
-    bool          ispressed;  // 按下1，没按下0
-    uint8_t       borderWidth;
-    uint8_t       borderFlag;
-    uint8_t       borderColor;
+    bool          ispressed;                // 按下1，没按下0
+    Border        border;
+    Font          font;
+    AlignType     alignType;
     const char*   str;  // 字符串
 } Button;
 
@@ -26,12 +23,13 @@ typedef struct BT_struct
 #define BT_PRESSED 1
 #define BT_UNPRESSED 0
 
-Button* NewButton(u16      xpos,
-                  u16      ypos,
-                  u16      width,
-                  u16      height,
-                  uint16_t fontColor,
-                  Border*  border);
+Button* NewButton(u16     xpos,
+                  u16     ypos,
+                  u16     width,
+                  u16     height,
+                  Font*   font,
+                  Border* border,
+                  AlignType* alognType);
 void    ButtonSetStr(Button* button, const char* str);
 
 #endif

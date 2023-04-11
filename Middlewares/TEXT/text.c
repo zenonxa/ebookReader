@@ -245,22 +245,27 @@ uint8_t* Show_Str(uint16_t x,
 // mode: 0:非叠加 1:叠加
 void Show_Str_Mid(uint16_t x,
                   uint16_t y,
+                  uint16_t width,
+                  uint16_t height,
                   uint8_t* str,
                   FontName fontName,
                   FontSize fontSize,
-                  uint8_t  len, uint8_t mode)
+                  uint16_t  len,
+                  uint8_t  mode)
 {
     uint16_t strlenth = 0;
     uint8_t  size     = getSize(fontSize);
     strlenth          = strlen((const char*)str);
     strlenth *= size / 2;
     if (strlenth > len) {
-        Show_Str(x, y, ATK_MD0700_LCD_WIDTH, ATK_MD0700_LCD_HEIGHT, str,
-                 fontName, fontSize, mode);
+        Show_Str(x, y, width, height, str, fontName, fontSize, mode);
+        log_n("%s not middle", ARROW_STRING);
     } else {
+        log_n("%s middle", ARROW_STRING);
         strlenth = (len - strlenth) / 2;
-        Show_Str(strlenth + x, y, ATK_MD0700_LCD_WIDTH, ATK_MD0700_LCD_HEIGHT,
-                 str, fontName, fontSize, mode);
+        log_n("strlenth = %d, strlenth+x: %d, y: %d", strlenth, strlenth + x,
+              y);
+        Show_Str(strlenth + x, y, width, height, str, fontName, fontSize, mode);
     }
 }
 

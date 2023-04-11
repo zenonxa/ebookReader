@@ -40,6 +40,7 @@
 #include "text.h"
 #include "widget/inc/button.h"
 #include "widget/inc/list.h"
+#include "widget/inc/textarea.h"
 /********************************************************/
 
 /********************************************************/
@@ -108,6 +109,12 @@ void LED_Toggle(void);
 void LED_flashing(
     uint16_t time_span_ms); /* LED0 and LED1, flashing as the given time span */
 void show_logo(uint8_t* logoPicture, uint16_t delayTime_ms);
+void fillMainArea(void);
+Obj* touchQuery(LinkedList* queryQueue, Position* pos);
+Obj* touchSubQuery(LinkedList* querySubQueue, Position* pos);
+Obj* touchQueryForWidget(LinkedList* touchQueryQueue,
+                         Position*   pos,
+                         TouchState  state);
 #if ACTION_ONCE
 void excuteCommand(void);
 #endif

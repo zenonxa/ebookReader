@@ -18,28 +18,28 @@ void draw_ButtonBorder(Button* button);
 void BtDefaultText(Button* button);
 void BtText(Button* button);
 
-Button* NewButton(u16      xpos,
-                  u16      ypos,
-                  u16      width,
-                  u16      height,
-                  uint16_t fontColor,
-                  Border*  border)
+Button* NewButton(u16        xpos,
+                  u16        ypos,
+                  u16        width,
+                  u16        height,
+                  Font*      font,
+                  Border*    border,
+                  AlignType* alognType)
 {
     Button* button = (Button*)mymalloc(GUI_MALLOC_SOURCE, sizeof(Button));
 
+    // button->font.fontName  = GUI_FONT_TYPE_DEFAULT;
+    // button->font.fontSize  = GUI_FONT_SIZE_DEFAULT;
     button->ispressed      = UNPRESSED;
     button->str            = 0;
-    button->fontColor      = fontColor;
-    button->borderWidth    = border->borderWidth;
-    button->borderFlag     = border->borderFlag;
-    button->borderColor    = border->borderColor;
-    button->fontType       = GUI_FONT_TYPE_DEFAULT;
-    button->fontSize       = GUI_FONT_SIZE_DEFAULT;
+    button->font           = *font;
+    button->border         = *border;
     ((Obj*)button)->height = height;
     ((Obj*)button)->width  = width;
     ((Obj*)button)->x      = xpos;
     ((Obj*)button)->y      = ypos;
-    ((Obj*)button)->type   = BUTTON;
+    ((Obj*)button)->type   = Obj_Type_Button;
+    button->alignType      = *alognType;
     button->DrawButton     = &DrawButton;
     return button;
 }
@@ -88,7 +88,7 @@ void Obj_Skin_base(Obj* obj, COLOR_DATTYPE color)
 
 void draw_ButtonBorder(Button* button)
 {
-    drawBorder((Obj*)button, button->borderWidth);
+    drawBorder((Obj*)button, &button->border);
 }
 
 void BtDefaultText(Button* button)
@@ -100,18 +100,19 @@ void BtText(Button* button)
 {
     // u16 length;
     if (button->str != 0) {
-        GUI_SetFontType((FontName)button->fontType);
-        GUI_SetFontSize((FontSize)button->fontSize);
+        GUI_SetFontName((FontName)button->font.fontName);
+        GUI_SetFontSize((FontSize)button->font.fontSize);
         // length = strlen(button->str);
         if (button->ispressed == BT_PRESSED) {
-            GUI_setForeColor(GUI_GetXORColor(button->fontColor));
+            GUI_setForeColor(GUI_GetXORColor(button->font.fontColor));
         } else {
-            GUI_setForeColor(button->fontColor);
+            GUI_setForeColor(button->font.fontColor);
         }
         // Show_Str_Mid(((Obj*)button)->x, ((Obj*)button)->y,
         // (uint8_t*)(button->str),
         //              GUI_GetFontType(), GUI_GetFontSize(),
         //              ((Obj*)button)->width, 1);
+        setPublicAlignType(button->alignType.horizonal, button->alignType.vertical);
         GUI_DrawStr(&button->obj, button->str);
         // CUIGUI_DrawStr(((Obj*)button)->x + (((Obj*)button)->width - length) /
         // 2,
@@ -130,14 +131,14 @@ void ButtonSetPressed(Obj* obj, u8 isPressed)
 
 void ButtonSetFont(Button* button, const FontName fontName)
 {
-    button->fontType = fontName;
+    button->font.fontName = fontName;
     button->DrawButton(button);
 }
 
 // 设置按键颜色
 void ButtonSetColor(Button* button, COLOR_DATTYPE fontColor)
 {
-    button->fontColor = fontColor;
+    button->font.fontColor = fontColor;
     button->DrawButton(button);
 }
 

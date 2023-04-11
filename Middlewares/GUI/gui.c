@@ -1,18 +1,27 @@
 #include "gui.h"
 #include "BSP/ATK_MD0700/atk_md0700.h"
+#include "log.h"
 #include "text.h"
 #include "util.h"
 #include "widget/inc/button.h"
 #include "widget/inc/list.h"
+#include "widget/inc/textarea.h"
+#include <string.h>
 
-uint8_t GUI_FONT_TYPE = GUI_FONT_TYPE_DEFAULT;
+uint8_t GUI_FONT_NAME = GUI_FONT_TYPE_DEFAULT;
 uint8_t GUI_FONT_SIZE = GUI_FONT_SIZE_DEFAULT;
+
+Font      publicFont;
+Border    publicBorder;
+AlignType publicAlignType;
 
 extern u16 FOREGROUND_COLOR;  // 画笔颜色
 extern u16 BACKGROUND_COLOR;  // 背景色
 
 uint16_t* pGUI_FOREGROUND_COLOR = &FOREGROUND_COLOR;
 uint16_t* pGUI_BACKGROUND_COLOR = &FOREGROUND_COLOR;
+
+void fillArea(u16 x, u16 y, u16 width, u16 height, COLOR_DATTYPE color);
 
 void GUI_setForeColor(COLOR_DATTYPE color)
 {
@@ -24,9 +33,18 @@ void GUI_setBackColor(COLOR_DATTYPE color)
     *pGUI_BACKGROUND_COLOR = color;
 }
 
-void GUI_SetFontType(FontName fontName)
+COLOR_DATTYPE GUI_getBackColor(void)
 {
-    GUI_FONT_TYPE = fontName;
+    return *pGUI_BACKGROUND_COLOR;
+}
+COLOR_DATTYPE GUI_getForeColor(void)
+{
+    return *pGUI_FOREGROUND_COLOR;
+}
+
+void GUI_SetFontName(FontName fontName)
+{
+    GUI_FONT_NAME = fontName;
 }
 
 void GUI_SetFontSize(FontSize fontSize)
@@ -34,9 +52,9 @@ void GUI_SetFontSize(FontSize fontSize)
     GUI_FONT_SIZE = fontSize;
 }
 
-FontName GUI_GetFontType()
+FontName GUI_GetFontName()
 {
-    return (FontName)GUI_FONT_TYPE;
+    return (FontName)GUI_FONT_NAME;
 }
 
 FontSize GUI_GetFontSize()
@@ -51,10 +69,44 @@ uint16_t GUI_GetXORColor(uint16_t color)
 
 void GUI_DrawStr(Obj* obj, const char* str)
 {
-    uint16_t x = obj->x;
-    uint16_t y = obj->y + (obj->height - getSize(GUI_GetFontSize())) / 2;
-    Show_Str_Mid(x, y, (uint8_t*)str, GUI_GetFontType(), GUI_GetFontSize(),
-                 obj->width, 1);
+    uint16_t x       = obj->x;
+    uint16_t y       = obj->y;
+    uint16_t len     = getSize(GUI_GetFontSize()) / 2 * strlen(str);
+    uint16_t lineCnt = len / obj->width + (len % obj->width ? 1 : 0);
+    if (len <= obj->width) {
+        switch (publicAlignType.horizonal) {
+            case AlignHorizonalType_LEFT: x = obj->x; break;
+            case AlignHorizonalType_RIGHT: x = obj->x + obj->width - len; break;
+            case AlignHorizonalType_CENTER:
+                x = obj->x + (obj->width - len) / 2;
+                break;
+            default: break;
+        }
+    }
+    if (lineCnt * getSize(GUI_GetFontSize()) <= obj->height) {
+        switch (publicAlignType.vertical) {
+            case AlignVerticalType_TOP: y = obj->y; break;
+            case AlignVerticalType_BOTTOM:
+                y = obj->y + obj->height - lineCnt * getSize(GUI_GetFontSize());
+                break;
+            case AlignVerticalType_MIDDLE:
+                y = obj->y +
+                    (obj->height - lineCnt * getSize(GUI_GetFontSize())) / 2;
+                break;
+            default: break;
+        }
+    }
+
+    // x = obj->x;
+    // y = obj->y + (obj->height - getSize(GUI_GetFontSize())) / 2;
+    // if (obj->type == Obj_Type_Textarea) {
+    //     log_n("%swidth: %d, strlen(str): %d", ARROW_STRING, obj->width,
+    //     strlen(str)); log_n("x: %d, y: %d", obj->x, obj->y);
+    // }
+    // Show_Str_Mid(x, y, obj->width, obj->height, (uint8_t*)str,
+    //              GUI_GetFontName(), GUI_GetFontSize(), obj->width, 1);
+    Show_Str(x, y, obj->width, obj->height, (uint8_t*)str, GUI_GetFontName(),
+             GUI_GetFontSize(), 1);
 }
 
 bool GUI_isTarget(Obj* obj, Position* point)
@@ -73,27 +125,23 @@ bool GUI_isTarget(Obj* obj, Position* point)
 
 bool GUI_GetBorderFlag(Obj* obj, BorderFlagBit botderFlagBit)
 {
-    bool flag = 0;
-    switch (obj->type) {
-        case BUTTON: flag = ((Button*)obj)->borderFlag; break;
-        case LIST: flag = ((List*)obj)->border.borderFlag; break;
-        case WINDOW: break;
-    }
-    flag = (flag >> botderFlagBit) & 0x01;
+    bool flag = (getObjBorder(obj)->borderFlag >> botderFlagBit) & 0x01;
     return flag;
 }
 
+// Used when drawing widgets in List
 void draw_widget(Obj* obj)
 {
     switch (obj->type) {
-        case BUTTON: ((Button*)obj)->DrawButton((Button*)obj); break;
+        case Obj_Type_Button: ((Button*)obj)->DrawButton((Button*)obj); break;
         default: break;
     }
 }
 
-void drawBorder(Obj* obj, uint16_t borderWidth)
+void drawBorder(Obj* obj, Border* border)
 {
-    uint16_t borderColor = ATK_MD0700_BLACK;
+    uint16_t borderColor = border->borderColor;
+    uint16_t borderWidth = border->borderWidth;
     if (GUI_GetBorderFlag(obj, BORDER_TOP)) {
         atk_md0700_fill(obj->x - borderWidth, obj->y - borderWidth,
                         obj->x + obj->width + borderWidth - 1, obj->y - 1,
@@ -129,4 +177,57 @@ bool checkBoundary(uint16_t x,
         return false;
     }
     return true;
+}
+
+void setPublicFont(FontName      fontName,
+                   FontSize      fontSize,
+                   COLOR_DATTYPE fontColor)
+{
+    publicFont.fontName  = fontName;
+    publicFont.fontSize  = fontSize;
+    publicFont.fontColor = fontColor;
+}
+
+void setPublicBorder(COLOR_DATTYPE borderColor,
+                     uint8_t       borderWidth,
+                     uint8_t       borderFlag)
+{
+    publicBorder.borderColor = borderColor;
+    publicBorder.borderWidth = borderWidth;
+    publicBorder.borderFlag  = borderFlag;
+}
+
+void setPublicAlignType(AlignHorizonalType horizonal,
+                        AlignVerticalType  vertical)
+{
+    publicAlignType.horizonal = horizonal;
+    publicAlignType.vertical  = vertical;
+}
+
+AlignType* getPublicAlignType(void)
+{
+    return &publicAlignType;
+}
+
+Border* getObjBorder(Obj* obj)
+{
+    Border* border = NULL;
+    switch (obj->type) {
+        case Obj_Type_Button: border = &((Button*)obj)->border; break;
+        case Obj_Type_List: border = &((List*)obj)->border; break;
+        case Obj_Type_Textarea: border = &((Textarea*)obj)->border; break;
+        default: break;
+    }
+    return border;
+}
+
+void ObjSkin(Obj* obj)
+{
+    fillArea(obj->x, obj->y, obj->width, obj->height, GUI_getBackColor());
+}
+
+void fillArea(u16 x, u16 y, u16 width, u16 height, COLOR_DATTYPE color)
+{
+    atk_md0700_fill(x, y, x + width - 1, y + height - 1, &color,
+                    SINGLE_COLOR_BLOCK);
 }
