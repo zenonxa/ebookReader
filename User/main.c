@@ -110,26 +110,9 @@ int main(void)
     LinkedList touchQueryQueue; /* Queue for querying of touch operation */
     init_LinkedList(&touchQueryQueue, NodeDataType_Obj);
 
-    const uint16_t menuWidth_1   = 400;
-    const uint16_t menuHeight_1  = 600;
-    const uint8_t  listItemLimit = 4;
-    // Border         listBorder    = {
-    //                .borderColor = RGB888toRGB565(0x000000),
-    //                .borderWidth = 3,
-    //                .borderFlag = BORDER_FLAG(BORDER_TOP) |
-    //                BORDER_FLAG(BORDER_BOTTOM),
-    // };
-    // uint16_t buttonFontColor = RGB888toRGB565(0x000000);
-    // Border   buttonBorder    = {
-    //          .borderColor = RGB888toRGB565(0x000000),
-    //          .borderWidth = 3,
-    //          .borderFlag  = BORDER_NULL,
-    // };
-    // Font buttonFont = {
-    //     .fontName  = Font_SimSun,
-    //     .fontSize  = PX24,
-    //     .fontColor = RGB888toRGB565(0x000000),
-    // };
+    const uint16_t menuWidth_1  = 400;
+    const uint16_t menuHeight_1 = 600;
+    uint8_t        listItemLimit;
     setPublicBorder(RGB888toRGB565(0x000000), 3,
                     BORDER_FLAG(BORDER_TOP) | BORDER_FLAG(BORDER_BOTTOM));
     List* bookshelf =
@@ -139,6 +122,7 @@ int main(void)
                     2,
                 menuWidth_1, menuHeight_1, &publicBorder, 70, 55, NULL, 1);
     publicElemData.obj = (Obj*)bookshelf;
+    listItemLimit      = bookshelf->itemList->size;
     push_tail(&touchQueryQueue, &publicElemData);
     setPublicFont(Font_SimSun, PX24, RGB888toRGB565(0x000000));
     setPublicBorder(RGB888toRGB565(0x000000), 3, BORDER_NULL);
@@ -148,7 +132,7 @@ int main(void)
     bookshelfHeadline->str      = bookshelfHeadlineStr;
     bookshelf->headlineTextarea = bookshelfHeadline;
     /**********************/
-    /* Navigation Bar */
+    // 创建导航栏
     setPublicBorder(RGB888toRGB565(0x000000), 3, BORDER_NULL);
     List* navigationBar =
         NewList(0, ATK_MD0700_LCD_HEIGHT / 10 * 9, ATK_MD0700_LCD_WIDTH,
@@ -177,44 +161,53 @@ int main(void)
     navigationBar->DrawList(navigationBar);
     /* Navigation Bar */
     /**********************/
-    Button* btn[listItemLimit];
-    char    str[listItemLimit][30];
-    /* Create button */
+    Button* booknameBtn[listItemLimit];
+    char    bookname[listItemLimit][30];
+    memset(booknameBtn, 0, sizeof(Button*) * listItemLimit);
+    memset(bookname, 0, sizeof(char) * listItemLimit * 30);
+    /* 创建按钮，并添加至书架列表中 */
     setPublicAlignType(AlignHorizonalType_LEFT, AlignVerticalType_MIDDLE);
     setPublicBorder(RGB888toRGB565(0x000000), 3, BORDER_NULL);
     setPublicFont(Font_SimSun, PX24, RGB888toRGB565(0x000000));
     for (i = 0; i < listItemLimit; ++i) {
-        btn[i] =
+        booknameBtn[i] =
             NewButton(0, 0, ((Obj*)bookshelf)->width, bookshelf->itemHeight,
                       &publicFont, &publicBorder, &publicAlignType);
+        check_value_not_equal(booknameBtn[i], NULL,
+                              "Fail to malloc for bootnameBtn[%d]", i);
+        booknameBtn[i]->str = bookname[i];
     }
-    /* Append button to sublist */
-    for (i = 0; i < listItemLimit; ++i) {
-        AppendSubListItem(bookshelf, i, (Obj*)btn[i]);
-    }
+    /* 读取目录*/
+    /* Read directory to get filenames */
     res = f_opendir(&dir, "0:/BOOK");
     check_value_equal(res, FR_OK, "Open dir fail");
     i = 0;
     /* Read the directory and copy the fileName path string to the char array
-     * pointed by button[i]*/
-    while (res == FR_OK) {
-        res = f_readdir(&dir, &fileinfo);
-        if ((i >= listItemLimit) || (*fileinfo.fname == 0)) {
-            break;
-        }
-        check_value_equal(res, FR_OK, "read dir fail");
-        log_n("File name: %s, altname: %s", fileinfo.fname, fileinfo.altname);
-        strcpy(str[i], fileinfo.fname);
-        btn[i]->str = str[i];
-        ++i;
-    }
+     * pointed by button[i] */
+    CopyBookname(&dir, listItemLimit, bookname);
+    refreshBookname(bookshelf, booknameBtn, bookname, DrawOption_Delay);
+    // while (res == FR_OK) {
+    //     res = f_readdir(&dir, &fileinfo);
+    //     if ((i >= listItemLimit) || (*fileinfo.fname == 0)) {
+    //         break;
+    //     }
+    //     check_value_equal(res, FR_OK, "read dir fail");
+    //     log_n("File name: %s, altname: %s", fileinfo.fname,
+    //     fileinfo.altname); strcpy(bookname[i], fileinfo.fname);
+    //     ++i;
+    // }
+    /* Append button to sublist */
+    // for (i = 0; i < listItemLimit; ++i) {
+    //     AppendSubListItem(bookshelf, i, (Obj*)booknameBtn[i]);
+    // }
+    /* Draw bookshelf (List) */
     bookshelf->DrawList(bookshelf);
+    // log_n("Number of line in List: %d", bookshelf->itemList->size);
     // startX = 0;
     // startY = ATK_MD0700_LCD_HEIGHT / 10 * 9;
     // color  = RGB888toRGB565(0XCCCCCC);
     // atk_md0700_fill(startX, startY, ATK_MD0700_LCD_WIDTH - 1,
     //                 startY + LINE_WIDTH_DEFAULT, &color, SINGLE_COLOR_BLOCK);
-    BORDER_ALL;
     Obj* cur_target = NULL;
     // log_n("     %sCnt of queryQueue %d", ARROW_STRING, touchQueryQueue.size);
     while (1) {
@@ -224,16 +217,32 @@ int main(void)
         if (touchState == OnRelease) {
             touchEvent = getTouchEvent(flag);
             /* Do things according the touch event */
-            switch (cur_target->type) {
-                case Obj_Type_Button:
-                    if (((Button*)cur_target)->ispressed == BT_PRESSED) {
-                        ((Button*)cur_target)->ispressed = BT_UNPRESSED;
-                        ((Button*)cur_target)->DrawButton((Button*)cur_target);
-                    }
-                    break;
-                default: break;
+            if (cur_target) {
+                switch (cur_target->type) {
+                    case Obj_Type_Button:
+                        if (((Button*)cur_target)->ispressed == BT_PRESSED) {
+                            ((Button*)cur_target)->ispressed = BT_UNPRESSED;
+                            ((Button*)cur_target)
+                                ->DrawButton((Button*)cur_target);
+                        }
+                        break;
+                    default: break;
+                }
+                cur_target = NULL;
             }
-            cur_target = NULL;
+            if (touchEvent == Touch_Event_Move) {
+                slideDirestion =
+                    getSlideDirection(point_prev[0].x, point_prev[0].y,
+                                      point_cur[0].x, point_cur[0].y);
+                if (slideDirestion == Slide_Up) {
+                    if (*fileinfo.fname) {
+                        CopyBookname(&dir, listItemLimit, bookname);
+                        refreshBookname(bookshelf, booknameBtn, bookname,
+                                        DrawOption_Immediately);
+                    }
+                } else if (slideDirestion == Slide_Down) {
+                }
+            }
             // if (pBtn->ispressed) {
             //     pBtn->ispressed = BT_UNPRESSED;
             //     pBtn->DrawButton(pBtn);
@@ -355,7 +364,7 @@ Obj* touchQuery(LinkedList* queryQueue, Position* pos)
         node = queryQueue->head;
         while (node) {
             obj = node->nodeData.obj;
-            if (GUI_isTarget(obj, pos)) {
+            if (obj && GUI_isTarget(obj, pos)) {
                 target = obj;
                 break;
             }
@@ -412,6 +421,72 @@ Obj* touchQueryForWidget(LinkedList* touchQueryQueue,
         }
     }
     return obj;
+}
+
+void readDirRevert(DIR* dir, uint8_t limit)
+{
+    uint8_t i = 0;
+    uint8_t res;
+    for (i = 0; i < limit - 1; ++i) {
+        res = f_readdir(dir, NULL);
+    }
+}
+
+void CopyBookname(DIR* dir, uint8_t limit, char bookname[][30])
+{
+    uint8_t i   = 0;
+    uint8_t res = FR_OK;
+    while (res == FR_OK) {
+        res = f_readdir(dir, &fileinfo);
+        if (*fileinfo.fname == 0) {
+            break;
+        }
+        check_value_equal(res, FR_OK, "read dir fail");
+        log_n("File name: %s, altname: %s", fileinfo.fname, fileinfo.altname);
+        strcpy(bookname[i], fileinfo.fname);
+        ++i;
+        if (i >= limit) {
+            break;
+        }
+    }
+    /* The book rest is less than limit, reset the string of btn to empty string
+     */
+    if (i < limit) {
+        for (; i < limit; ++i) {
+            bookname[i][0] = 0;
+        }
+    }
+}
+
+void refreshBookname(List*      list,
+                     Button**   booknameBtn,
+                     char       bookname[][30],
+                     DrawOption drawOption)
+{
+    uint8_t i = 0;
+    for (i = 0; i < list->itemList->size; i++) {
+        // 若无法搜索到书名，后续内容不渲染
+        if (bookname[i][0] == 0) {
+            break;
+        }
+        // 如果按钮中有书名，但曾按钮曾被移出链表，则重新添加回来
+        LinkedNodeData data;
+        data.obj = (Obj*)booknameBtn[i];
+        if (find_data(getSubList(list, i), &data) == NULL) {
+            AppendSubListItem(list, i, (Obj*)booknameBtn[i]);
+        }
+    }
+    // 若存在空字符串的按钮，则移出链表
+    for (; i < list->itemList->size; i++) {
+        LinkedNodeData data;
+        data.obj = (Obj*)booknameBtn[i];
+        booknameBtn[i]->DrawButton(booknameBtn[i]);
+        deleteNode(getSubList(list, i), find_data(getSubList(list, i), &data));
+    }
+    if (drawOption == DrawOption_Immediately) {
+        redrawListItem(list);
+        // list->DrawList(list);
+    }
 }
 
 #if ACTION_ONCE

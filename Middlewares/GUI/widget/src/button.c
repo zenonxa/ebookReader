@@ -108,6 +108,7 @@ void BtText(Button* button)
         } else {
             GUI_setForeColor(button->font.fontColor);
         }
+        // GUI_setForeColor(button->font.fontColor);
         // Show_Str_Mid(((Obj*)button)->x, ((Obj*)button)->y,
         // (uint8_t*)(button->str),
         //              GUI_GetFontType(), GUI_GetFontSize(),

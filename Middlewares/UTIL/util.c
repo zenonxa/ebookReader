@@ -36,7 +36,7 @@ void TouchEventInfo_Init() {
     clearTouchFlag(&logParam.touchEventInfo->flag);
     logParam.touchEventInfo->angle = 0.0;
     logParam.touchEventInfo->slideDirection = Slide_Direction_None;
-    logParam.touchEventInfo->touchEvent = NoEvent;
+    logParam.touchEventInfo->touchEvent = Touch_Event_NoEvent;
 }
 
 void TouchEventInfo_Update(uint8_t flag, float angle, SlideDirection slideDirection, TouchEvent touchEvent) {

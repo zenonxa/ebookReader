@@ -111,11 +111,25 @@ void GUI_DrawStr(Obj* obj, const char* str)
 
 bool GUI_isTarget(Obj* obj, Position* point)
 {
-    bool     res  = false;
-    uint16_t xMin = obj->x;
-    uint16_t xMax = obj->x + obj->width - 1;
-    uint16_t yMin = obj->y;
-    uint16_t yMax = obj->y + obj->height - 1;
+    // bool     res  = false;
+    // uint16_t xMin = obj->x;
+    // uint16_t xMax = obj->x + obj->width - 1;
+    // uint16_t yMin = obj->y;
+    // uint16_t yMax = obj->y + obj->height - 1;
+    // if ((point_cur[0].x >= xMin) && (point_cur[0].x <= xMax) &&
+    //     (point_cur[0].y >= yMin) && (point_cur[0].y <= yMax)) {
+    //     res = true;
+    // }
+    // return res;
+    return GUI_isInArea(obj->x, obj->y, obj->width, obj->height, point);
+}
+
+bool GUI_isInArea(uint16_t x, uint16_t y, uint16_t width, uint16_t height, Position* pos) {
+    bool res = false;
+    uint16_t xMin = x;
+    uint16_t xMax = x + width - 1;
+    uint16_t yMin = y;
+    uint16_t yMax = y + height - 1;
     if ((point_cur[0].x >= xMin) && (point_cur[0].x <= xMax) &&
         (point_cur[0].y >= yMin) && (point_cur[0].y <= yMax)) {
         res = true;

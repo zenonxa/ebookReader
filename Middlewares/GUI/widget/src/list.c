@@ -194,3 +194,31 @@ void SetListHeadlineTextarea(List* list, Textarea* textarea)
     list->headlineTextarea = textarea;
     list->DrawList(list);
 }
+
+void redrawListItem(List* list)
+{
+    LinkedNode* lineNode = list->itemList->head;
+    LinkedNode* node;
+    while (lineNode) {
+        node = lineNode->nodeData.subList.head;
+        while (node) {
+            if (node->nodeData.obj) {
+                switch (node->nodeData.obj->type) {
+                    case Obj_Type_Button:
+                        ((Button*)node->nodeData.obj)
+                            ->DrawButton((Button*)node->nodeData.obj);
+                        break;
+                    default: break;
+                }
+                node = node->next;
+            }
+        }
+        lineNode = lineNode->next;
+    }
+}
+
+// 返回子列表，即一行控件，index从0开始
+LinkedList* getSubList(List* list, int index)
+{
+    return &get_node(list->itemList, index)->nodeData.subList;
+}

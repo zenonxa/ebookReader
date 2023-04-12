@@ -268,12 +268,27 @@ LinkedNode* get_node(LinkedList* linkedlist, int index)
 #if LINKEDLIST_FIND_ENABLE
 LinkedNode* find_data(LinkedList* linkedlist, ElemType* data)
 {
-    if (linkedlist->size == 0)
+    if (linkedlist->size == 0) {
         return NULL;
+    }
     LinkedNode* node = linkedlist->head;
+    bool        condition;
     while (node) {
-        if (node->data == data)
+        switch (linkedlist->nodeDataType) {
+            case NodeDataType_Data:
+                condition = (node->nodeData.data == data->data);
+                break;
+            case NodeDataType_LinkedList:
+                condition = (&node->nodeData.subList == &data->subList);
+                break;
+            case NodeDataType_Obj:
+                condition = (node->nodeData.obj == data->obj);
+                break;
+            default: condition = false; break;
+        }
+        if (condition) {
             return node;
+        }
         node = node->next;
     }
     return NULL;
@@ -301,6 +316,28 @@ bool modify_data(LinkedList* linkedlist, ElemType* data, ElemType* val)
     return false;
 }
 #endif
+
+void deleteNode(LinkedList* linkedList, LinkedNode* node)
+{
+    // 空指针，放弃删除操作
+    if (node == NULL) {
+        return;
+    }
+    if (linkedList->head == node) {
+        // 若为头结点，则调用删除头结点的接口
+        del_head(linkedList);
+    } else if (linkedList->tail == node) {
+        // 若为尾结点，则调用删除尾结点的接口
+        del_tail(linkedList);
+    } else {
+        // 位置既非头结点，也非尾结点，改变前后节点的链接后，删除自身节点
+        node->prev->next    = node->next;
+        node->next->prev    = node->prev;
+        myfree(LINKEDLIST_MALLOC_SOURCE, node);
+        node = NULL;
+        linkedList->size--;
+    }
+}
 
 // LinkedNode*
 // queryLinkedList(LinkedList* linkedList,

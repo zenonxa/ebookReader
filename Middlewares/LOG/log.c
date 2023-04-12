@@ -162,10 +162,10 @@ void print_log_touch_event()
 {
     TouchEventInfo* touchEventInfo = logParam.touchEventInfo;
     switch (touchEventInfo->touchEvent) {
-        case Move: print_log_touch_event_move(); break;
-        case LongPress: print_log_touch_event_press_base(); break;
-        case ShortPress: print_log_touch_event_press_base(); break;
-        case NoEvent: log_n("[No Event]"); break;
+        case Touch_Event_Move: print_log_touch_event_move(); break;
+        case Touch_Event_LongPress: print_log_touch_event_press_base(); break;
+        case Touch_Event_ShortPress: print_log_touch_event_press_base(); break;
+        case Touch_Event_NoEvent: log_n("[No Event]"); break;
         default: log_n("Invalid event"); break;
     }
 }
@@ -194,8 +194,8 @@ void print_log_touch_event_move()
 void print_log_touch_event_press_base()
 {
     TouchEventInfo* touchEventInfo = logParam.touchEventInfo;
-    if ((touchEventInfo->touchEvent != LongPress) &&
-        (touchEventInfo->touchEvent != ShortPress)) {
+    if ((touchEventInfo->touchEvent != Touch_Event_LongPress) &&
+        (touchEventInfo->touchEvent != Touch_Event_ShortPress)) {
         return;
     }
     sprintf(logParam.logBuffer, "[Event: %s]\r\n",

@@ -72,7 +72,7 @@ typedef Position atk_md0700_touch_point_t;
  */
 typedef struct
 {
-    Position startPoint;
+    Position point;
     uint16_t width;
     uint16_t height;
 } AreaInfo;
@@ -107,12 +107,12 @@ typedef enum {
 } TouchState;
 
 typedef enum {
-    NoEvent = 0,
-    ShortPress,
-    LongPress,
-    Move,
-    Touch_Event_Min     = NoEvent,
-    Touch_Event_Max     = Move,                /* Max */
+    Touch_Event_NoEvent = 0,
+    Touch_Event_ShortPress,
+    Touch_Event_LongPress,
+    Touch_Event_Move,
+    Touch_Event_Min     = Touch_Event_NoEvent,
+    Touch_Event_Max     = Touch_Event_Move,                /* Max */
     Touch_Event_Default = Touch_Event_Min,     /* Default */
     Touch_Event_Cnt     = Touch_Event_Max + 1, /* The number of all */
     Touch_Event_None    = Touch_Event_Cnt,     /* Invalid value */

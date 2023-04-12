@@ -9,7 +9,7 @@
 
 #define MENU_SIZE_LIMIT 10
 
-#define LINKEDLIST_FIND_ENABLE 0
+#define LINKEDLIST_FIND_ENABLE 1
 #define LINKEDLIST_MODIFY_ENABLE 0
 
 // Forward Declaration for union LinkedNodeData
@@ -78,6 +78,7 @@ void        del_head(LinkedList* list);
 void        del_tail(LinkedList* list);
 bool        del_node(LinkedList* list, int index);
 LinkedNode* get_node(LinkedList* list, int index);
+void deleteNode(LinkedList* linkedList, LinkedNode* node);
 #if LINKEDLIST_FIND_ENABLE
 LinkedNode* find_data(LinkedList* list, ElemType* data);
 #endif

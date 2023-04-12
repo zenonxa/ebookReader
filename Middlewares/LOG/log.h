@@ -69,10 +69,17 @@ extern LogParam logParam;
         delay_ms(TIME_SPAN_IN_INFINITE_LOOP);                                  \
     } while (1)
 
-/* Check the value */
-#define check_value_equal(actual, expect, log_format, ...)                     \
+#define check_value_not_equal(actual, unexpected, log_format, ...)             \
     do {                                                                       \
-        if (!((actual) == (expect))) {                                         \
+        if ((actual) == (unexpected)) {                                        \
+            infinite_throw(log_format, ##__VA_ARGS__);                         \
+        }                                                                      \
+    } while (0)
+
+/* Check the value */
+#define check_value_equal(actual, expected, log_format, ...)                   \
+    do {                                                                       \
+        if (!((actual) == (expected))) {                                       \
             infinite_throw(log_format, ##__VA_ARGS__);                         \
         }                                                                      \
     } while (0)

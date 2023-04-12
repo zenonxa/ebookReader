@@ -61,6 +61,16 @@ typedef struct Font
     COLOR_DATTYPE fontColor;
 } Font;
 
+typedef enum {
+    DrawOption_Delay = 0,
+    DrawOption_Immediately,
+    DrawOption_Min     = DrawOption_Delay,
+    DrawOption_Max     = DrawOption_Immediately, /* Max */
+    DrawOption_Default = DrawOption_Min,         /* Default */
+    DrawOption_Cnt     = DrawOption_Max + 1,     /* The number of all */
+    DrawOption_None    = DrawOption_Cnt,         /* Invalid value */
+} DrawOption;
+
 #define BORDER_FLAG(borderFlagBit) (0x01 << (borderFlagBit))
 
 #define BORDER_ALL                                                             \
@@ -151,4 +161,9 @@ void          setPublicAlignType(AlignHorizonalType horizonal,
 Border*       getObjBorder(Obj* obj);
 void          ObjSkin(Obj* obj);
 void fillArea(u16 x, u16 y, u16 width, u16 height, COLOR_DATTYPE color);
+bool GUI_isInArea(uint16_t  x,
+                  uint16_t  y,
+                  uint16_t  width,
+                  uint16_t  height,
+                  Position* pos);
 #endif

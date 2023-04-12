@@ -36,5 +36,6 @@ List* NewList(uint16_t xpos,
 void  AppendSubListItem(List* list, uint16_t index, Obj* obj);
 void  AppendSubList(List* list);
 void  SetListHeadlineTextarea(List* list, Textarea* textarea);
-
+void redrawListItem(List* list);
+LinkedList* getSubList(List* list, int index);
 #endif

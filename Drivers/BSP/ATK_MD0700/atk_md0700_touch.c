@@ -411,10 +411,10 @@ TouchEvent touchFlagMappingToEvent(TouchFlag touchFlag)
 {
     uint8_t touchEvent;
     switch (touchFlag) {
-        case MovingFlag: touchEvent = Move; break;
-        case LongPressingFlag: touchEvent = LongPress; break;
-        case ShortPressingFlag: touchEvent = ShortPress; break;
-        default: touchEvent = NoEvent; break;
+        case MovingFlag: touchEvent = Touch_Event_Move; break;
+        case LongPressingFlag: touchEvent = Touch_Event_LongPress; break;
+        case ShortPressingFlag: touchEvent = Touch_Event_ShortPress; break;
+        default: touchEvent = Touch_Event_NoEvent; break;
     }
     return (TouchEvent)touchEvent;
 }
@@ -422,7 +422,7 @@ TouchEvent touchFlagMappingToEvent(TouchFlag touchFlag)
 TouchEvent getTouchEvent(uint8_t flag)
 {
     uint8_t         i          = 0;
-    uint8_t         touchEvent = NoEvent;
+    uint8_t         touchEvent = Touch_Event_NoEvent;
     static uint16_t dy;
     static uint16_t dx;
     static float    angle;
@@ -433,7 +433,7 @@ TouchEvent getTouchEvent(uint8_t flag)
             break;
         }
     }
-    if (touchEvent != NoEvent) {
+    if (touchEvent != Touch_Event_NoEvent) {
         dy             = point_cur[0].y - point_prev[0].y;
         dx             = point_cur[0].x - point_prev[0].x;
         angle          = getSlideAngle(dy, dx);

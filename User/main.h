@@ -115,6 +115,11 @@ Obj* touchSubQuery(LinkedList* querySubQueue, Position* pos);
 Obj* touchQueryForWidget(LinkedList* touchQueryQueue,
                          Position*   pos,
                          TouchState  state);
+void refreshBookname(List*      list,
+                     Button**   booknameBtn,
+                     char       bookname[][30],
+                     DrawOption drawOption);
+void CopyBookname(DIR* dir, uint8_t limit, char bookname[][30]);
 #if ACTION_ONCE
 void excuteCommand(void);
 #endif
