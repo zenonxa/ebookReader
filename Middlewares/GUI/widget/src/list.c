@@ -222,3 +222,15 @@ LinkedList* getSubList(List* list, int index)
 {
     return &get_node(list->itemList, index)->nodeData.subList;
 }
+
+uint8_t getItemListSize(List* list) {
+    uint8_t cnt = 0;
+    LinkedNode* node = list->itemList->head;
+    while (node) {
+        if (node->nodeData.subList.size >= 0) {
+            ++cnt;
+        }
+        node = node->next;
+    }
+    return cnt;
+}

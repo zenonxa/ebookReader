@@ -94,16 +94,16 @@ typedef enum {
 extern char* SlideDirectionStr[Slide_Direction_Cnt + 1];
 
 typedef enum {
-    OnPress = 0,
-    ShortPressing,
-    LongPressing,
-    Moving,
-    OnRelease,
-    Touch_State_Min     = OnPress,
-    Touch_State_Max     = OnRelease,           /* Max */
-    Touch_State_Default = Touch_State_Min,     /* Default */
-    Touch_State_Cnt     = Touch_State_Max + 1, /* The number of all */
-    Touch_State_None    = Touch_State_Cnt,     /* Invalid value */
+    TouchState_OnPress = 0,
+    TouchState_ShortPressing,
+    TouchState_LongPressing,
+    TouchState_Moving,
+    TouchState_OnRelease,
+    Touch_State_Min     = TouchState_OnPress,
+    Touch_State_Max     = TouchState_OnRelease, /* Max */
+    Touch_State_Default = Touch_State_Min,      /* Default */
+    Touch_State_Cnt     = Touch_State_Max + 1,  /* The number of all */
+    Touch_State_None    = Touch_State_Cnt,      /* Invalid value */
 } TouchState;
 
 typedef enum {
@@ -112,7 +112,7 @@ typedef enum {
     Touch_Event_LongPress,
     Touch_Event_Move,
     Touch_Event_Min     = Touch_Event_NoEvent,
-    Touch_Event_Max     = Touch_Event_Move,                /* Max */
+    Touch_Event_Max     = Touch_Event_Move,    /* Max */
     Touch_Event_Default = Touch_Event_Min,     /* Default */
     Touch_Event_Cnt     = Touch_Event_Max + 1, /* The number of all */
     Touch_Event_None    = Touch_Event_Cnt,     /* Invalid value */

@@ -2,7 +2,7 @@
 #define __MAIN_H__
 
 // #include "math.h"
-#include "string.h"
+#include <string.h>
 #include <stm32f1xx.h>
 
 /********************************************************/
@@ -112,14 +112,14 @@ void show_logo(uint8_t* logoPicture, uint16_t delayTime_ms);
 void fillMainArea(void);
 Obj* touchQuery(LinkedList* queryQueue, Position* pos);
 Obj* touchSubQuery(LinkedList* querySubQueue, Position* pos);
-Obj* touchQueryForWidget(LinkedList* touchQueryQueue,
-                         Position*   pos,
-                         TouchState  state);
+Obj* touchQueryForWidget(LinkedList* touchQueryQueue, Position* pos);
+void updateWidgetStateOnTouch(Obj* obj, TouchState state);
 void refreshBookname(List*      list,
                      Button**   booknameBtn,
                      char       bookname[][30],
                      DrawOption drawOption);
 void CopyBookname(DIR* dir, uint8_t limit, char bookname[][30]);
+void readDirRevese(DIR* dir, uint8_t limit);
 #if ACTION_ONCE
 void excuteCommand(void);
 #endif

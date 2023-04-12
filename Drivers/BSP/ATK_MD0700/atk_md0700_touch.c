@@ -339,7 +339,7 @@ TouchState touchEventUpdate(uint8_t* pState, uint8_t* pFlag)
     if ((touchPointCnt > 0) && (touchPointCnt == tmp)) {
         /* The first moment on press */
         if (*pState == Touch_State_None) {
-            *pState       = OnPress;
+            *pState       = TouchState_OnPress;
             point_prev->x = point_cur->x;
             point_prev->y = point_cur->y;
             /* ToDo: Reset timer for LongPress timing */
@@ -353,7 +353,7 @@ TouchState touchEventUpdate(uint8_t* pState, uint8_t* pFlag)
             // if (getTouchFlag(pFlag, FirstIntoMovingFlag)) {
             //     resetTouchFlag(pFlag, FirstIntoMovingFlag);
             // }
-            *pState = Moving;
+            *pState = TouchState_Moving;
             return (TouchState)*pState;
         }
         /* position offset is more than error value, need to set moving flag
@@ -365,12 +365,12 @@ TouchState touchEventUpdate(uint8_t* pState, uint8_t* pFlag)
             //     setTouchFlag(pFlag, FirstIntoMovingFlag);
             // }
             setTouchFlag(pFlag, MovingFlag);
-            *pState = Moving;
+            *pState = TouchState_Moving;
             return (TouchState)*pState;
         }
         /* longPressing flag exists */
         if (getTouchFlag(*pFlag, LongPressingFlag)) {
-            *pState = LongPressing;
+            *pState = TouchState_LongPressing;
             return (TouchState)*pState;
         }
         /* The timing of the decider(timer) is greater than the decision value
@@ -385,17 +385,17 @@ TouchState touchEventUpdate(uint8_t* pState, uint8_t* pFlag)
         }
         /* ShortPressing flag exists */
         if (getTouchFlag(*pFlag, ShortPressingFlag)) {
-            *pState = ShortPressing;
+            *pState = TouchState_ShortPressing;
             return (TouchState)*pState;
         }
         /* Set ShortPressing flag, and return the */
         //clearTouchFlag(pFlag);
         setTouchFlag(pFlag, ShortPressingFlag);
-        *pState = ShortPressing;
+        *pState = TouchState_ShortPressing;
         return (TouchState)*pState;
     } else {
-        if ((*pState != Touch_State_None) && (*pState != OnPress)) {
-            *pState = OnRelease;
+        if ((*pState != Touch_State_None) && (*pState != TouchState_OnPress)) {
+            *pState = TouchState_OnRelease;
             //__HAL_TIM_DISABLE(&TIM3_Handler);
             PressingTime_prev = PressingKeepingTime;
             TimerDelay_Press  = DISABLE;

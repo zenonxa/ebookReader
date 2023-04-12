@@ -38,4 +38,5 @@ void  AppendSubList(List* list);
 void  SetListHeadlineTextarea(List* list, Textarea* textarea);
 void redrawListItem(List* list);
 LinkedList* getSubList(List* list, int index);
+uint8_t getItemListSize(List* list);
 #endif
