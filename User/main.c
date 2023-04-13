@@ -15,6 +15,14 @@ uint8_t  fontSizeSelect = Font_Size_Min;
 uint8_t  needRerender   = 1;
 uint16_t booknameIndex  = 0;
 
+/* 书架列表控件 */
+List* bookshelf = NULL;
+/* 全局导航栏控件 */
+List*    navigationBar = NULL;
+Button** booknameBtn   = NULL;
+
+char** bookname = NULL;
+
 int main(void)
 {
     uint8_t    res;
@@ -111,14 +119,14 @@ int main(void)
     /* 创建书架列表 */
     setPublicBorder(RGB888toRGB565(0x000000), 3,
                     BORDER_FLAG(BORDER_TOP) | BORDER_FLAG(BORDER_BOTTOM));
-    List* bookshelf =
+    bookshelf =
         NewList((ATK_MD0700_LCD_WIDTH - menuWidth_1) / 2,
                 (ATK_MD0700_LCD_HEIGHT - ATK_MD0700_LCD_HEIGHT / 10 / 2 -
                  menuHeight_1) /
                     2,
                 menuWidth_1, menuHeight_1, &publicBorder, 70, 55, NULL, 1);
-    publicElemData.obj = (Obj*)bookshelf;
     listItemLimit      = bookshelf->itemList->size;
+    publicElemData.obj = (Obj*)bookshelf;
     push_tail(&touchQueryQueue, &publicElemData);
     setPublicFont(Font_SimSun, PX24, RGB888toRGB565(0x000000));
     setPublicBorder(RGB888toRGB565(0x000000), 3, BORDER_NULL);
@@ -129,7 +137,7 @@ int main(void)
     bookshelf->headlineTextarea = bookshelfHeadline;
     /* 创建导航栏 */
     setPublicBorder(RGB888toRGB565(0x000000), 3, BORDER_NULL);
-    List* navigationBar =
+    navigationBar =
         NewList(0, ATK_MD0700_LCD_HEIGHT / 10 * 9, ATK_MD0700_LCD_WIDTH,
                 ATK_MD0700_LCD_HEIGHT / 10, &publicBorder, 0,
                 ATK_MD0700_LCD_HEIGHT / 10, NULL, 0);
@@ -156,10 +164,18 @@ int main(void)
     /* 绘制导航栏 */
     navigationBar->DrawList(navigationBar);
     /* 创建按钮，并添加至书架列表中 */
-    Button* booknameBtn[listItemLimit];
-    char    bookname[listItemLimit][30];
+    booknameBtn = mymalloc(GUI_MALLOC_SOURCE, sizeof(Button*) * listItemLimit);
+    check_value_not_equal(booknameBtn, NULL,
+                          "Failed to malloc for booknameBtn");
+    // Button* booknameBtn[listItemLimit];
+    //char bookname[listItemLimit][30];
+    bookname = (char**)mymalloc(SRAMIN, sizeof(char*)*listItemLimit);
+    for (int i = 0; i < listItemLimit; i++) {
+        bookname[i] = (char*)mymalloc(SRAMIN, sizeof(char)*30);
+        memset(bookname[i], 0, sizeof(char)*30);
+    }
     memset(booknameBtn, 0, sizeof(Button*) * listItemLimit);
-    memset(bookname, 0, sizeof(char) * listItemLimit * 30);
+    //memset(bookname, 0, sizeof(char) * listItemLimit * 30);
     setPublicAlignType(AlignHorizonalType_LEFT, AlignVerticalType_MIDDLE);
     setPublicBorder(RGB888toRGB565(0x000000), 3, BORDER_NULL);
     setPublicFont(Font_SimSun, PX24, RGB888toRGB565(0x000000));
@@ -221,7 +237,7 @@ int main(void)
                 }
             }
             clearTouchFlag(&flag);
-            touchState   = Touch_State_None;
+            touchState = Touch_State_None;
             /* 查看当前dir指针偏移 */
             // char buf[30] = {0};
             // sprintf(buf, "%2d", booknameIndex);
@@ -424,7 +440,7 @@ void readDirRevese(DIR* dir, uint8_t limit)
     }
 }
 
-void CopyBookname(DIR* dir, uint8_t limit, char bookname[][30])
+void CopyBookname(DIR* dir, uint8_t limit, char** bookname)
 {
     uint8_t i   = 0;
     uint8_t res = FR_OK;
@@ -453,7 +469,7 @@ void CopyBookname(DIR* dir, uint8_t limit, char bookname[][30])
 
 void refreshBookname(List*      list,
                      Button**   booknameBtn,
-                     char       bookname[][30],
+                     char**       bookname,
                      DrawOption drawOption)
 {
     uint8_t i = 0;
@@ -480,6 +496,11 @@ void refreshBookname(List*      list,
         redrawListItem(list);
         // list->DrawList(list);
     }
+}
+
+void renderHomePage()
+{
+    //refreshBookname(bookshelf, booknameBtn, );
 }
 
 #if ACTION_ONCE

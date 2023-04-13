@@ -116,9 +116,9 @@ Obj* touchQueryForWidget(LinkedList* touchQueryQueue, Position* pos);
 void updateWidgetStateOnTouch(Obj* obj, TouchState state);
 void refreshBookname(List*      list,
                      Button**   booknameBtn,
-                     char       bookname[][30],
+                     char**       bookname,
                      DrawOption drawOption);
-void CopyBookname(DIR* dir, uint8_t limit, char bookname[][30]);
+void CopyBookname(DIR* dir, uint8_t limit, char** bookname);
 void readDirRevese(DIR* dir, uint8_t limit);
 #if ACTION_ONCE
 void excuteCommand(void);
