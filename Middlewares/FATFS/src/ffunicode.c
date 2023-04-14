@@ -15283,39 +15283,61 @@ WCHAR ff_oem2uni (	/* Returns Unicode character in UTF-16, zero on error */
 #if FF_CODE_PAGE >= 900
 
 #if USE_EXT_FLASH
+	WCHAR ff_convert ( /* Converted code, 0 means conversion error */
+		WCHAR src, /* Character code to be converted */
+		UINT dir 	/* 0: Unicode to OEMCP, 1: OEMCP to Unicode */
+	)
+	{
+		WCHAR t[2];
+		WCHAR c;
+		uint32_t i, li, hi;
+		uint16_t n;
+		uint32_t gbk2uni_offset = 0;
+		if (src < 0x80){
+			c = src;	/* Non-ASCII character */
+		} else {
+			if(dir) {
+				gbk2uni_offset = UNIGBK_SIZE / 2; //GBK 2 UNICODE
+			} else { 
+				gbk2uni_offset=0; //UNICODE 2 GBK
+			}
+			/* Unicode to OEMCP */
+			hi = UNIGBK_SIZE / 2;//对半开.
+			hi = hi / 4 - 1;
+			li = 0;
+			for (n = 16; n; n--) {
+				i = li + (hi - li) / 2;
+				/* Read 4 bytes from flash to (WCHAR)t[2] */
+				W25QXX_Read((uint8_t*)&t, UNIGBK_ADDR+gbk2uni_offset+i*4, 4);
+				if (src == t[0]) {
+					break;
+				}
+				if (src > t[0]){
+					li = i;
+				} else {
+					hi = i;
+				}
+			}
+			c = n ? t[1] : 0;
+		}
+		return c;
+	}
+	
+
 	WCHAR ff_uni2oem (	/* Returns OEM code character, zero on error */
 		DWORD	uni,	/* UTF-16 encoded character to be converted */
 		WORD	cp		/* Code page for the conversion */
 	)
 	{
-		WCHAR c = 0, uc;
-		WCHAR t[2];
-		UINT i = 0, n, li, hi;
-
+		WCHAR c = 0;
 
 		if (uni < 0x80) {	/* ASCII? */
 			c = (WCHAR)uni;
 		} else {			/* Non-ASCII */
 			if (uni < 0x10000 && cp == FF_CODE_PAGE) {	/* Is it in BMP and valid code page? */
-				uc = (WCHAR)uni;
-				hi = UNIGBK_SIZE/2;//对半开.
-				hi = hi / 4 - 1;
-				li = 0;
-				for (n = 16; n; n--) {
-					i = li + (hi - li) / 2;
-					W25QXX_Read((uint8_t*)&t, UNIGBK_ADDR+i*4, 4);//读出4个字节
-					if (uc == t[0]) break;
-					if (uc > t[0]) {
-						li = i;  
-					}
-					else {
-						hi = i;
-					}
-				}
-				c = n ? t[1] : 0;
+				c = ff_convert(uni, 0);
 			}
 		}
-
 		return c;
 	}
 
@@ -15325,35 +15347,15 @@ WCHAR ff_oem2uni (	/* Returns Unicode character in UTF-16, zero on error */
 		WORD	cp		/* Code page for the conversion */
 	)
 	{
-		WCHAR t[2];
 		WCHAR c = 0;
-		UINT i = 0, n, li, hi;
-		uint32_t gbk2uni_offset = 0;
 
 		if (oem < 0x80) {	/* ASCII? */
 			c = oem;
-
 		} else {			/* Extended char */
 			if (cp == FF_CODE_PAGE) {	/* Is it valid code page? */
-				
-				hi = UNIGBK_SIZE/2;//对半开.
-				hi = hi / 4 - 1;
-				li = 0;
-				for (n = 16; n; n--) {
-					i = li + (hi - li) / 2;
-					W25QXX_Read((uint8_t*)&t, UNIGBK_SIZE+gbk2uni_offset+i*4, 4);//读出4个字节
-					if (oem == t[0]) break;
-					if (oem > t[0]) {
-						li = i;  
-					}
-					else {
-						hi = i;
-					}
-				}
-				c = n ? t[1] : 0;
+				c = ff_convert(oem, 1);
 			}
 		}
-
 		return c;
 	}
 #else

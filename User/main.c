@@ -10,8 +10,8 @@ extern UINT    br, bw;     // the number of byte really read or written
 extern FILINFO fileinfo;   // file information
 extern DIR     dir;        // directory
 
-uint8_t  fontNameSelect = Font_Name_Min;
-uint8_t  fontSizeSelect = Font_Size_Min;
+uint8_t  fontNameSelect = Font_SimSun;
+uint8_t  fontSizeSelect = PX24;
 uint8_t  needRerender   = 1;
 uint16_t booknameIndex  = 0;
 
@@ -20,8 +20,19 @@ List* bookshelf = NULL;
 /* 全局导航栏控件 */
 List*    navigationBar = NULL;
 Button** booknameBtn   = NULL;
+Button*  buttonBack    = NULL;
+Button*  buttonHome    = NULL;
+Button*  buttonSetting = NULL;
 
 char** bookname = NULL;
+
+uint16_t textAreaWidth  = ATK_MD0700_LCD_WIDTH * 4 / 5;
+uint16_t textAreaHeight = ATK_MD0700_LCD_HEIGHT * 4 / 5;
+
+#define STRING_SIZE 60
+
+WCHAR utf16_string[STRING_SIZE];
+char  gb2312_string[STRING_SIZE * 2];
 
 int main(void)
 {
@@ -58,8 +69,6 @@ int main(void)
     /* Detect SD Card and mount FATFS for SD Card */
     FIL      my_file;
     uint8_t* pc;
-    uint16_t textAreaWidth  = ATK_MD0700_LCD_WIDTH * 4 / 5;
-    uint16_t textAreaHeight = ATK_MD0700_LCD_HEIGHT * 4 / 5;
     /* Show Logo */
     show_logo(NULL, 500);
     atk_md0700_fill(0, 0, ATK_MD0700_LCD_WIDTH - 1, ATK_MD0700_LCD_HEIGHT - 1,
@@ -81,17 +90,37 @@ int main(void)
         W25QXX_Write((uint8_t*)&fontHeader, FONT_HEADER_ADDR,
                      sizeof(fontHeader));
     }
+    // memset(utf16_string, 0, sizeof(WCHAR) * 60);
+    // utf16_string[0] = 0x4b6d;
+    // utf16_string[1] = 0xd58b;
+    // utf16_string[2] = 0x2e00;
+    // utf16_string[3] = 0x7400;
+    // utf16_string[4] = 0x7800;
+    // utf16_string[5] = 0x7400;
+    // res = f_open(&my_file, L"测试.txt", FA_READ);
+    // res = f_open(&my_file, L"测试.txt", FA_CREATE_NEW);
+    // if (res != FR_OK) {
+    //     char tmp[30];
+    //     sprintf(tmp, "%d", res);
+    //     Show_Str(0, 0, 50, 30, tmp, Font_SimSun, PX24, 0);
+    //     LED_flashing(500);
+    //     infinite_throw("Open test file fail. ==> %d", res);
+    // }
+    // res = f_close(&my_file);
+    // f_mount(NULL, L"0:", 1);
+    // LED_flashing(3000);
 
     /* Open test txt fle in SD Card */
-    res = f_open(&my_file, "0:BOOK/test.txt", FA_READ);
-    if (res != FR_OK) {
-        infinite_throw("Open test file fail.");
-    }
-    f_read(&my_file, page_buffer[0], PAGE_SIZE, &br);
-    page_buffer[0][br] = '\0';
-    if (res != FR_OK) {
-        infinite_throw("Read test file fail.");
-    }
+    // res = f_open(&my_file, "0:BOOK/test.txt", FA_READ);
+    // if (res != FR_OK) {
+    //     infinite_throw("Open test file fail.");
+    // }
+    // f_read(&my_file, page_buffer[0], PAGE_SIZE, &br);
+    // page_buffer[0][br] = '\0';
+    // if (res != FR_OK) {
+    //     infinite_throw("Read test file fail.");
+    // }
+    // f_close(&my_file);
     /* Test to show a string with Chinese character */
     // BACKGROUND_COLOR = ATK_MD0700_GREEN;
     // Show_Str((ATK_MD0700_LCD_WIDTH - textAreaWidth) / 2,
@@ -99,7 +128,6 @@ int main(void)
     //               textAreaWidth, textAreaHeight, page_buffer[0], Font_SimSun,
     //               PX12, 1);
     // log_n("br: %d", br);
-    f_close(&my_file);
     /* Unmount SD Card volume */
     // f_mount(NULL, "0:", 1);
 
@@ -146,15 +174,15 @@ int main(void)
     setPublicFont(Font_SimSun, PX24, RGB888toRGB565(0x000000));
     setPublicBorder(RGB888toRGB565(0xcccccc), 5, BORDER_FLAG(BORDER_TOP));
     setPublicAlignType(AlignHorizonalType_CENTER, AlignVerticalType_MIDDLE);
-    Button* buttonBack =
+    buttonBack =
         NewButton(0, 0, 160, navigationBar->itemHeight, &publicFont,
-                  &publicBorder, &publicAlignType);
-    Button* buttonHome =
+                  &publicBorder, &publicAlignType, navigationBtnOnClicked);
+    buttonHome =
         NewButton(160, 0, 160, navigationBar->itemHeight, &publicFont,
-                  &publicBorder, &publicAlignType);
-    Button* buttonSetting =
+                  &publicBorder, &publicAlignType, navigationBtnOnClicked);
+    buttonSetting =
         NewButton(320, 0, 160, navigationBar->itemHeight, &publicFont,
-                  &publicBorder, &publicAlignType);
+                  &publicBorder, &publicAlignType, navigationBtnOnClicked);
     buttonBack->str    = navigationBarString[0];
     buttonHome->str    = navigationBarString[1];
     buttonSetting->str = navigationBarString[2];
@@ -168,21 +196,21 @@ int main(void)
     check_value_not_equal(booknameBtn, NULL,
                           "Failed to malloc for booknameBtn");
     // Button* booknameBtn[listItemLimit];
-    //char bookname[listItemLimit][30];
-    bookname = (char**)mymalloc(SRAMIN, sizeof(char*)*listItemLimit);
+    // char bookname[listItemLimit][30];
+    bookname = (char**)mymalloc(SRAMIN, sizeof(char*) * listItemLimit);
     for (int i = 0; i < listItemLimit; i++) {
-        bookname[i] = (char*)mymalloc(SRAMIN, sizeof(char)*30);
-        memset(bookname[i], 0, sizeof(char)*30);
+        bookname[i] = (char*)mymalloc(SRAMIN, sizeof(char) * STRING_SIZE * 2);
+        memset(bookname[i], 0, sizeof(char) * STRING_SIZE);
     }
     memset(booknameBtn, 0, sizeof(Button*) * listItemLimit);
-    //memset(bookname, 0, sizeof(char) * listItemLimit * 30);
+    // memset(bookname, 0, sizeof(char) * listItemLimit * 30);
     setPublicAlignType(AlignHorizonalType_LEFT, AlignVerticalType_MIDDLE);
     setPublicBorder(RGB888toRGB565(0x000000), 3, BORDER_NULL);
     setPublicFont(Font_SimSun, PX24, RGB888toRGB565(0x000000));
     for (i = 0; i < listItemLimit; ++i) {
-        booknameBtn[i] =
-            NewButton(0, 0, ((Obj*)bookshelf)->width, bookshelf->itemHeight,
-                      &publicFont, &publicBorder, &publicAlignType);
+        booknameBtn[i] = NewButton(
+            0, 0, ((Obj*)bookshelf)->width, bookshelf->itemHeight, &publicFont,
+            &publicBorder, &publicAlignType, &bookshelfBtnOnClicked);
         check_value_not_equal(booknameBtn[i], NULL,
                               "Fail to malloc for bootnameBtn[%d]", i);
         booknameBtn[i]->str = bookname[i];
@@ -195,7 +223,8 @@ int main(void)
     refreshBookname(bookshelf, booknameBtn, bookname, DrawOption_Delay);
     /* 绘制书架列表 */
     bookshelf->DrawList(bookshelf);
-    Obj* cur_target = NULL;
+    Obj* cur_target  = NULL;
+    Obj* prev_target = NULL;
     while (1) {
 #    if 1
         touchEventUpdate(&touchState, &flag); /* 更新触摸事件生命周期 */
@@ -213,28 +242,49 @@ int main(void)
                         break;
                     default: break;
                 }
-                cur_target = NULL;
+                prev_target = cur_target;
+                cur_target  = NULL;
             }
             if (touchEvent == Touch_Event_Move) {
                 slideDirestion =
                     getSlideDirection(point_prev[0].x, point_prev[0].y,
                                       point_cur[0].x, point_cur[0].y);
                 if (slideDirestion == Slide_Up) {
+                    /* 书架界面上滑：下一页 */
                     if (*fileinfo.fname) {
                         CopyBookname(&dir, listItemLimit, bookname);
+                        for (i = 0; i < listItemLimit; ++i) {
+                            booknameBtn[i]->ispressed = BT_UNPRESSED;
+                        }
                         refreshBookname(bookshelf, booknameBtn, bookname,
                                         DrawOption_Immediately);
                     }
                 } else if (slideDirestion == Slide_Down) {
+                    /* 书架界面下滑：上一页 */
                     if (booknameIndex > 9) {
-                        uint8_t lineCnt = getItemListSize(bookshelf);
-                        readDirRevese(&dir, lineCnt);
+                        readDirRevese(&dir, getItemListSize(bookshelf));
                         readDirRevese(&dir, listItemLimit);
                         CopyBookname(&dir, listItemLimit, bookname);
+                        for (i = 0; i < listItemLimit; ++i) {
+                            booknameBtn[i]->ispressed = BT_UNPRESSED;
+                        }
                         refreshBookname(bookshelf, booknameBtn, bookname,
                                         DrawOption_Immediately);
                     }
+                } else if (slideDirestion == Slide_To_Left) {
+                    /* 阅读界面：向左翻页 */
+                } else if (slideDirestion == Slide_To_Right) {
+                    /* 阅读界面：向右翻页 */
                 }
+            } else if ((touchEvent == Touch_Event_ShortPress) ||
+                       (touchEvent == Touch_Event_LongPress)) {
+                // cur_target;
+                if ((prev_target) && (prev_target->type == Obj_Type_Button)) {
+                    ((Button*)prev_target)->OnClicked((Button*)prev_target);
+                }
+                /* 存在展开的菜单时，若落点不在菜单内，则收回菜单 */
+                /* 阅读界面：发生短按或长按时，根据落点区域判断是否进行翻页以及翻页的方向
+                 */
             }
             clearTouchFlag(&flag);
             touchState = Touch_State_None;
@@ -442,8 +492,12 @@ void readDirRevese(DIR* dir, uint8_t limit)
 
 void CopyBookname(DIR* dir, uint8_t limit, char** bookname)
 {
-    uint8_t i   = 0;
-    uint8_t res = FR_OK;
+    uint8_t        i       = 0;
+    uint8_t        res     = FR_OK;
+    const uint16_t tmpSize = 256 * sizeof(TCHAR);
+    char           tmp[tmpSize];
+    char*          dest = tmp;
+    TCHAR*         src  = NULL;
     while (res == FR_OK) {
         res = f_readdir(dir, &fileinfo);
         if (*fileinfo.fname == 0) {
@@ -451,8 +505,13 @@ void CopyBookname(DIR* dir, uint8_t limit, char** bookname)
         }
         booknameIndex++;
         check_value_equal(res, FR_OK, "read dir fail");
-        log_n("File name: %s, altname: %s", fileinfo.fname, fileinfo.altname);
-        strcpy(bookname[i], fileinfo.fname);
+        // log_n("File name: %s, altname: %s", (char*)fileinfo.fname,
+        // fileinfo.altname); 
+		strcpy(bookname[i], (char*)fileinfo.fname);
+        // wprintf(L"File name: %s, altname: %s", fileinfo.fname,
+        // fileinfo.altname);
+        // wchncpy((WCHAR*)bookname[i], fileinfo.fname, STRING_SIZE);
+        //convert_Unicode_to_GB2312(bookname[i], fileinfo.fname);
         ++i;
         if (i >= limit) {
             break;
@@ -469,7 +528,7 @@ void CopyBookname(DIR* dir, uint8_t limit, char** bookname)
 
 void refreshBookname(List*      list,
                      Button**   booknameBtn,
-                     char**       bookname,
+                     char**     bookname,
                      DrawOption drawOption)
 {
     uint8_t i = 0;
@@ -500,7 +559,145 @@ void refreshBookname(List*      list,
 
 void renderHomePage()
 {
-    //refreshBookname(bookshelf, booknameBtn, );
+    // refreshBookname(bookshelf, booknameBtn, );
+}
+
+void bookshelfBtnOnClicked(Button* bookBtn)
+{
+    char path[30];
+    strcpy(path, bookDirPath_GBK);
+    strcat(path, bookBtn->str);
+    // WCHAR wpath[60];
+    // memset(wpath, 0, sizeof(WCHAR) * 60);
+    // sprintf((char*)wpath, bookBtn->str);
+    // log_n("[wpath]: %s", (char*)wpath);
+    // WCHAR* pWPath = wpath;
+    // char*  pBPath = path;
+    // while (*pBPath) {
+    //     if (!(*pBPath & 0x80)) {
+    //         *pWPath++ = 0;
+    //     }
+    //     *pWPath++ = *pBPath++;
+    // }
+    // *pWPath++ = 0;
+    // *pWPath   = 0;
+    // strcat(wpath, bookBtn->str);
+    // _bstr_t b(wpath);
+    // log_n("Result of strcat (path, bookBtn->str): [%s]", path);
+    // *main_file = *_wfopen(wpath, FA_READ);
+    // WCHAR* uni = wpath;
+    // pBPath     = path;
+    // int i      = 0;
+    // while (*pBPath) {
+    //     WCHAR tmp = 0;
+    //     if ((*pBPath & 0x80)) {
+    //         tmp |= *pBPath++;
+    //         tmp <<= 8;
+    //         tmp |= *pBPath++;
+    //     } else {
+    //         tmp |= *pBPath++;
+    //     }
+    //     ++i;
+    //     log(" ==> %04x", tmp);
+    //     tmp = ff_oem2uni(tmp, 936);
+    //     log("[%04x]", tmp);
+    //     if ((i + 1) % 5 == 0) {
+    //         log_n("");
+    //         i = 0;
+    //     }
+    //     *uni &= 0;
+    //     *uni |= tmp;
+    //     uni++;
+    //     //*uni++ = tmp;
+    // }
+    // *uni = 0;
+    // log_n("%s Wpath:", ARROW_STRING);
+    // for (int i = 0; i < 30; ++i) {
+    //     log("%04x ", *((WCHAR*)wpath + i));
+    //     if ((i + 1) % 5 == 0) {
+    //         log_n("");
+    //     }
+    // }
+    // log_n("%s Bpath:", ARROW_STRING);
+    // for (int i = 0; i < 60; ++i) {
+    //     log("%02x ", *((char*)path + i));
+    //     if ((i + 1) % 5 == 0) {
+    //         log_n("");
+    //     }
+    // }
+    memset(utf16_string, 0, (2 / sizeof(utf16_string[0])) * STRING_SIZE);
+    //convert_GB2312_to_Unicode(utf16_string, path);
+    uint8_t res = f_open(main_file, path, FA_READ);
+    check_value_equal(res, FR_OK, "Failed to open file [%s], res [%d]", path,
+                      res);
+    res = f_read(main_file, page_buffer[0], PAGE_SIZE, &br);
+    check_value_equal(res, FR_OK, "Failed to read from file [%s]", path);
+    page_buffer[0][br] = '\0';
+    log_n("Rerender LCD panel.");
+    atk_md0700_fill((ATK_MD0700_LCD_WIDTH - textAreaWidth) / 2,
+                    (ATK_MD0700_LCD_HEIGHT - textAreaHeight) / 2,
+                    (ATK_MD0700_LCD_WIDTH + textAreaWidth) / 2,
+                    (ATK_MD0700_LCD_HEIGHT + textAreaHeight) / 2,
+                    &BACKGROUND_COLOR, SINGLE_COLOR_BLOCK);
+    Show_Str((ATK_MD0700_LCD_WIDTH - textAreaWidth) / 2,
+             (ATK_MD0700_LCD_HEIGHT - textAreaHeight) / 2, textAreaWidth,
+             textAreaHeight, page_buffer[0], fontNameSelect, fontSizeSelect, 1);
+}
+
+void navigationBtnOnClicked(Button* button)
+{
+    if (button == buttonBack) {
+    } else if (button == buttonHome) {
+    } else if (button == buttonSetting) {
+    }
+}
+
+WCHAR* convert_GB2312_to_Unicode(WCHAR* pUnicode, char* pGB2312)
+{
+    WCHAR  tmp;
+    WCHAR* origin = pUnicode;
+    while (*pGB2312) {
+        tmp = *pGB2312++;
+        if (tmp & 0x80) {
+            tmp <<= 8;
+            tmp |= (*pGB2312++);
+        }
+        *pUnicode = ff_oem2uni(tmp, 936);
+        pUnicode++;
+    }
+    *pUnicode = 0;
+    return origin;
+}
+
+char* convert_Unicode_to_GB2312(char* pGB2312, WCHAR* pUnicode)
+{
+    WCHAR tmp;
+    char* origin = pGB2312;
+    while (*pUnicode) {
+        tmp = ff_uni2oem(*pUnicode, 936);
+        if (tmp & (~(0xff))) {
+            *pGB2312++ = (tmp >> 8);
+        }
+        *pGB2312++ = tmp;
+        pUnicode++;
+    }
+    *pGB2312 = 0;
+    return origin;
+}
+
+WCHAR* wchncpy(WCHAR* dest, WCHAR* src, int cnt)
+{
+    int    i      = 0;
+    WCHAR* origin = dest;
+    for (i = 0; i < cnt; ++i) {
+        *dest = *src;
+        if (*src == 0) {
+            break;
+        }
+        dest++;
+        src++;
+    }
+    return origin;
 }
 
 #if ACTION_ONCE

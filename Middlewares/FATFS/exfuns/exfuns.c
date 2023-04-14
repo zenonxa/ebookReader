@@ -482,7 +482,7 @@ uint8_t load_file_to_flash(char* fname, uint32_t flash_addr)
     if (temp_file == NULL) {
         infinite_throw("temp_file is NULL");
     }
-    res = f_open(temp_file, fname, FA_READ);
+    res = f_open(temp_file, (TCHAR*)fname, FA_READ);
     if (res != FR_OK) {
         infinite_throw("Fail to open file: %s", fname);
     }
