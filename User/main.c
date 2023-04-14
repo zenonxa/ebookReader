@@ -4,6 +4,8 @@ uint8_t*     lcd_buffer;
 uint8_t*     page_buffer[PAGE_NUM];
 unsigned int page_buffer_len[PAGE_NUM];
 
+COLOR_DATTYPE color;
+
 extern FIL*    main_file;  // file 1
 extern FIL*    ftemp;      // file temp.
 extern UINT    br, bw;     // the number of byte really read or written
@@ -41,7 +43,7 @@ char  gb2312_string[STRING_SIZE * 2];
 int main(void)
 {
     uint8_t    res;
-    uint8_t    i;
+    uint8_t    i = 0;
     uint8_t    tmp_buf[PAGE_SIZE];
     FontHeader fontHeader = {FLAG_OK, FLAG_OK};
     uint16_t   color      = ATK_MD0700_BLACK;
@@ -49,190 +51,58 @@ int main(void)
     uint16_t   startY;
 
     page_buffer[0] = tmp_buf;
+    /* 执行必要的初始化操作 */
+    InitForMain();
 
-    /* Some initialization work */
-    HAL_Init();                         /* HAL init */
-    sys_stm32_clock_init(RCC_PLL_MUL9); /* Set clock: 72Mhz */
-    delay_init(72);                     /* delay init */
-    led_init();                         /* LED init */
-    key_init();                         /* KEY init */
-    EXTI_Init();                        /* external interrupt init */
-    usart_init(115200);                 /* Serial: 115200 */
-    atk_md0700_init(&color);            /* LCD panel init */
-    SRAM_Init();
-    W25QXX_Init();
-    TIM3_Init(10000 - 1, 72 - 1);
-    res = exfuns_init();
-    if (res) {
-        infinite_throw("Fail to do exfuns_init()");
-    }
-    LogParam_Init();
 #if ACTION_ONCE
     excuteCommand();
 #else
     /* Detect SD Card and mount FATFS for SD Card */
-    FIL      my_file;
-    uint8_t* pc;
-    /* Show Logo */
-    show_logo(NULL, 500);
-    atk_md0700_fill(0, 0, ATK_MD0700_LCD_WIDTH - 1, ATK_MD0700_LCD_HEIGHT - 1,
-                    &BACKGROUND_COLOR, SINGLE_COLOR_BLOCK);
-    waiting_for_SD_Card();
-    mount_SD_Card();
-    /* Check flag in Flash */
-    res = check_font_header(10);
-
-    /* Copy font file from SD Card to Flash */
-    if (res) {
-        res = update_font();
-        if (res) {
-            infinite_throw(
-                "Fail to load UNIGBK.BIN and font library to falsh.");
-        }
-        fontHeader.fontok = FLAG_OK;
-        fontHeader.ugbkok = FLAG_OK;
-        W25QXX_Write((uint8_t*)&fontHeader, FONT_HEADER_ADDR,
-                     sizeof(fontHeader));
-    }
-    // memset(utf16_string, 0, sizeof(WCHAR) * 60);
-    // utf16_string[0] = 0x4b6d;
-    // utf16_string[1] = 0xd58b;
-    // utf16_string[2] = 0x2e00;
-    // utf16_string[3] = 0x7400;
-    // utf16_string[4] = 0x7800;
-    // utf16_string[5] = 0x7400;
-    // res = f_open(&my_file, L"测试.txt", FA_READ);
-    // res = f_open(&my_file, L"测试.txt", FA_CREATE_NEW);
-    // if (res != FR_OK) {
-    //     char tmp[30];
-    //     sprintf(tmp, "%d", res);
-    //     Show_Str(0, 0, 50, 30, tmp, Font_SimSun, PX24, 0);
-    //     LED_flashing(500);
-    //     infinite_throw("Open test file fail. ==> %d", res);
-    // }
-    // res = f_close(&my_file);
-    // f_mount(NULL, L"0:", 1);
-    // LED_flashing(3000);
-
-    /* Open test txt fle in SD Card */
-    // res = f_open(&my_file, "0:BOOK/test.txt", FA_READ);
-    // if (res != FR_OK) {
-    //     infinite_throw("Open test file fail.");
-    // }
-    // f_read(&my_file, page_buffer[0], PAGE_SIZE, &br);
-    // page_buffer[0][br] = '\0';
-    // if (res != FR_OK) {
-    //     infinite_throw("Read test file fail.");
-    // }
-    // f_close(&my_file);
-    /* Test to show a string with Chinese character */
-    // BACKGROUND_COLOR = ATK_MD0700_GREEN;
-    // Show_Str((ATK_MD0700_LCD_WIDTH - textAreaWidth) / 2,
-    //               (ATK_MD0700_LCD_HEIGHT - textAreaHeight) / 2,
-    //               textAreaWidth, textAreaHeight, page_buffer[0], Font_SimSun,
-    //               PX12, 1);
-    // log_n("br: %d", br);
-    /* Unmount SD Card volume */
-    // f_mount(NULL, "0:", 1);
-
     uint8_t touchState = Touch_State_None;
     uint8_t flag;
     uint8_t slideDirestion;
     uint8_t touchEvent;
     int16_t dx, dy;
+    Obj*    cur_target  = NULL;
+    Obj*    prev_target = NULL;
+    uint8_t listItemLimit;
+
+    show_logo(NULL, 500); /* 展示开机Logo */
+    atk_md0700_clear(BACKGROUND_COLOR);
+    waiting_for_SD_Card(); /* 阻塞等待SD卡插入 */
+    mount_SD_Card();       /* 挂载SD卡 */
+    /* Check flag in Flash */
+    /* 检查 ex-flash 中的头部信息 */
+    res = check_font_header(10);
+    /* 若检查 ex-flash 失败，则更新BMP转换表及所有字库文件 */
+    if (res) {
+        res = update_font();
+        check_value_not_equal(
+            res, 0, "Fail to load UNIGBK.BIN and font library to falsh.");
+        fontHeader.fontok = FLAG_OK;
+        fontHeader.ugbkok = FLAG_OK;
+        W25QXX_Write((uint8_t*)&fontHeader, FONT_HEADER_ADDR,
+                     sizeof(fontHeader));
+    }
     clearTouchFlag(&flag);
     TouchEventInfo_Init();
     curTouchQueryQueue = &homeTouchQueryQueue;
     init_LinkedList(curTouchQueryQueue, NodeDataType_Obj);
     init_LinkedList(&emptyTouchQueryQueue, NodeDataType_Obj);
 
-    const uint16_t menuWidth_1  = 400;
-    const uint16_t menuHeight_1 = 600;
-    uint8_t        listItemLimit;
-    /* 创建书架列表 */
-    setPublicBorder(RGB888toRGB565(0x000000), 3,
-                    BORDER_FLAG(BORDER_TOP) | BORDER_FLAG(BORDER_BOTTOM));
-    bookshelf =
-        NewList((ATK_MD0700_LCD_WIDTH - menuWidth_1) / 2,
-                (ATK_MD0700_LCD_HEIGHT - ATK_MD0700_LCD_HEIGHT / 10 / 2 -
-                 menuHeight_1) /
-                    2,
-                menuWidth_1, menuHeight_1, &publicBorder, 70, 55, NULL, 1);
-    listItemLimit      = bookshelf->itemList->size;
-    publicElemData.obj = (Obj*)bookshelf;
-    push_tail(curTouchQueryQueue, &publicElemData);
-    setPublicFont(Font_SimSun, PX24, RGB888toRGB565(0x000000));
-    setPublicBorder(RGB888toRGB565(0x000000), 3, BORDER_NULL);
-    Textarea* bookshelfHeadline =
-        NewTextarea(0, 0, ((Obj*)bookshelf)->width, bookshelf->headlineHeight,
-                    &publicFont, &publicBorder, RGB888toRGB565(0xcccccc));
-    bookshelfHeadline->str      = bookshelfHeadlineStr;
-    bookshelf->headlineTextarea = bookshelfHeadline;
     /* 创建导航栏 */
-    setPublicBorder(RGB888toRGB565(0x000000), 3, BORDER_NULL);
-    navigationBar =
-        NewList(0, ATK_MD0700_LCD_HEIGHT / 10 * 9, ATK_MD0700_LCD_WIDTH,
-                ATK_MD0700_LCD_HEIGHT / 10, &publicBorder, 0,
-                ATK_MD0700_LCD_HEIGHT / 10, NULL, 0);
-    publicElemData.obj = (Obj*)navigationBar;
-    push_tail(curTouchQueryQueue, &publicElemData);
-    setPublicFont(Font_SimSun, PX24, RGB888toRGB565(0x000000));
-    setPublicBorder(RGB888toRGB565(0xcccccc), 5, BORDER_FLAG(BORDER_TOP));
-    setPublicAlignType(AlignHorizonalType_CENTER, AlignVerticalType_MIDDLE);
-    buttonBack =
-        NewButton(0, 0, 160, navigationBar->itemHeight, &publicFont,
-                  &publicBorder, &publicAlignType, navigationBtnOnClicked);
-    buttonHome =
-        NewButton(160, 0, 160, navigationBar->itemHeight, &publicFont,
-                  &publicBorder, &publicAlignType, navigationBtnOnClicked);
-    buttonSetting =
-        NewButton(320, 0, 160, navigationBar->itemHeight, &publicFont,
-                  &publicBorder, &publicAlignType, navigationBtnOnClicked);
-    buttonBack->str    = navigationBarString[0];
-    buttonHome->str    = navigationBarString[1];
-    buttonSetting->str = navigationBarString[2];
-    AppendSubListItem(navigationBar, 0, (Obj*)buttonBack);
-    AppendSubListItem(navigationBar, 0, (Obj*)buttonHome);
-    AppendSubListItem(navigationBar, 0, (Obj*)buttonSetting);
-    /* 绘制导航栏 */
-    // navigationBar->DrawList(navigationBar);
-    /* 创建按钮，并添加至书架列表中 */
-    booknameBtn = mymalloc(GUI_MALLOC_SOURCE, sizeof(Button*) * listItemLimit);
-    check_value_not_equal(booknameBtn, NULL,
-                          "Failed to malloc for booknameBtn");
-    // Button* booknameBtn[listItemLimit];
-    // char bookname[listItemLimit][30];
-    bookname = (char**)mymalloc(SRAMIN, sizeof(char*) * listItemLimit);
-    for (int i = 0; i < listItemLimit; i++) {
-        bookname[i] = (char*)mymalloc(SRAMIN, sizeof(char) * STRING_SIZE * 2);
-        memset(bookname[i], 0, sizeof(char) * STRING_SIZE);
-    }
-    memset(booknameBtn, 0, sizeof(Button*) * listItemLimit);
-    // memset(bookname, 0, sizeof(char) * listItemLimit * 30);
-    setPublicAlignType(AlignHorizonalType_LEFT, AlignVerticalType_MIDDLE);
-    setPublicBorder(RGB888toRGB565(0x000000), 3, BORDER_NULL);
-    setPublicFont(Font_SimSun, PX24, RGB888toRGB565(0x000000));
-    for (i = 0; i < listItemLimit; ++i) {
-        booknameBtn[i] = NewButton(
-            0, 0, ((Obj*)bookshelf)->width, bookshelf->itemHeight, &publicFont,
-            &publicBorder, &publicAlignType, &bookshelfBtnOnClicked);
-        check_value_not_equal(booknameBtn[i], NULL,
-                              "Fail to malloc for bootnameBtn[%d]", i);
-        booknameBtn[i]->str = bookname[i];
-    }
+    createNavigationBar();
+    /* 创建书架列表 */
+    createBookshelf();
+    listItemLimit = bookshelf->itemList->size;
     /* 读取目录,并将文件名加载值书架列表的列表项中 */
     res = f_opendir(&dir, "0:/BOOK");
     check_value_equal(res, FR_OK, "Open dir fail");
-    i = 0;
     CopyBookname(&dir, listItemLimit, bookname);
-    refreshBookname(bookshelf, booknameBtn, bookname, DrawOption_Delay);
-    /* 绘制书架列表 */
-    // bookshelf->DrawList(bookshelf);
-    renderHomePage();
-    Obj* cur_target  = NULL;
-    Obj* prev_target = NULL;
+    refreshBookname(bookshelf, booknameBtn, bookname,
+                    DrawOption_Delay); /* 刷新书名 */
+    renderHomePage();                  /* 渲染 Home 界面 */
     while (1) {
-#    if 1
         touchEventUpdate(&touchState, &flag); /* 更新触摸事件生命周期 */
         if (touchState == TouchState_OnRelease) {
             touchEvent = getTouchEvent(flag);
@@ -288,8 +158,8 @@ int main(void)
                 }
             } else if ((touchEvent == Touch_Event_ShortPress) ||
                        (touchEvent == Touch_Event_LongPress)) {
-                // cur_target;
-                /* 主页时，把 */
+                /* 位于主页时，若触摸点位于书架的图书按钮上，则进度阅读界面，并切换组件查询队列
+                 */
                 if (curTouchQueryQueue == &homeTouchQueryQueue) {
                     if ((prev_target) &&
                         (prev_target->type == Obj_Type_Button)) {
@@ -303,11 +173,13 @@ int main(void)
             }
             clearTouchFlag(&flag);
             touchState = Touch_State_None;
+#    if 0
             /* 查看当前dir指针偏移 */
-            // char buf[30] = {0};
-            // sprintf(buf, "%2d", booknameIndex);
-            // fillArea(0, 0, 50, 30, RGB888toRGB565(0xffffff));
-            // Show_Str(0, 0, 50, 30, buf, Font_SimSun, PX24, 0);
+            char buf[30] = {0};
+            sprintf(buf, "%2d", booknameIndex);
+            fillArea(0, 0, 50, 30, RGB888toRGB565(0xffffff));
+            Show_Str(0, 0, 50, 30, buf, Font_SimSun, PX24, 0);
+#    endif
         } else if (touchState == TouchState_OnPress) {
             /* 查询控件队列，落点是否位于某个具体的控件上 */
             cur_target = touchQueryForWidget(curTouchQueryQueue, &point_cur[0]);
@@ -321,28 +193,119 @@ int main(void)
                 }
             }
         }
-#    else
-        if (needRerender) {
-            log_n("Rerender LCD panel.");
-            atk_md0700_fill((ATK_MD0700_LCD_WIDTH - textAreaWidth) / 2,
-                            (ATK_MD0700_LCD_HEIGHT - textAreaHeight) / 2,
-                            (ATK_MD0700_LCD_WIDTH + textAreaWidth) / 2,
-                            (ATK_MD0700_LCD_HEIGHT + textAreaHeight) / 2,
-                            &BACKGROUND_COLOR, SINGLE_COLOR_BLOCK);
-            delay_ms(500);
-            Show_Str((ATK_MD0700_LCD_WIDTH - textAreaWidth) / 2,
-                     (ATK_MD0700_LCD_HEIGHT - textAreaHeight) / 2,
-                     textAreaWidth, textAreaHeight, page_buffer[0],
-                     fontNameSelect, fontSizeSelect, 1);
-            needRerender = 0;
-        }
-#    endif
     }
 #endif /* Action Once */
     while (1) {
         log_n("Main work finished. In infinite loop now...");
         LED_Toggle();
         delay_ms(1500);
+    }
+}
+
+void InitForMain(void)
+{
+    uint8_t res;
+    /* Some initialization work */
+    HAL_Init();                         /* HAL init */
+    sys_stm32_clock_init(RCC_PLL_MUL9); /* Set clock: 72Mhz */
+    delay_init(72);                     /* delay init */
+    led_init();                         /* LED init */
+    key_init();                         /* KEY init */
+    EXTI_Init();                        /* external interrupt init */
+    usart_init(115200);                 /* Serial: 115200 */
+    atk_md0700_init(ATK_MD0700_BLACK);  /* LCD panel init */
+    SRAM_Init();
+    W25QXX_Init();
+    TIM3_Init(10000 - 1, 72 - 1);
+    res = exfuns_init();
+    check_value_equal(res, 0, "Fail to do exfuns_init()");
+    LogParam_Init();
+}
+
+/**
+ * @description: 在主页底部创建导航栏
+ * @return {void}
+ */
+void createNavigationBar(void)
+{
+    /* 创建导航栏 */
+    setPublicBorder(RGB888toRGB565(0x000000), 3, BORDER_NULL);
+    navigationBar =
+        NewList(0, ATK_MD0700_LCD_HEIGHT / 10 * 9, ATK_MD0700_LCD_WIDTH,
+                ATK_MD0700_LCD_HEIGHT / 10, &publicBorder, 0,
+                ATK_MD0700_LCD_HEIGHT / 10, NULL, 0);
+    publicElemData.obj = (Obj*)navigationBar;
+    push_tail(curTouchQueryQueue, &publicElemData);
+    /* 创建导航栏中的按钮 */
+    setPublicFont(Font_SimSun, PX24, RGB888toRGB565(0x000000));
+    setPublicBorder(RGB888toRGB565(0xcccccc), 5, BORDER_FLAG(BORDER_TOP));
+    setPublicAlignType(AlignHorizonalType_CENTER, AlignVerticalType_MIDDLE);
+    buttonBack =
+        NewButton(0, 0, 160, navigationBar->itemHeight, &publicFont,
+                  &publicBorder, &publicAlignType, navigationBtnOnClicked);
+    buttonHome =
+        NewButton(160, 0, 160, navigationBar->itemHeight, &publicFont,
+                  &publicBorder, &publicAlignType, navigationBtnOnClicked);
+    buttonSetting =
+        NewButton(320, 0, 160, navigationBar->itemHeight, &publicFont,
+                  &publicBorder, &publicAlignType, navigationBtnOnClicked);
+    buttonBack->str    = navigationBarString[0];
+    buttonHome->str    = navigationBarString[1];
+    buttonSetting->str = navigationBarString[2];
+    AppendSubListItem(navigationBar, 0, (Obj*)buttonBack);
+    AppendSubListItem(navigationBar, 0, (Obj*)buttonHome);
+    AppendSubListItem(navigationBar, 0, (Obj*)buttonSetting);
+}
+
+/**
+ * @description: 在主页创建书架列表
+ * @return {void}
+ */
+void createBookshelf(void)
+{
+    /* 创建书架列表 */
+    const uint16_t menuWidth_1  = 400;
+    const uint16_t menuHeight_1 = 600;
+    uint16_t       listItemLimit;
+    setPublicBorder(RGB888toRGB565(0x000000), 3,
+                    BORDER_FLAG(BORDER_TOP) | BORDER_FLAG(BORDER_BOTTOM));
+    bookshelf =
+        NewList((ATK_MD0700_LCD_WIDTH - menuWidth_1) / 2,
+                (ATK_MD0700_LCD_HEIGHT - ATK_MD0700_LCD_HEIGHT / 10 / 2 -
+                 menuHeight_1) /
+                    2,
+                menuWidth_1, menuHeight_1, &publicBorder, 70, 55, NULL, 1);
+    listItemLimit      = bookshelf->itemList->size;
+    publicElemData.obj = (Obj*)bookshelf;
+    push_tail(curTouchQueryQueue, &publicElemData);
+    /* 创建书架标题栏中的文本域 */
+    setPublicFont(Font_SimSun, PX24, RGB888toRGB565(0x000000));
+    setPublicBorder(RGB888toRGB565(0x000000), 3, BORDER_NULL);
+    Textarea* bookshelfHeadlineTA =
+        NewTextarea(0, 0, ((Obj*)bookshelf)->width, bookshelf->headlineHeight,
+                    &publicFont, &publicBorder, RGB888toRGB565(0xcccccc));
+    bookshelfHeadlineTA->str    = bookshelfHeadlineStr;
+    bookshelf->headlineTextarea = bookshelfHeadlineTA;
+    /* 创建按钮，并添加至书架列表中 */
+    booknameBtn = mymalloc(GUI_MALLOC_SOURCE, sizeof(Button*) * listItemLimit);
+    check_value_not_equal(booknameBtn, NULL,
+                          "Failed to malloc for booknameBtn");
+    bookname = (char**)mymalloc(SRAMIN, sizeof(char*) * listItemLimit);
+    for (uint16_t i = 0; i < listItemLimit; i++) {
+        bookname[i] = (char*)mymalloc(SRAMIN, sizeof(char) * STRING_SIZE * 2);
+        memset(bookname[i], 0, sizeof(char) * STRING_SIZE);
+    }
+    memset(booknameBtn, 0, sizeof(Button*) * listItemLimit);
+    setPublicAlignType(AlignHorizonalType_LEFT, AlignVerticalType_MIDDLE);
+    setPublicBorder(RGB888toRGB565(0x000000), 3, BORDER_NULL);
+    setPublicFont(Font_SimSun, PX24, RGB888toRGB565(0x000000));
+    for (uint16_t i = 0; i < listItemLimit; ++i) {
+        booknameBtn[i] = NewButton(
+            0, 0, ((Obj*)bookshelf)->width, bookshelf->itemHeight, &publicFont,
+            &publicBorder, &publicAlignType, &bookshelfBtnOnClicked);
+        check_value_not_equal(booknameBtn[i], NULL,
+                              "Fail to malloc for bootnameBtn[%d]", i);
+        booknameBtn[i]->str = bookname[i];
     }
 }
 
@@ -422,6 +385,8 @@ void fillMainArea(void)
     fillArea(0, 0, ATK_MD0700_LCD_WIDTH, ATK_MD0700_LCD_HEIGHT / 10 * 9 - 1,
              GUI_getBackColor());
 }
+
+void addWidgetToQuery() {}
 
 /**
  * @description: 查询触摸点是否落在某个控件上，不具体到某个子控件
@@ -612,11 +577,10 @@ void refreshBookname(List*      list,
  */
 void renderHomePage(void)
 {
-    uint16_t limit = getItemListSize(bookshelf);
-    readDirRevese(&dir, limit);
+    readDirRevese(&dir, getItemListSize(bookshelf));
     /* 刷新主界面书架、导航栏 */
     // refreshBookname(bookshelf, booknameBtn, bookname, DrawOption_Delay);
-    atk_md0700_clear(ATK_MD0700_WHITE);
+    atk_md0700_clear(BACKGROUND_COLOR);
     bookshelf->DrawList(bookshelf);
     navigationBar->DrawList(navigationBar);
 }
@@ -648,6 +612,11 @@ void bookshelfBtnOnClicked(Button* bookBtn)
              textAreaHeight, page_buffer[0], fontNameSelect, fontSizeSelect, 1);
 }
 
+/**
+ * @description: 点击导航栏按钮时执行对应的操作
+ * @param {Button*} button 指向被点击的导航栏按钮的指针
+ * @return {void}
+ */
 void navigationBtnOnClicked(Button* button)
 {
     if (button == buttonBack) {

@@ -2,8 +2,8 @@
 #define __MAIN_H__
 
 // #include "math.h"
-#include <string.h>
 #include <stm32f1xx.h>
+#include <string.h>
 #include <wchar.h>
 
 /********************************************************/
@@ -109,24 +109,27 @@ void mount_SD_Card(void);
 void LED_Toggle(void);
 void LED_flashing(
     uint16_t time_span_ms); /* LED0 and LED1, flashing as the given time span */
-void show_logo(uint8_t* logoPicture, uint16_t delayTime_ms);
-void fillMainArea(void);
-Obj* touchQuery(LinkedList* queryQueue, Position* pos);
-Obj* touchSubQuery(LinkedList* querySubQueue, Position* pos);
-Obj* touchQueryForWidget(LinkedList* touchQueryQueue, Position* pos);
-void updateWidgetStateOnTouch(Obj* obj, TouchState state);
-void refreshBookname(List*      list,
-                     Button**   booknameBtn,
-                     char**       bookname,
-                     DrawOption drawOption);
-void CopyBookname(DIR* dir, uint8_t limit, char** bookname);
-void readDirRevese(DIR* dir, uint8_t limit);
-void bookshelfBtnOnClicked(Button* bookBtn);
-void navigationBtnOnClicked(Button* button);
+void   show_logo(uint8_t* logoPicture, uint16_t delayTime_ms);
+void   fillMainArea(void);
+Obj*   touchQuery(LinkedList* queryQueue, Position* pos);
+Obj*   touchSubQuery(LinkedList* querySubQueue, Position* pos);
+Obj*   touchQueryForWidget(LinkedList* touchQueryQueue, Position* pos);
+void   updateWidgetStateOnTouch(Obj* obj, TouchState state);
+void   refreshBookname(List*      list,
+                       Button**   booknameBtn,
+                       char**     bookname,
+                       DrawOption drawOption);
+void   CopyBookname(DIR* dir, uint8_t limit, char** bookname);
+void   readDirRevese(DIR* dir, uint8_t limit);
+void   bookshelfBtnOnClicked(Button* bookBtn);
+void   navigationBtnOnClicked(Button* button);
 WCHAR* wchncpy(WCHAR* dest, WCHAR* src, int cnt);
 WCHAR* convert_GB2312_to_Unicode(WCHAR* pUnicode, char* pGB2312);
-char* convert_Unicode_to_GB2312(char* pGB2312, WCHAR* pUnicode);
-void renderHomePage(void);
+char*  convert_Unicode_to_GB2312(char* pGB2312, WCHAR* pUnicode);
+void   renderHomePage(void);
+void   InitForMain(void);
+void   createNavigationBar(void);
+void   createBookshelf(void);
 #if ACTION_ONCE
 void excuteCommand(void);
 #endif

@@ -11,7 +11,7 @@ void test_atk_md0700(void) {
 	uint16_t color = ATK_MD0700_WHITE;
 	
     /* 初始化ATK-MD0700模块 */
-    ret = atk_md0700_init(&color);
+    ret = atk_md0700_init(color);
 
     if (ret != 0) {
         printf("ATK-MD0700 init failed!\r\n");

@@ -113,7 +113,7 @@ typedef enum {
 #define ATK_MD0700_EINVAL 2 /* 非法参数 */
 
 /* 操作函数 */
-uint8_t  atk_md0700_init(uint16_t* color); /* ATK-MD0700模块初始化 */
+uint8_t  atk_md0700_init(uint16_t color); /* ATK-MD0700模块初始化 */
 uint16_t atk_md0700_get_lcd_width(void);   /* 获取ATK-MD0700模块LCD宽度 */
 uint16_t atk_md0700_get_lcd_height(void);  /* 获取ATK-MD0700模块LCD高度 */
 void     atk_md0700_backlight_config(
