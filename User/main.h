@@ -126,6 +126,7 @@ void navigationBtnOnClicked(Button* button);
 WCHAR* wchncpy(WCHAR* dest, WCHAR* src, int cnt);
 WCHAR* convert_GB2312_to_Unicode(WCHAR* pUnicode, char* pGB2312);
 char* convert_Unicode_to_GB2312(char* pGB2312, WCHAR* pUnicode);
+void renderHomePage(void);
 #if ACTION_ONCE
 void excuteCommand(void);
 #endif
