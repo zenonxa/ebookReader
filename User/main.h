@@ -4,6 +4,7 @@
 // #include "math.h"
 #include <string.h>
 #include <stm32f1xx.h>
+#include <wchar.h>
 
 /********************************************************/
 /* 				include for BSP							*/
@@ -120,6 +121,11 @@ void refreshBookname(List*      list,
                      DrawOption drawOption);
 void CopyBookname(DIR* dir, uint8_t limit, char** bookname);
 void readDirRevese(DIR* dir, uint8_t limit);
+void bookshelfBtnOnClicked(Button* bookBtn);
+void navigationBtnOnClicked(Button* button);
+WCHAR* wchncpy(WCHAR* dest, WCHAR* src, int cnt);
+WCHAR* convert_GB2312_to_Unicode(WCHAR* pUnicode, char* pGB2312);
+char* convert_Unicode_to_GB2312(char* pGB2312, WCHAR* pUnicode);
 #if ACTION_ONCE
 void excuteCommand(void);
 #endif
