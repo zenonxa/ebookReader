@@ -1,11 +1,3 @@
-/*
- * @Author: KimKey 13829607886@163.com
- * @Date: 2023-03-20 17:06:44
- * @LastEditors: KimKey 13829607886@163.com
- * @LastEditTime: 2023-04-01 17:29:33
- * @FilePath: \ebookReader\Middlewares\FATFS\exfuns\exfuns.h
- * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
- */
 #ifndef __EXFUNS_H
 #define __EXFUNS_H 					   
 #include "SYSTEM/sys/sys.h"
@@ -30,6 +22,7 @@
 
 #define FLASH_BUFFER_SIZE	4096
 //#define MSG_CACHE_SIZE      100
+#define PAGE_INDEX_SIZE 10000
 
 extern FATFS *fs[FF_VOLUMES];  
 extern FIL *main_file;
@@ -42,6 +35,9 @@ extern u8 *fatbuf;//SD卡数据缓存区
 /* Cache for flash when do reading or writing operation */
 extern u8* flash_buffer;
 extern u8* dzk;
+
+#define PAGE_INDEX_SIZE 10000
+extern uint32_t* pageIndex;
 /* Cache for message to throw */
 //extern u8* msg_cache;
 

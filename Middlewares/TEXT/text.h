@@ -36,13 +36,14 @@ uint8_t* Show_Str(uint16_t x,
                   FontName fontName,
                   FontSize fontSize,
                   uint8_t  mode);
-void Show_Str_Mid(uint16_t x,
-                  uint16_t y,
-                  uint16_t width,
-                  uint16_t height,
-                  uint8_t* str,
-                  FontName fontName,
-                  FontSize fontSize,
-                  uint16_t  len,
-                  uint8_t  mode);
+void     Show_Str_Mid(uint16_t x,
+                      uint16_t y,
+                      uint16_t width,
+                      uint16_t height,
+                      uint8_t* str,
+                      FontName fontName,
+                      FontSize fontSize,
+                      uint16_t len,
+                      uint8_t  mode);
+uint8_t  getLineSpace(FontSize fontSize);
 #endif

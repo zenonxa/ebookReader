@@ -17,6 +17,7 @@ Textarea* NewTextarea(uint16_t      x,
                       uint16_t      y,
                       uint16_t      width,
                       uint16_t      heigh,
+                      LocateType    locateType,
                       Font*         font,
                       Border*       border,
                       COLOR_DATTYPE backColor);

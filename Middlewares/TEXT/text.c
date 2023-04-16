@@ -6,6 +6,7 @@
 #include "exfuns/exfuns.h"
 #include "font.h"
 #include "fontupd.h"
+#include "gui.h"
 #include "log.h"
 #include "string.h"
 //////////////////////////////////////////////////////////////////////////////////
@@ -172,13 +173,18 @@ void fillLineSpace(uint16_t lineSpaceStartX,
         lineSpaceStartY + lineSpace, &backgroundColor, SINGLE_COLOR_BLOCK);
 }
 
-// 在指定位置开始显示一个字符串
-// 支持自动换行
-//(x,y):起始坐标
-// width,height:区域
-// str  :字符串
-// size :字体大小
-// mode:0,非叠加方式;1,叠加方式
+/**
+ * @description: 在指定区域内以左对齐的格式显示字符串，支持自动换行
+ * @param {uint16_t  } x 起点X坐标
+ * @param {uint16_t  } y 起点Y坐标
+ * @param {uint16_t  } width 区域宽度
+ * @param {uint16_t  } height 区域高度
+ * @param {uint8_t*  } str 字符串
+ * @param {FontName  } fontName 字体
+ * @param {FontSize  } fontSize 字号
+ * @param {uint8_t   } mode 叠加模式（0：非叠加，1：叠加）
+ * @return {uint8_t*} 返回下一个被绘制的字符串的起始地址
+ */
 uint8_t* Show_Str(uint16_t x,
                   uint16_t y,
                   uint16_t width,
@@ -250,7 +256,7 @@ void Show_Str_Mid(uint16_t x,
                   uint8_t* str,
                   FontName fontName,
                   FontSize fontSize,
-                  uint16_t  len,
+                  uint16_t len,
                   uint8_t  mode)
 {
     uint16_t strlenth = 0;

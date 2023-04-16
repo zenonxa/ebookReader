@@ -12,10 +12,12 @@ extern UINT    br, bw;     // the number of byte really read or written
 extern FILINFO fileinfo;   // file information
 extern DIR     dir;        // directory
 
-uint8_t  fontNameSelect = Font_SimSun;
-uint8_t  fontSizeSelect = PX24;
-uint8_t  needRerender   = 1;
-uint16_t booknameIndex  = 0;
+uint8_t fontNameSelect = Font_SimSun;
+uint8_t fontSizeSelect = PX24;
+uint8_t needRerender   = 1;
+uint16_t booknameIndex = 0; /* 数值上等价于读取的已读取过的bookname的数量 */
+
+uint32_t* pageIndex;
 
 /* 书架列表控件 */
 List* bookshelf = NULL;
@@ -25,12 +27,22 @@ Button** booknameBtn   = NULL;
 Button*  buttonBack    = NULL;
 Button*  buttonHome    = NULL;
 Button*  buttonSetting = NULL;
+/* 阅读区域 */
+Textarea* readingArea = NULL;
 
-LinkedList* curTouchQueryQueue;
+LinkedList* curTouchQueryQueue = NULL;
 LinkedList  homeTouchQueryQueue; /* 存储widget指针的触摸查询队列 */
 LinkedList  emptyTouchQueryQueue;
 
-char** bookname = NULL;
+#define BOOKNAME_Buffer_Size 5
+char**  booknameBuffer[BOOKNAME_Buffer_Size];
+int16_t booknameBufferHead = -1;
+int16_t booknameBufferTail = -1;
+int16_t booknameBufferCur  = -1;
+char**  bookname           = NULL;
+#define nextBookNameBufferIndex(index) (((index) + 1) % (BOOKNAME_Buffer_Size))
+#define prevBookNameBufferIndex(index)                                         \
+    ((((index)-1) >= 0) ? ((index)-1) : (BOOKNAME_Buffer_Size - 1))
 
 uint16_t textAreaWidth  = ATK_MD0700_LCD_WIDTH * 4 / 5;
 uint16_t textAreaHeight = ATK_MD0700_LCD_HEIGHT * 4 / 5;
@@ -39,6 +51,25 @@ uint16_t textAreaHeight = ATK_MD0700_LCD_HEIGHT * 4 / 5;
 
 WCHAR utf16_string[STRING_SIZE];
 char  gb2312_string[STRING_SIZE * 2];
+
+const char tmpPath[] = "0:BOOK/";
+#define readdir(forward)                                                       \
+    do {                                                                       \
+        FILINFO* pFNO;                                                         \
+        if (forward) {                                                         \
+            pFNO = &fileinfo;                                                  \
+        } else {                                                               \
+            pFNO = NULL;                                                       \
+        }                                                                      \
+        uint8_t res = f_readdir(&dir, pFNO);                                   \
+        check_value_equal(res, FR_OK, "Fail to read dir %s", tmpPath);         \
+        if ((pFNO) != (NULL)) {                                                \
+            log_n("filename: [%s]", fileinfo.fname);                           \
+        } else {                                                               \
+            log_n("Reverse.");                                                 \
+        }                                                                      \
+        log_n("dir.dptr: %d", dir.dptr);                                       \
+    } while (0)
 
 int main(void)
 {
@@ -67,11 +98,13 @@ int main(void)
     Obj*    prev_target = NULL;
     uint8_t listItemLimit;
 
-    show_logo(NULL, 500); /* 展示开机Logo */
+    /* 展示开机Logo */
+    show_logo(NULL, 500);
     atk_md0700_clear(BACKGROUND_COLOR);
-    waiting_for_SD_Card(); /* 阻塞等待SD卡插入 */
-    mount_SD_Card();       /* 挂载SD卡 */
-    /* Check flag in Flash */
+    /* 阻塞等待SD卡插入 */
+    waiting_for_SD_Card();
+    /* 挂载SD卡 */
+    mount_SD_Card();
     /* 检查 ex-flash 中的头部信息 */
     res = check_font_header(10);
     /* 若检查 ex-flash 失败，则更新BMP转换表及所有字库文件 */
@@ -84,6 +117,14 @@ int main(void)
         W25QXX_Write((uint8_t*)&fontHeader, FONT_HEADER_ADDR,
                      sizeof(fontHeader));
     }
+    // char tmpPath[] = "0:BOOK/";
+    // res = f_opendir(&dir, tmpPath);
+    // check_value_equal(res, FR_OK, "Fail to open dir %s", tmpPath);
+    // while (1)
+    //     ;
+
+    // res = f_readdir(&dir, &fileinfo);
+
     clearTouchFlag(&flag);
     TouchEventInfo_Init();
     curTouchQueryQueue = &homeTouchQueryQueue;
@@ -95,23 +136,31 @@ int main(void)
     /* 创建书架列表 */
     createBookshelf();
     listItemLimit = bookshelf->itemList->size;
+    createBooknameBuffer();
     /* 读取目录,并将文件名加载值书架列表的列表项中 */
     res = f_opendir(&dir, "0:/BOOK");
     check_value_equal(res, FR_OK, "Open dir fail");
-    CopyBookname(&dir, listItemLimit, bookname);
+    CopyBookname(&dir, listItemLimit, bookname, 1);
     refreshBookname(bookshelf, booknameBtn, bookname,
                     DrawOption_Delay); /* 刷新书名 */
     renderHomePage();                  /* 渲染 Home 界面 */
+    // createReadingArea();
     while (1) {
+        /* 状态机设计：
+         * - 每次循环更新一次触摸事件生命周期状态
+         * - 根据当前状态进行必要的即时响应
+         * - 在松手后，产生触摸事件的结果，根据此结果，进行对应的操作 */
         touchEventUpdate(&touchState, &flag); /* 更新触摸事件生命周期 */
         if (touchState == TouchState_OnRelease) {
             touchEvent = getTouchEvent(flag);
             /* Do things according the touch event */
+            /* 松手后解除控件的即时响应 */
             if (cur_target) {
                 switch (cur_target->type) {
+                    /* 恢复按钮的状态 */
                     case Obj_Type_Button:
-                        if (((Button*)cur_target)->ispressed == BT_PRESSED) {
-                            ((Button*)cur_target)->ispressed = BT_UNPRESSED;
+                        if (((Button*)cur_target)->isPressed == BT_PRESSED) {
+                            ((Button*)cur_target)->isPressed = BT_UNPRESSED;
                             ((Button*)cur_target)
                                 ->DrawButton((Button*)cur_target);
                         }
@@ -128,10 +177,11 @@ int main(void)
                 if (slideDirestion == Slide_Up) {
                     if (curTouchQueryQueue == &homeTouchQueryQueue) {
                         /* 书架界面上滑：下一页 */
-                        if (*fileinfo.fname) {
-                            CopyBookname(&dir, listItemLimit, bookname);
+                        if ((*fileinfo.fname) ||
+                            (booknameBufferCur != booknameBufferTail)) {
+                            CopyBookname(&dir, listItemLimit, bookname, 1);
                             for (i = 0; i < listItemLimit; ++i) {
-                                booknameBtn[i]->ispressed = BT_UNPRESSED;
+                                booknameBtn[i]->isPressed = BT_UNPRESSED;
                             }
                             refreshBookname(bookshelf, booknameBtn, bookname,
                                             DrawOption_Immediately);
@@ -141,11 +191,14 @@ int main(void)
                     if (curTouchQueryQueue == &homeTouchQueryQueue) {
                         /* 书架界面下滑：上一页 */
                         if (booknameIndex > 9) {
-                            readDirRevese(&dir, getItemListSize(bookshelf));
-                            readDirRevese(&dir, listItemLimit);
-                            CopyBookname(&dir, listItemLimit, bookname);
+                            // readDirRevese(&dir, getItemListSize(bookshelf) -
+                            // 1); readDirRevese(&dir, listItemLimit);
+                            CopyBookname(&dir,
+                                         listItemLimit +
+                                             getItemListSize(bookshelf),
+                                         bookname, 0);
                             for (i = 0; i < listItemLimit; ++i) {
-                                booknameBtn[i]->ispressed = BT_UNPRESSED;
+                                booknameBtn[i]->isPressed = BT_UNPRESSED;
                             }
                             refreshBookname(bookshelf, booknameBtn, bookname,
                                             DrawOption_Immediately);
@@ -173,12 +226,12 @@ int main(void)
             }
             clearTouchFlag(&flag);
             touchState = Touch_State_None;
-#    if 0
+#    if 1
             /* 查看当前dir指针偏移 */
             char buf[30] = {0};
             sprintf(buf, "%2d", booknameIndex);
             fillArea(0, 0, 50, 30, RGB888toRGB565(0xffffff));
-            Show_Str(0, 0, 50, 30, buf, Font_SimSun, PX24, 0);
+            Show_Str(0, 0, 50, 30, (uint8_t*)buf, Font_SimSun, PX24, 0);
 #    endif
         } else if (touchState == TouchState_OnPress) {
             /* 查询控件队列，落点是否位于某个具体的控件上 */
@@ -240,15 +293,15 @@ void createNavigationBar(void)
     setPublicFont(Font_SimSun, PX24, RGB888toRGB565(0x000000));
     setPublicBorder(RGB888toRGB565(0xcccccc), 5, BORDER_FLAG(BORDER_TOP));
     setPublicAlignType(AlignHorizonalType_CENTER, AlignVerticalType_MIDDLE);
-    buttonBack =
-        NewButton(0, 0, 160, navigationBar->itemHeight, &publicFont,
-                  &publicBorder, &publicAlignType, navigationBtnOnClicked);
-    buttonHome =
-        NewButton(160, 0, 160, navigationBar->itemHeight, &publicFont,
-                  &publicBorder, &publicAlignType, navigationBtnOnClicked);
-    buttonSetting =
-        NewButton(320, 0, 160, navigationBar->itemHeight, &publicFont,
-                  &publicBorder, &publicAlignType, navigationBtnOnClicked);
+    buttonBack         = NewButton(0, 0, 160, navigationBar->itemHeight,
+                                   LocateType_Relative, &publicFont, &publicBorder,
+                                   &publicAlignType, navigationBtnOnClicked);
+    buttonHome         = NewButton(160, 0, 160, navigationBar->itemHeight,
+                                   LocateType_Relative, &publicFont, &publicBorder,
+                                   &publicAlignType, navigationBtnOnClicked);
+    buttonSetting      = NewButton(320, 0, 160, navigationBar->itemHeight,
+                                   LocateType_Relative, &publicFont, &publicBorder,
+                                   &publicAlignType, navigationBtnOnClicked);
     buttonBack->str    = navigationBarString[0];
     buttonHome->str    = navigationBarString[1];
     buttonSetting->str = navigationBarString[2];
@@ -283,9 +336,10 @@ void createBookshelf(void)
     setPublicBorder(RGB888toRGB565(0x000000), 3, BORDER_NULL);
     Textarea* bookshelfHeadlineTA =
         NewTextarea(0, 0, ((Obj*)bookshelf)->width, bookshelf->headlineHeight,
-                    &publicFont, &publicBorder, RGB888toRGB565(0xcccccc));
-    bookshelfHeadlineTA->str    = bookshelfHeadlineStr;
-    bookshelf->headlineTextarea = bookshelfHeadlineTA;
+                    LocateType_Relative, &publicFont, &publicBorder,
+                    RGB888toRGB565(0xcccccc));
+    bookshelfHeadlineTA->str = bookshelfHeadlineStr;
+    SetListHeadlineTextarea(bookshelf, bookshelfHeadlineTA, DrawOption_Delay);
     /* 创建按钮，并添加至书架列表中 */
     booknameBtn = mymalloc(GUI_MALLOC_SOURCE, sizeof(Button*) * listItemLimit);
     check_value_not_equal(booknameBtn, NULL,
@@ -300,13 +354,48 @@ void createBookshelf(void)
     setPublicBorder(RGB888toRGB565(0x000000), 3, BORDER_NULL);
     setPublicFont(Font_SimSun, PX24, RGB888toRGB565(0x000000));
     for (uint16_t i = 0; i < listItemLimit; ++i) {
-        booknameBtn[i] = NewButton(
-            0, 0, ((Obj*)bookshelf)->width, bookshelf->itemHeight, &publicFont,
-            &publicBorder, &publicAlignType, &bookshelfBtnOnClicked);
+        booknameBtn[i] =
+            NewButton(0, 0, ((Obj*)bookshelf)->width, bookshelf->itemHeight,
+                      LocateType_Relative, &publicFont, &publicBorder,
+                      &publicAlignType, &bookshelfBtnOnClicked);
         check_value_not_equal(booknameBtn[i], NULL,
                               "Fail to malloc for bootnameBtn[%d]", i);
         booknameBtn[i]->str = bookname[i];
     }
+}
+
+void createBooknameBuffer(void)
+{
+    bool     res_ok = 1;
+    uint16_t i, j;
+    /* 创建bookname环形缓冲区 */
+    uint16_t listItemLimit = bookshelf->itemList->size;
+    for (i = 0; i < BOOKNAME_Buffer_Size; ++i) {
+        booknameBuffer[i] =
+            (char**)mymalloc(SRAMIN, sizeof(char*) * listItemLimit);
+        if (booknameBuffer == NULL) {
+            res_ok = 0;
+            break;
+        }
+    }
+    check_value_not_equal(res_ok, 0, "Failed to malloc for booknameBuffer[%d]",
+                          i);
+    for (i = 0; i < BOOKNAME_Buffer_Size; ++i) {
+        for (j = 0; j < listItemLimit; ++j) {
+            booknameBuffer[i][j] = (char*)mymalloc(
+                GUI_MALLOC_SOURCE, sizeof(char) * STRING_SIZE * 2);
+            if (booknameBuffer[i][j] == NULL) {
+                res_ok = 0;
+                break;
+            }
+            memset(booknameBuffer[i][j], 0, sizeof(char) * STRING_SIZE * 2);
+        }
+        if (res_ok == 0) {
+            break;
+        }
+    }
+    check_value_not_equal(res_ok, 0,
+                          "Failed to malloc for booknameBuffer[%d][%d]", i, j);
 }
 
 void LED_Toggle(void)
@@ -471,9 +560,9 @@ void updateWidgetStateOnTouch(Obj* obj, TouchState state)
         switch (obj->type) {
             case Obj_Type_Button:
                 if (state == TouchState_OnPress) {
-                    ((Button*)obj)->ispressed = BT_PRESSED;
+                    ((Button*)obj)->isPressed = BT_PRESSED;
                 } else if (state == TouchState_OnRelease) {
-                    ((Button*)obj)->ispressed = BT_UNPRESSED;
+                    ((Button*)obj)->isPressed = BT_UNPRESSED;
                 }
                 ((Button*)obj)->DrawButton((Button*)obj);
                 break;
@@ -490,11 +579,15 @@ void updateWidgetStateOnTouch(Obj* obj, TouchState state)
  */
 void readDirRevese(DIR* dir, uint8_t limit)
 {
-    uint8_t i = 0;
+    // uint16_t bookCntInCurPage = getItemListSize(bookshelf);
     uint8_t res;
-    for (i = 0; i < limit - 1; ++i) {
-        res = f_readdir(dir, NULL);
-        booknameIndex--;
+    booknameIndex -= limit;
+    res = f_readdir(dir, NULL);
+    check_value_equal(res, FR_OK, "Failed to reverse to head.");
+    /* 已回退至缓冲区首部，则需要借助f_readdir接口进行回滚，相当于重新打开 */
+    for (int i = 0; i < booknameIndex; ++i) {
+        res = f_readdir(dir, &fileinfo);
+        check_value_equal(res, FR_OK, "Failed to readdir [%d].", i);
     }
 }
 
@@ -505,21 +598,145 @@ void readDirRevese(DIR* dir, uint8_t limit)
  * @param {char**} bookname 存储目录名的二维数组
  * @return {void}
  */
-void CopyBookname(DIR* dir, uint8_t limit, char** bookname)
+void CopyBookname(DIR* dir, uint8_t limit, char** bookname, bool forward)
 {
-    uint8_t i   = 0;
-    uint8_t res = FR_OK;
+    uint8_t     i                  = 0;
+    uint8_t     res                = FR_OK;
+    static bool readFromBufferFlag = false;
+    /* 第一次拷贝，初始化缓冲区index */
+    if (forward) {
+        /* 前进式拷贝，进行index的处理 */
+        if (booknameBufferCur == -1) {
+            /* 首次前进式拷贝，需要readir */
+            booknameBufferCur = booknameBufferTail = booknameBufferHead = 0;
+        } else {
+            /* 非首次拷贝，需要readdir */
+            /* cur已在最后一个buffer，则除了cur自增，还要让tail自增 */
+            // if ((booknameBufferCur != booknameBufferTail) &&
+            // (readFromBufferFlag == true)) { /* 发生过回退，但未发生回滚 */
+            //     booknameBufferCur =
+            //     nextBookNameBufferIndex(booknameBufferCur);
+            // } else if (booknameBufferCur == booknameBufferTail) { /*
+            // 未发生回退，或者回退已完全恢复 */
+            //     readFromBufferFlag = false;
+            // }
+            /* 不管是否发生过回退，都需要移动cur */
+            booknameBufferCur = nextBookNameBufferIndex(booknameBufferCur);
+            /* 如果（未发生过回退，或回退已恢复）或（发生过回滚），则需要readdir
+             */
+            if ((booknameBufferCur == booknameBufferTail) ||
+                (readFromBufferFlag == false)) {
+                if (nextBookNameBufferIndex(booknameBufferTail) ==
+                    booknameBufferCur) {
+                    booknameBufferTail =
+                        nextBookNameBufferIndex(booknameBufferTail);
+                }
+                if (booknameBufferTail == booknameBufferHead) {
+                    booknameBufferHead =
+                        nextBookNameBufferIndex(booknameBufferHead);
+                }
+            }
+        }
+        if (readFromBufferFlag == false) { /* 需要raeddir？ */
+            /* 通过多次调用readdir遍历指定数量的文件名 */
+            while (res == FR_OK) {
+                res = f_readdir(dir, &fileinfo);
+                log_n("In copy bookname. [%d] dir->fn: [%8s]", i, dir->fn);
+                /* 若已遍历整个目录, 则退出 */
+                if (*fileinfo.fname == 0) {
+                    break;
+                }
+                booknameIndex++; /* 下一个会被读取的文件项的编号, 自0开始 */
+                check_value_equal(res, FR_OK, "read dir fail");
+                strcpy(booknameBuffer[booknameBufferCur][i], fileinfo.fname);
+                ++i;
+                /* 读至足够 limit 项则退出 */
+                if (i >= limit) {
+                    break;
+                }
+            }
+            /* 若目录剩余项不足 limit, 将未获取到字符串的数组置为空字符串 */
+            if (i < limit) {
+                for (; i < limit; ++i) {
+                    booknameBuffer[booknameBufferCur][i][0] = 0;
+                }
+            }
+        }
+        for (uint8_t j = 0; j < limit; ++j) {
+            strcpy(bookname[j], booknameBuffer[booknameBufferCur][j]);
+            if ((readFromBufferFlag==true)&&(bookname[j][0])) {
+                ++booknameIndex;
+            }
+        }
+    } else {
+        /* 回退式拷贝 */
+        /* 刷新上一页[1] or 重刷本页？ */
+        if (limit >= bookshelf->itemList->size) { /* 刷新上一页？ */
+            if (booknameBufferCur != booknameBufferHead) {
+                booknameBufferCur  = prevBookNameBufferIndex(booknameBufferCur);
+                readFromBufferFlag = true;
+                booknameIndex -= getItemListSize(bookshelf);
+            } else {
+                readFromBufferFlag = false;
+                /* readdir指针回滚，再拷贝到buff[cur]中 */
+                readDirRevese(dir, bookshelf->itemList->size +
+                                       getItemListSize(bookshelf));
+                for (int i = 0; i < bookshelf->itemList->size; ++i) {
+                    res = f_readdir(dir, &fileinfo);
+                    check_value_equal(res, FR_OK, "Failed to readdir [%d].", i);
+                    strcpy(booknameBuffer[booknameBufferCur][i],
+                           fileinfo.fname);
+                    ++booknameIndex;
+                }
+            }
+            // if (booknameBufferCur ==
+            //     prevBookNameBufferIndex(
+            //         booknameBufferHead)) { /*
+            //         若上一页不在缓存中，则cur自减后，还需要回滚
+            //                                 */
+            //     booknameBufferHead =
+            //         prevBookNameBufferIndex(booknameBufferHead);
+            //     booknameBufferTail =
+            //         prevBookNameBufferIndex(booknameBufferTail);
+            // if (readFromBufferFlag == false) {
+
+            // }
+        } else { /* 刷新本页 */
+            // booknameIndex -= getItemListSize(bookshelf);
+        }
+    }
+    /* 将buff[cur]中的bookname拷贝出来（刷新上页、重刷本页） */
+    for (int i = 0; i < bookshelf->itemList->size; ++i) {
+        strcpy(bookname[i], booknameBuffer[booknameBufferCur][i]);
+    }
+
+#if 0
+    if (booknameBufferCur == -1) {
+        booknameBufferCur = booknameBufferTail = booknameBufferHead = 0;
+        /* 第一次前进式拷贝，需要readir */
+    } else {
+        /* 如果当前使用的缓冲区就是最后一个，则tail应当取模自增1 */
+        if (booknameBufferCur == booknameBufferTail) {
+            booknameBufferTail = nextBookNameBufferIndex(booknameBufferTail);
+        }
+        /* cur正常取模自增1。若cur取模自增后等于head，则head也应取模自增1 */
+        booknameBufferCur = nextBookNameBufferIndex(booknameBufferCur);
+        if (booknameBufferCur == booknameBufferHead) {
+            booknameBufferHead = nextBookNameBufferIndex(booknameBufferHead);
+        }
+    }
     while (res == FR_OK) {
         res = f_readdir(dir, &fileinfo);
+        log_n("In copy bookname. [%d] dir->fn: [%8s]", i, dir->fn);
         /* 若已遍历整个目录, 则退出 */
         if (*fileinfo.fname == 0) {
             break;
         }
         booknameIndex++; /* 下一个会被读取的文件项的编号, 自0开始 */
         check_value_equal(res, FR_OK, "read dir fail");
-        strcpy(bookname[i], fileinfo.fname);
+        strcpy(booknameBuffer[booknameBufferCur][i], fileinfo.fname);
         ++i;
-        /* 读够 limit 项则退出 */
+        /* 读至足够 limit 项则退出 */
         if (i >= limit) {
             break;
         }
@@ -527,9 +744,13 @@ void CopyBookname(DIR* dir, uint8_t limit, char** bookname)
     /* 若目录剩余项不足 limit, 将未获取到字符串的数组置为空字符串 */
     if (i < limit) {
         for (; i < limit; ++i) {
-            bookname[i][0] = 0;
+            booknameBuffer[booknameBufferCur][i][0] = 0;
         }
     }
+    for (uint8_t j = 0; j < limit; ++j) {
+        strcpy(bookname[j], booknameBuffer[booknameBufferCur][j]);
+    }
+#endif
 }
 
 /**
@@ -577,12 +798,58 @@ void refreshBookname(List*      list,
  */
 void renderHomePage(void)
 {
-    readDirRevese(&dir, getItemListSize(bookshelf));
+    if (curTouchQueryQueue != &homeTouchQueryQueue) {
+        readDirRevese(&dir, getItemListSize(bookshelf));
+    }
     /* 刷新主界面书架、导航栏 */
     // refreshBookname(bookshelf, booknameBtn, bookname, DrawOption_Delay);
     atk_md0700_clear(BACKGROUND_COLOR);
     bookshelf->DrawList(bookshelf);
     navigationBar->DrawList(navigationBar);
+}
+
+void createReadingArea(void)
+{
+    const uint16_t textAreaWidth  = ATK_MD0700_LCD_WIDTH * 4 / 5;
+    const uint16_t textAreaHeight = ATK_MD0700_LCD_HEIGHT * 4 / 5;
+    setPublicFont(fontNameSelect, fontSizeSelect, RGB888toRGB565(0x000000));
+    readingArea =
+        NewTextarea((ATK_MD0700_LCD_WIDTH - textAreaWidth) / 2,
+                    (ATK_MD0700_LCD_HEIGHT - textAreaHeight) / 2, textAreaWidth,
+                    textAreaHeight, LocateType_Absolute, &publicFont,
+                    &publicBorder, RGB888toRGB565(0xffffff));
+    readingArea->str = NULL;
+}
+
+/* 要做到上一页，需要知道页起始字节在文件中的偏移，然后移动指针至此偏移，再刷新
+ * 开始渲染文本内容时，open一本书，从头开始读。每次读取一个page_buffer，大小为PAGE_SIZE。
+ * 之后渲染一页内容，记录下一页的起始文本在page_buffer中的偏移，即可得知page_buffer中还剩余多少个字节
+ */
+void CreatePageIndex(char* filePath)
+{
+    uint8_t  res;
+    char*    pCh               = page_buffer[0];
+    uint32_t prevIndexInBuffer = 0;
+    if (main_file->obj.fs != 0) {
+        f_close(main_file);
+    }
+    res = f_open(main_file, filePath, FA_READ);
+    check_value_equal(res, FR_OK, "Failed to open file [%s]", filePath);
+    memset(pageIndex, 0, PAGE_INDEX_SIZE * sizeof(uint32_t));
+    pageIndex[0] = 0;
+
+    while (!f_eof(main_file)) {
+        /* 按page_buffer的大小进行一次读取 */
+        res = f_read(main_file, page_buffer[0], PAGE_SIZE, &br);
+        check_value_equal(res, FR_OK, "Failed to read from file [%s]",
+                          filePath);
+        /* 遍历page_buffer中的内容，找到每一页内容的起始偏移 */
+        // pCh = Show_Str(((Obj*)readingArea)->x, ((Obj*)readingArea)->y,
+        //                ((Obj*)readingArea)->width,
+        //                ((Obj*)readingArea)->height, page_buffer[0],
+        //                readingArea->font.fontName,
+        //                readingArea->font.fontSize, 1, DrawOption_Delay);
+    }
 }
 
 void bookshelfBtnOnClicked(Button* bookBtn)
@@ -602,11 +869,11 @@ void bookshelfBtnOnClicked(Button* bookBtn)
     log_n("Rerender LCD panel.");
     /* 整个界面清空后，开始渲染文本 */
     atk_md0700_clear(ATK_MD0700_WHITE);
-    atk_md0700_fill((ATK_MD0700_LCD_WIDTH - textAreaWidth) / 2,
-                    (ATK_MD0700_LCD_HEIGHT - textAreaHeight) / 2,
-                    (ATK_MD0700_LCD_WIDTH + textAreaWidth) / 2,
-                    (ATK_MD0700_LCD_HEIGHT + textAreaHeight) / 2,
-                    &BACKGROUND_COLOR, SINGLE_COLOR_BLOCK);
+    // atk_md0700_fill((ATK_MD0700_LCD_WIDTH - textAreaWidth) / 2,
+    //                 (ATK_MD0700_LCD_HEIGHT - textAreaHeight) / 2,
+    //                 (ATK_MD0700_LCD_WIDTH + textAreaWidth) / 2,
+    //                 (ATK_MD0700_LCD_HEIGHT + textAreaHeight) / 2,
+    //                 &BACKGROUND_COLOR, SINGLE_COLOR_BLOCK);
     Show_Str((ATK_MD0700_LCD_WIDTH - textAreaWidth) / 2,
              (ATK_MD0700_LCD_HEIGHT - textAreaHeight) / 2, textAreaWidth,
              textAreaHeight, page_buffer[0], fontNameSelect, fontSizeSelect, 1);

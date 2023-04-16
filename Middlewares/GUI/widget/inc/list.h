@@ -24,19 +24,21 @@ typedef struct List_struct
 
 typedef LinkedList ListItem;
 
-List* NewList(uint16_t xpos,
-              uint16_t ypos,
-              uint16_t width,
-              uint16_t height,
-              Border*  border,
-              uint16_t headlineHeight,
-              uint16_t itemHeight,
-              Obj*     scroller,
-              uint8_t  dividingLineHeight);
-void  AppendSubListItem(List* list, uint16_t index, Obj* obj);
-void  AppendSubList(List* list);
-void  SetListHeadlineTextarea(List* list, Textarea* textarea);
-void redrawListItem(List* list);
+List*       NewList(uint16_t xpos,
+                    uint16_t ypos,
+                    uint16_t width,
+                    uint16_t height,
+                    Border*  border,
+                    uint16_t headlineHeight,
+                    uint16_t itemHeight,
+                    Obj*     scroller,
+                    uint8_t  dividingLineHeight);
+void        AppendSubListItem(List* list, uint16_t index, Obj* obj);
+void        AppendSubList(List* list);
+void        SetListHeadlineTextarea(List*      list,
+                                    Textarea*  textarea,
+                                    DrawOption drawOption);
+void        redrawListItem(List* list);
 LinkedList* getSubList(List* list, int index);
-uint8_t getItemListSize(List* list);
+uint8_t     getItemListSize(List* list);
 #endif

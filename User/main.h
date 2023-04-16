@@ -119,8 +119,8 @@ void   refreshBookname(List*      list,
                        Button**   booknameBtn,
                        char**     bookname,
                        DrawOption drawOption);
-void   CopyBookname(DIR* dir, uint8_t limit, char** bookname);
-void   readDirRevese(DIR* dir, uint8_t limit);
+void   CopyBookname(DIR* dir, uint8_t limit, char** bookname, bool forward);
+void readDirRevese(DIR* dir, uint8_t limit);
 void   bookshelfBtnOnClicked(Button* bookBtn);
 void   navigationBtnOnClicked(Button* button);
 WCHAR* wchncpy(WCHAR* dest, WCHAR* src, int cnt);
@@ -130,6 +130,8 @@ void   renderHomePage(void);
 void   InitForMain(void);
 void   createNavigationBar(void);
 void   createBookshelf(void);
+void createReadingArea(void);
+void createBooknameBuffer(void);
 #if ACTION_ONCE
 void excuteCommand(void);
 #endif

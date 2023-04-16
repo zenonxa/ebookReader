@@ -42,6 +42,7 @@ typedef struct Obj_struct
     uint16_t width;
     uint16_t height;
     uint8_t  type;
+    uint8_t  locateType;
     // struct Obj_struct* subObj;
     // void (*Draw)(struct Obj_struct*); /* Interface to draw the widget*/
     /* void (*Response)(void*); */
@@ -70,6 +71,16 @@ typedef enum {
     DrawOption_Cnt     = DrawOption_Max + 1,     /* The number of all */
     DrawOption_None    = DrawOption_Cnt,         /* Invalid value */
 } DrawOption;
+
+typedef enum {
+    LocateType_Absolute = 0,
+    LocateType_Relative,
+    LocateType_Min     = LocateType_Absolute,
+    LocateType_Max     = LocateType_Relative, /* Max */
+    LocateType_Default = LocateType_Min,      /* Default */
+    LocateType_Cnt     = LocateType_Max + 1,  /* The number of all */
+    LocateType_None    = LocateType_Cnt,      /* Invalid value */
+} LocateType;
 
 #define BORDER_FLAG(borderFlagBit) (0x01 << (borderFlagBit))
 

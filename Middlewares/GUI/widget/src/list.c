@@ -63,10 +63,6 @@ void DrawListDefault(List* list)
     drawBorder((Obj*)list, &list->border);
     LinkedNode* node = subList->nodeData.subList.head;
     if (list->headlineTextarea) {
-#if RELATIVE_LOCATE_ENABLE
-        ((Obj*)list->headlineTextarea)->x += x;
-        ((Obj*)list->headlineTextarea)->y += y;
-#endif
         if (!checkBoundary(x, y, ((Obj*)list)->width, list->headlineHeight,
                            (Obj*)list->headlineTextarea)) {
             ((Obj*)list->headlineTextarea)->x = x;
@@ -74,8 +70,8 @@ void DrawListDefault(List* list)
             if (((Obj*)list->headlineTextarea)->width > ((Obj*)list)->width) {
                 ((Obj*)list->headlineTextarea)->width = ((Obj*)list)->width;
             }
-            if (((Obj*)list->headlineTextarea)->height > list->itemHeight) {
-                ((Obj*)list->headlineTextarea)->height = list->itemHeight;
+            if (((Obj*)list->headlineTextarea)->height > list->headlineHeight) {
+                ((Obj*)list->headlineTextarea)->height = list->headlineHeight;
             }
         }
         /* Save the background color and restore it after drawing textarea in
@@ -90,26 +86,22 @@ void DrawListDefault(List* list)
     setPublicAlignType(AlignHorizonalType_LEFT, AlignVerticalType_MIDDLE);
     while (subList) {
         while (node) {
-#if RELATIVE_LOCATE_ENABLE
-            node->nodeData.obj->x += x;
-            node->nodeData.obj->y += y;
-#endif
             if (!checkBoundary(x, y, ((Obj*)list)->width, list->itemHeight,
                                node->nodeData.obj)) {
-                /* Reset boundary */
-                log_n("%sCheckBoundary fail.", ARROW_STRING);
-                log_n("Actual:");
-                log_n("x: %d", node->nodeData.obj->x);
-                log_n("y: %d", node->nodeData.obj->y);
-                log_n("width: %d", node->nodeData.obj->width);
-                log_n("height: %d", node->nodeData.obj->height);
-                log_n("");
-                log_n("Target: ");
-                log_n("x: %d", x);
-                log_n("y: %d", y);
-                log_n("width: %d", ((Obj*)list)->width);
-                log_n("height: %d", list->itemHeight);
-                log_n("%s", ARROW_STRING);
+                // /* Reset boundary */
+                // log_n("%sCheckBoundary fail.", ARROW_STRING);
+                // log_n("Actual:");
+                // log_n("x: %d", node->nodeData.obj->x);
+                // log_n("y: %d", node->nodeData.obj->y);
+                // log_n("width: %d", node->nodeData.obj->width);
+                // log_n("height: %d", node->nodeData.obj->height);
+                // log_n("");
+                // log_n("Target: ");
+                // log_n("x: %d", x);
+                // log_n("y: %d", y);
+                // log_n("width: %d", ((Obj*)list)->width);
+                // log_n("height: %d", list->itemHeight);
+                // log_n("%s", ARROW_STRING);
                 node->nodeData.obj->x = x;
                 node->nodeData.obj->y = y;
                 if (node->nodeData.obj->width > ((Obj*)list)->width) {
@@ -147,6 +139,21 @@ void AppendSubListItem(List* list, uint16_t index, Obj* obj)
     LinkedNodeData data;
     LinkedNode*    node = get_node(list->itemList, index);
     data.obj            = obj;
+    uint16_t x          = ((Obj*)list)->x;
+    uint16_t y          = ((Obj*)list)->y;
+    if (list->headlineHeight) {
+        y += list->headlineHeight;
+        y += list->dividingLineHeight;
+    }
+    for (int i = 0; i < index; ++i) {
+        y += list->itemHeight;
+        y += list->dividingLineHeight;
+    }
+    if (obj->locateType == LocateType_Relative) {
+        obj->x += x;
+        obj->y += y;
+        obj->locateType = LocateType_Absolute;
+    }
     push_tail(&node->nodeData.subList, &data);
 }
 
@@ -189,10 +196,19 @@ uint8_t getSubListCntLimit(List* list)
     return cnt;
 }
 
-void SetListHeadlineTextarea(List* list, Textarea* textarea)
+void SetListHeadlineTextarea(List*      list,
+                             Textarea*  textarea,
+                             DrawOption drawOption)
 {
+    if (((Obj*)list)->locateType == LocateType_Relative) {
+        ((Obj*)list->headlineTextarea)->x += ((Obj*)list)->x;
+        ((Obj*)list->headlineTextarea)->y += ((Obj*)list)->y;
+        ((Obj*)list)->locateType = LocateType_Absolute;
+    }
     list->headlineTextarea = textarea;
-    list->DrawList(list);
+    if (drawOption == DrawOption_Immediately) {
+        list->DrawList(list);
+    }
 }
 
 void redrawListItem(List* list)
@@ -223,11 +239,17 @@ LinkedList* getSubList(List* list, int index)
     return &get_node(list->itemList, index)->nodeData.subList;
 }
 
-uint8_t getItemListSize(List* list) {
-    uint8_t cnt = 0;
+/**
+ * @description: 记录列表中的有效行（即非空行）的数量
+ * @param {List*} list 列表
+ * @return {uint8_t} 有效行的数量
+ */
+uint8_t getItemListSize(List* list)
+{
+    uint8_t     cnt  = 0;
     LinkedNode* node = list->itemList->head;
     while (node) {
-        if (node->nodeData.subList.size >= 0) {
+        if (node->nodeData.subList.size > 0) {
             ++cnt;
         }
         node = node->next;
