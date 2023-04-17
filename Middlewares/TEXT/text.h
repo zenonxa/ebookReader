@@ -46,4 +46,16 @@ void     Show_Str_Mid(uint16_t x,
                       uint16_t len,
                       uint8_t  mode);
 uint8_t  getLineSpace(FontSize fontSize);
+char* renderString(uint16_t  startX,
+                   uint16_t  startY,
+                   uint16_t  areaWidth,
+                   uint16_t  areaHeight,
+                   uint16_t* curX,
+                   uint16_t* curY,
+                   char*     str,
+                   uint16_t  limit,
+                   FontName  fontName,
+                   FontSize  fontSize,
+                   uint8_t   mode,
+                   bool      drawOption);
 #endif

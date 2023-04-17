@@ -55,7 +55,7 @@ DIR     dir;       // 目录
 /* Cache for flash when do reading or writing operation */
 u8* flash_buffer = NULL;
 u8* dzk;
-extern uint32_t* pageIndex;
+extern uint32_t* pageNumTBL;
 ///////////////////////////////////////////////////////////////////////////////////////
 // 为exfuns申请内存
 // 返回值:0,成功
@@ -85,10 +85,10 @@ u8 exfuns_init(void)
     logBuffer   = (u8*)mymalloc(SRAMIN, LOG_BUFFER_SIZE);
 
 	dzk = (u8*)mymalloc(SRAMIN, MAX_DZK_SIZE);
-    pageIndex = (uint32_t*)mymalloc(SRAMEX, PAGE_INDEX_SIZE*sizeof(uint32_t));
+    pageNumTBL = (uint32_t*)mymalloc(SRAMEX, PAGE_INDEX_SIZE*sizeof(uint32_t));
 
     if ((i == FF_VOLUMES) && main_file && vice_file && temp_file && fatbuf &&
-        flash_buffer && logBuffer && dzk && pageIndex) {
+        flash_buffer && logBuffer && dzk && pageNumTBL) {
         res = 0; /* All succeed. */
     } else {
         res = 1; /* Failure occur. */

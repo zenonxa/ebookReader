@@ -202,37 +202,44 @@ uint8_t* Show_Str(uint16_t x,
     uint16_t ls_y; /* line space start position */
     /* Do while block when the character is not '\0', and there is space left on
      * the screen for unrendered text. */
+    return renderString(x0, y0, width, height, &x, &y, str, 4096, fontName,
+                        fontSize, mode, 1);
+#if 0
     while (*str != 0) {
-        if (!bHz) {
-            if (*str & 0x80) { /* Chinese character */
+        if (!bHz) {            /* 处理第一个字符 */
+            if (*str & 0x80) { /* 第一个字符是汉字？ */
                 bHz = 1;
-            } else { /* ASCII character */
+            } else { /* 第一个字符不是汉字 */
+                /* 若剩余空间已无法再绘制一个ASCII字符，则换行 */
                 if (x > (x0 + width - size / 2)) {
-                    /* New line */
+                    /* 换行操作包括：X重置、Y增加行高、Y增加行距 */
                     moveCursorToNextLine(&x, &y, size, lineSpace, x0, &ls_y);
                 }
+                /* 若剩余高度不足以再再渲染一行文字，则结束渲染 */
                 if (y > (y0 + height - size)) {
                     break;  // 越界返回
                 }
-                if (*str == 13)  // 换行符号
-                {
+                /* 绘制ASCII字符。若遇到换行符号，则改为另起一行，并将指针后后移
+                 */
+                if (*str == 13) {
                     moveCursorToNextLine(&x, &y, size, lineSpace, x0, &ls_y);
                     str++;
                 } else {
                     atk_md0700_show_char(x, y, *(char*)str,
                                          (atk_md0700_lcd_font_t)size,
                                          FOREGROUND_COLOR);  // 有效部分写入
+                    str++;
+                    x += size / 2;  // 字符,为全字的一半
                 }
-                str++;
-                x += size / 2;  // 字符,为全字的一半
             }
-        } else {
-            /* 中文 */
-            bHz = 0;  // 有汉字库
+        } else {     /* 处理中文字符 */
+            bHz = 0; /* 清除汉字标志 */
+            /* 若本行剩余空间无法再绘制汉字，则换行 */
             if (x > (x0 + width - size)) {
                 /* The space left in this line is not enough */
                 moveCursorToNextLine(&x, &y, size, lineSpace, x0, &ls_y);
             }
+            /* 若剩余高度无法再绘制汉字，则结束绘制 */
             if (y > (y0 + height - size)) {
                 break;  // 越界返回
             }
@@ -243,6 +250,102 @@ uint8_t* Show_Str(uint16_t x,
         }
         // fillLineSpace(x0, ls_y, width, lineSpace, BACKGROUND_COLOR);
     }
+    return str;
+#endif
+}
+
+char* renderString(uint16_t  startX,
+                   uint16_t  startY,
+                   uint16_t  areaWidth,
+                   uint16_t  areaHeight,
+                   uint16_t* curX,
+                   uint16_t* curY,
+                   char*     str,
+                   uint16_t  limit,
+                   FontName  fontName,
+                   FontSize  fontSize,
+                   uint8_t   mode,
+                   bool      drawOption)
+{
+    static int runCnt = 0;
+    log_n("=================================> Time: %d", runCnt++);
+    uint8_t bHz       = 0; /* 0: ASCII字符, 1: 汉字字符 */
+    uint8_t size      = getSize(fontSize);
+    uint8_t lineSpace = getLineSpace(fontSize);
+    /* Do while block when the character is not '\0', and there is space left on
+     * the screen for unrendered text. */
+    char* strOrigin = str;
+    // check_value_not_equal(*str, 0, "%s:%s() ==> (*str == 0)", __FILE__,
+    //                       __FUNCTION__);
+    log_n("%sstartX: %d", ARROW_STRING, startX);
+    log_n("%sstartY: %d", ARROW_STRING, startY);
+    log_n("%scurX: %d", ARROW_STRING, *curX);
+    log_n("%scurY: %d", ARROW_STRING, *curY);
+    log_n("%sareaWidth: %d", ARROW_STRING, areaWidth);
+    log_n("%sareaHeight: %d", ARROW_STRING, areaHeight);
+    while (*str != 0) {
+        /* 读取足够limit字符则退出，由于ASCII和汉字大小不等，可能会差距1个字节
+         */
+        if ((str - strOrigin) >= limit) {
+            log_n("%sLength limit. Render page finished.", ARROW_STRING);
+            break;
+        }
+        if (!bHz) {            /* 处理第一个字符 */
+            if (*str & 0x80) { /* 第一个字符是汉字？ */
+                bHz = 1;
+            } else { /* 第一个字符不是汉字 */
+                /* 若剩余空间已无法再绘制一个ASCII字符，则换行 */
+                if (*curX > (startX + areaWidth - size / 2)) {
+                    /* 换行操作包括：X重置、Y增加行高、Y增加行距 */
+                    *curX = startX;
+                    *curY += size;
+                    *curY += lineSpace;
+                }
+                /* 若剩余高度不足以再再渲染一行文字，则结束渲染 */
+                if (*curY > (startY + areaHeight - size)) {
+                    log_n("%sRender page finished.", ARROW_STRING);
+                    break;  // 越界返回
+                }
+                /* 绘制ASCII字符。若遇到换行符号，则改为另起一行，并将指针后后移
+                 */
+                if (*str == 13) {
+                    *curX = startX;
+                    *curY += size;
+                    *curY += lineSpace;
+                    str++;
+                } else {
+                    if (drawOption) {
+                        atk_md0700_show_char(*curX, *curY, *(char*)str,
+                                             (atk_md0700_lcd_font_t)size,
+                                             FOREGROUND_COLOR);  // 有效部分写入
+                    }
+                }
+                str++;
+                *curX += size / 2;  // 字符,为全字的一半
+            }
+        } else {     /* 处理中文字符 */
+            bHz = 0; /* 清除汉字标志 */
+            /* 若本行剩余空间无法再绘制汉字，则换行 */
+            if (*curX > (startX + areaWidth - size)) {
+                /* The space left in this line is not enough */
+                *curX = startX;
+                *curY += size;
+                *curY += lineSpace;
+            }
+            /* 若剩余高度无法再绘制汉字，则结束绘制 */
+            if (*curY > (startY + areaHeight - size)) {
+                log_n("%sRender page finished.", ARROW_STRING);
+                break;  // 越界返回
+            }
+            if (drawOption) {
+                Show_Font(*curX, *curY, str, fontName, fontSize,
+                          mode);  // 显示这个汉字,空心显示
+            }
+            str += 2;
+            *curX += size;  // 下一个汉字偏移
+        }
+    }
+    log_n("cur_x: %d, cur_y: %d", *curX, *curY);
     return str;
 }
 // 在指定宽度的中间显示字符串

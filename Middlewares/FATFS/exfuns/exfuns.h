@@ -37,7 +37,7 @@ extern u8* flash_buffer;
 extern u8* dzk;
 
 #define PAGE_INDEX_SIZE 10000
-extern uint32_t* pageIndex;
+extern uint32_t* pageNumTBL;
 /* Cache for message to throw */
 //extern u8* msg_cache;
 

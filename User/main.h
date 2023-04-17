@@ -132,6 +132,7 @@ void   createNavigationBar(void);
 void   createBookshelf(void);
 void createReadingArea(void);
 void createBooknameBuffer(void);
+void CreatePageIndex(char* filePath);
 #if ACTION_ONCE
 void excuteCommand(void);
 #endif
