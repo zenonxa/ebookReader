@@ -117,14 +117,6 @@ int main(void)
         W25QXX_Write((uint8_t*)&fontHeader, FONT_HEADER_ADDR,
                      sizeof(fontHeader));
     }
-    // char tmpPath[] = "0:BOOK/";
-    // res = f_opendir(&dir, tmpPath);
-    // check_value_equal(res, FR_OK, "Fail to open dir %s", tmpPath);
-    // while (1)
-    //     ;
-
-    // res = f_readdir(&dir, &fileinfo);
-
     clearTouchFlag(&flag);
     TouchEventInfo_Init();
     curTouchQueryQueue = &homeTouchQueryQueue;
@@ -613,14 +605,7 @@ void CopyBookname(DIR* dir, uint8_t limit, char** bookname, bool forward)
         } else {
             /* 非首次拷贝，需要readdir */
             /* cur已在最后一个buffer，则除了cur自增，还要让tail自增 */
-            // if ((booknameBufferCur != booknameBufferTail) &&
-            // (readFromBufferFlag == true)) { /* 发生过回退，但未发生回滚 */
-            //     booknameBufferCur =
-            //     nextBookNameBufferIndex(booknameBufferCur);
-            // } else if (booknameBufferCur == booknameBufferTail) { /*
             // 未发生回退，或者回退已完全恢复 */
-            //     readFromBufferFlag = false;
-            // }
             /* 不管是否发生过回退，都需要移动cur */
             if (booknameBufferCur == booknameBufferTail) {
                 readFromBufferFlag = false;
@@ -693,18 +678,6 @@ void CopyBookname(DIR* dir, uint8_t limit, char** bookname, bool forward)
                     ++booknameIndex;
                 }
             }
-            // if (booknameBufferCur ==
-            //     prevBookNameBufferIndex(
-            //         booknameBufferHead)) { /*
-            //         若上一页不在缓存中，则cur自减后，还需要回滚
-            //                                 */
-            //     booknameBufferHead =
-            //         prevBookNameBufferIndex(booknameBufferHead);
-            //     booknameBufferTail =
-            //         prevBookNameBufferIndex(booknameBufferTail);
-            // if (readFromBufferFlag == false) {
-
-            // }
         } else { /* 刷新本页 */
             // booknameIndex -= getItemListSize(bookshelf);
         }
@@ -713,48 +686,6 @@ void CopyBookname(DIR* dir, uint8_t limit, char** bookname, bool forward)
     for (int i = 0; i < bookshelf->itemList->size; ++i) {
         strcpy(bookname[i], booknameBuffer[booknameBufferCur][i]);
     }
-
-#if 0
-    if (booknameBufferCur == -1) {
-        booknameBufferCur = booknameBufferTail = booknameBufferHead = 0;
-        /* 第一次前进式拷贝，需要readir */
-    } else {
-        /* 如果当前使用的缓冲区就是最后一个，则tail应当取模自增1 */
-        if (booknameBufferCur == booknameBufferTail) {
-            booknameBufferTail = nextBookNameBufferIndex(booknameBufferTail);
-        }
-        /* cur正常取模自增1。若cur取模自增后等于head，则head也应取模自增1 */
-        booknameBufferCur = nextBookNameBufferIndex(booknameBufferCur);
-        if (booknameBufferCur == booknameBufferHead) {
-            booknameBufferHead = nextBookNameBufferIndex(booknameBufferHead);
-        }
-    }
-    while (res == FR_OK) {
-        res = f_readdir(dir, &fileinfo);
-        log_n("In copy bookname. [%d] dir->fn: [%8s]", i, dir->fn);
-        /* 若已遍历整个目录, 则退出 */
-        if (*fileinfo.fname == 0) {
-            break;
-        }
-        booknameIndex++; /* 下一个会被读取的文件项的编号, 自0开始 */
-        check_value_equal(res, FR_OK, "read dir fail");
-        strcpy(booknameBuffer[booknameBufferCur][i], fileinfo.fname);
-        ++i;
-        /* 读至足够 limit 项则退出 */
-        if (i >= limit) {
-            break;
-        }
-    }
-    /* 若目录剩余项不足 limit, 将未获取到字符串的数组置为空字符串 */
-    if (i < limit) {
-        for (; i < limit; ++i) {
-            booknameBuffer[booknameBufferCur][i][0] = 0;
-        }
-    }
-    for (uint8_t j = 0; j < limit; ++j) {
-        strcpy(bookname[j], booknameBuffer[booknameBufferCur][j]);
-    }
-#endif
 }
 
 /**
@@ -863,13 +794,6 @@ void CreatePageIndex(char* filePath)
     pageNumTBL[pageNumTBL_Index++] = 0;
     res = f_read(main_file, strBuffer, bufferSize, &br);
     check_value_equal(res, FR_OK, "Failed to read from file [%s]", filePath);
-    // for (int i = 0; i < 20; ++i) {
-    //     log("0x%2x ", strBuffer[i]);
-    //     if ((i + 1) % 5 == 0) {
-    //         log_n("");
-    //     }
-    // }
-    // while(1);
     while (1) {
         /* 按page_buffer的大小进行一次读取 */
         /* 渲染一个buffer的内容 */
@@ -900,62 +824,6 @@ void CreatePageIndex(char* filePath)
         if (f_eof(main_file)) {
             break;
         }
-#if 0
-        while (*str) {
-            if (!bHz) {            /* 处理第一个字符 */
-                if (*str & 0x80) { /* 第一个字符是汉字？ */
-                    bHz = 1;
-                } else { /* 第一个字符不是汉字 */
-                    /* 若剩余空间已无法再绘制一个ASCII字符，则换行 */
-                    if (x > (xStart + width - size / 2)) {
-                        /* 换行操作包括：X重置、Y增加行高、Y增加行距 */
-                        moveCursorToNextLine(&x, &y, size, lineSpace, xStart,
-                                             &ls_y);
-                    }
-                    /* 若剩余高度不足以再再渲染一行文字，则结束渲染 */
-                    if (y > (yStart + height - size)) {
-                        break;  // 越界返回
-                    }
-                    /* 绘制ASCII字符。若遇到换行符号，则改为另起一行，并将指针后后移
-                     */
-                    if (*str == 13) {
-                        moveCursorToNextLine(&x, &y, size, lineSpace, xStart,
-                                             &ls_y);
-                        str++;
-                    } else {
-                        atk_md0700_show_char(x, y, *(char*)str,
-                                             (atk_md0700_lcd_font_t)size,
-                                             FOREGROUND_COLOR);  // 有效部分写入
-                        str++;
-                        x += size / 2;  // 字符,为全字的一半
-                    }
-                }
-            } else {     /* 处理中文字符 */
-                bHz = 0; /* 清除汉字标志 */
-                /* 若本行剩余空间无法再绘制汉字，则换行 */
-                if (x > (xStart + width - size)) {
-                    /* The space left in this line is not enough */
-                    moveCursorToNextLine(&x, &y, size, lineSpace, xStart,
-                                         &ls_y);
-                }
-                /* 若剩余高度无法再绘制汉字，则结束绘制 */
-                if (y > (yStart + height - size)) {
-                    break;  // 越界返回
-                }
-                Show_Font(x, y, str, fontName, fontSize,
-                          mode);  // 显示这个汉字,空心显示
-                str += 2;
-                x += size;  // 下一个汉字偏移
-            }
-        }
-        log_n("[%d] read from [%s]: %d byte", i++, filePath, br);
-        /* 遍历page_buffer中的内容，找到每一页内容的起始偏移 */
-        // pCh = Show_Str(((Obj*)readingArea)->x, ((Obj*)readingArea)->y,
-        //                ((Obj*)readingArea)->width,
-        //                ((Obj*)readingArea)->height, page_buffer[0],
-        //                readingArea->font.fontName,
-        //                readingArea->font.fontSize, 1, DrawOption_Delay);
-#endif
     }
     log_n("%sRead file [%s] finish.", ARROW_STRING, filePath);
     for (int i = 0; i < pageNumTBL_Index; ++i) {
@@ -980,11 +848,6 @@ void bookshelfBtnOnClicked(Button* bookBtn)
     log_n("Rerender LCD panel.");
     /* 整个界面清空后，开始渲染文本 */
     atk_md0700_clear(ATK_MD0700_WHITE);
-    // atk_md0700_fill((ATK_MD0700_LCD_WIDTH - textAreaWidth) / 2,
-    //                 (ATK_MD0700_LCD_HEIGHT - textAreaHeight) / 2,
-    //                 (ATK_MD0700_LCD_WIDTH + textAreaWidth) / 2,
-    //                 (ATK_MD0700_LCD_HEIGHT + textAreaHeight) / 2,
-    //                 &BACKGROUND_COLOR, SINGLE_COLOR_BLOCK);
     Show_Str((ATK_MD0700_LCD_WIDTH - textAreaWidth) / 2,
              (ATK_MD0700_LCD_HEIGHT - textAreaHeight) / 2, textAreaWidth,
              textAreaHeight, page_buffer[0], (FontName)fontNameSelect,
