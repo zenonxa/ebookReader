@@ -62,6 +62,7 @@ void TextareaSetStr(Textarea* textarea, char* str)
 
 void drawText(Textarea* textarea)
 {
+    COLOR_DATTYPE color = GUI_getBackColor();
     GUI_setBackColor(textarea->backColor);
     ObjSkin((Obj*)textarea);
     if (textarea->str) {
@@ -70,4 +71,5 @@ void drawText(Textarea* textarea)
         GUI_setForeColor(textarea->font.fontColor);
         GUI_DrawStr((Obj*)textarea, textarea->str);
     }
+    GUI_setBackColor(color);
 }

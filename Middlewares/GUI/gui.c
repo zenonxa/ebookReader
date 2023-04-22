@@ -19,7 +19,7 @@ extern u16 FOREGROUND_COLOR;  // 画笔颜色
 extern u16 BACKGROUND_COLOR;  // 背景色
 
 uint16_t* pGUI_FOREGROUND_COLOR = &FOREGROUND_COLOR;
-uint16_t* pGUI_BACKGROUND_COLOR = &FOREGROUND_COLOR;
+uint16_t* pGUI_BACKGROUND_COLOR = &BACKGROUND_COLOR;
 
 void fillArea(u16 x, u16 y, u16 width, u16 height, COLOR_DATTYPE color);
 

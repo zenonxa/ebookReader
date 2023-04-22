@@ -268,7 +268,7 @@ char* renderString(uint16_t  startX,
                    bool      drawOption)
 {
     static int runCnt = 0;
-    log_n("=================================> Time: %d", runCnt++);
+    // log_n("=================================> Time: %d", runCnt++);
     uint8_t bHz       = 0; /* 0: ASCII字符, 1: 汉字字符 */
     uint8_t size      = getSize(fontSize);
     uint8_t lineSpace = getLineSpace(fontSize);
@@ -277,17 +277,17 @@ char* renderString(uint16_t  startX,
     char* strOrigin = str;
     // check_value_not_equal(*str, 0, "%s:%s() ==> (*str == 0)", __FILE__,
     //                       __FUNCTION__);
-    log_n("%sstartX: %d", ARROW_STRING, startX);
-    log_n("%sstartY: %d", ARROW_STRING, startY);
-    log_n("%scurX: %d", ARROW_STRING, *curX);
-    log_n("%scurY: %d", ARROW_STRING, *curY);
-    log_n("%sareaWidth: %d", ARROW_STRING, areaWidth);
-    log_n("%sareaHeight: %d", ARROW_STRING, areaHeight);
+    // log_n("%sstartX: %d", ARROW_STRING, startX);
+    // log_n("%sstartY: %d", ARROW_STRING, startY);
+    // log_n("%scurX: %d", ARROW_STRING, *curX);
+    // log_n("%scurY: %d", ARROW_STRING, *curY);
+    // log_n("%sareaWidth: %d", ARROW_STRING, areaWidth);
+    // log_n("%sareaHeight: %d", ARROW_STRING, areaHeight);
     while (*str != 0) {
         /* 读取足够limit字符则退出，由于ASCII和汉字大小不等，可能会差距1个字节
          */
         if ((str - strOrigin) >= limit) {
-            log_n("%sLength limit. Render page finished.", ARROW_STRING);
+            // log_n("%sLength limit. Render page finished.", ARROW_STRING);
             break;
         }
         if (!bHz) {            /* 处理第一个字符 */
@@ -303,7 +303,7 @@ char* renderString(uint16_t  startX,
                 }
                 /* 若剩余高度不足以再再渲染一行文字，则结束渲染 */
                 if (*curY > (startY + areaHeight - size)) {
-                    log_n("%sRender page finished.", ARROW_STRING);
+                    // log_n("%sRender page finished.", ARROW_STRING);
                     break;  // 越界返回
                 }
                 /* 绘制ASCII字符。若遇到换行符号，则改为另起一行，并将指针后后移
@@ -334,7 +334,7 @@ char* renderString(uint16_t  startX,
             }
             /* 若剩余高度无法再绘制汉字，则结束绘制 */
             if (*curY > (startY + areaHeight - size)) {
-                log_n("%sRender page finished.", ARROW_STRING);
+                // log_n("%sRender page finished.", ARROW_STRING);
                 break;  // 越界返回
             }
             if (drawOption) {
@@ -345,7 +345,7 @@ char* renderString(uint16_t  startX,
             *curX += size;  // 下一个汉字偏移
         }
     }
-    log_n("cur_x: %d, cur_y: %d", *curX, *curY);
+    // log_n("cur_x: %d, cur_y: %d", *curX, *curY);
     return str;
 }
 // 在指定宽度的中间显示字符串

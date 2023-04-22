@@ -37,6 +37,20 @@ typedef struct
     uint8_t   touchEvent;
 } TouchEventInfo;
 
+typedef enum {
+    ValType_UINT8 = 0,
+    ValType_UINT16,
+    ValType_UINT32,
+    ValType_UINT8_POINTER,
+    ValType_UINT16_POINTER,
+    ValType_UINT32_POINTER,
+    ValType_Min     = ValType_UINT8,
+    ValType_Max     = ValType_UINT32_POINTER, /* Max */
+    ValType_Default = ValType_Min,            /* Default */
+    ValType_Cnt     = ValType_Max + 1,        /* The number of all */
+    ValType_None    = ValType_Cnt,            /* Invalid value */
+} ValType;
+
 extern Progress         g_progress;
 extern ProgressWithInfo g_progressWithInfo;
 extern TouchEventInfo   g_touchEventInfo;
@@ -58,5 +72,6 @@ void TouchEventInfo_Update(uint8_t        flag,
                            float          angle,
                            SlideDirection slideDirection,
                            TouchEvent     touchEvent);
+void swapVal(void* a, void* b, ValType type);
 
 #endif

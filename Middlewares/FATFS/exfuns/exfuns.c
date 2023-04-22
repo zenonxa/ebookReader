@@ -56,6 +56,8 @@ DIR     dir;       // 目录
 u8* flash_buffer = NULL;
 u8* dzk;
 extern uint32_t* pageNumTBL;
+extern uint32_t* dirTable;
+extern const uint32_t DIR_TABLE_MAX_SIZE;
 ///////////////////////////////////////////////////////////////////////////////////////
 // 为exfuns申请内存
 // 返回值:0,成功
@@ -86,9 +88,10 @@ u8 exfuns_init(void)
 
 	dzk = (u8*)mymalloc(SRAMIN, MAX_DZK_SIZE);
     pageNumTBL = (uint32_t*)mymalloc(SRAMEX, PAGE_INDEX_SIZE*sizeof(uint32_t));
+    dirTable = mymalloc(SRAMEX, sizeof(uint32_t)*DIR_TABLE_MAX_SIZE);
 
     if ((i == FF_VOLUMES) && main_file && vice_file && temp_file && fatbuf &&
-        flash_buffer && logBuffer && dzk && pageNumTBL) {
+        flash_buffer && logBuffer && dzk && pageNumTBL && dirTable) {
         res = 0; /* All succeed. */
     } else {
         res = 1; /* Failure occur. */

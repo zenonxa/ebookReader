@@ -18,6 +18,9 @@ uint8_t TimerDelay_Press = DISABLE;
 /* The incrementing variable for the deferred operation. */
 uint8_t PressingKeepingTime = 0;
 
+bool TimeEnable = DISABLE;
+uint32_t Time = 0;
+
 TIM_HandleTypeDef TIM3_Handler;  // 定时器句柄
 
 // 通用定时器3中断初始化
