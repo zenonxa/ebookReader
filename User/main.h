@@ -77,7 +77,7 @@ typedef enum {
 /*									Macro
  */
 /********************************************************************************************/
-#define PAGE_NUM 3      // the number of cache page
+#define PAGE_NUM 1      // the number of cache page
 #define PAGE_SIZE 1700  // the size of one cache page
 
 #define SRAMEX_USER_BASE_ADDR                                                  \

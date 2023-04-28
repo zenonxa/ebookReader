@@ -105,8 +105,8 @@ void GUI_DrawStr(Obj* obj, const char* str)
     // }
     // Show_Str_Mid(x, y, obj->width, obj->height, (uint8_t*)str,
     //              GUI_GetFontName(), GUI_GetFontSize(), obj->width, 1);
-    Show_Str(x, y, obj->width, obj->height, (uint8_t*)str, GUI_GetFontName(),
-             GUI_GetFontSize(), 1);
+    Show_Str(x, y, obj->width, obj->height, (uint8_t*)str, strlen(str), GUI_GetFontName(),
+             GUI_GetFontSize(), 1, &isOverOnePage);
 }
 
 bool GUI_isTarget(Obj* obj, Position* point)

@@ -69,7 +69,7 @@ void TouchEventInfo_Update(uint8_t        flag,
 
 void swapVal(void* a, void* b, ValType type)
 {
-    char tmpBuf[100];
+    char tmpBuf[10];
     switch (type) {
         case ValType_UINT8: SWAP_VAL(a, b, tmpBuf, uint8_t); break;
         case ValType_UINT16: SWAP_VAL(a, b, tmpBuf, uint16_t); break;

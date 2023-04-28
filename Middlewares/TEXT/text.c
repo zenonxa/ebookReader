@@ -190,9 +190,11 @@ uint8_t* Show_Str(uint16_t x,
                   uint16_t width,
                   uint16_t height,
                   uint8_t* str,
+                  uint32_t lenLimit,
                   FontName fontName,
                   FontSize fontSize,
-                  uint8_t  mode)
+                  uint8_t  mode,
+                  bool* isOverPage)
 {
     uint16_t x0        = x;
     uint16_t y0        = y;
@@ -202,8 +204,8 @@ uint8_t* Show_Str(uint16_t x,
     uint16_t ls_y; /* line space start position */
     /* Do while block when the character is not '\0', and there is space left on
      * the screen for unrendered text. */
-    return renderString(x0, y0, width, height, &x, &y, str, 4096, fontName,
-                        fontSize, mode, 1);
+    return renderString(x0, y0, width, height, &x, &y, str, lenLimit, fontName,
+                        fontSize, mode, true, &isOverOnePage);
 #if 0
     while (*str != 0) {
         if (!bHz) {            /* 处理第一个字符 */
@@ -261,11 +263,12 @@ char* renderString(uint16_t  startX,
                    uint16_t* curX,
                    uint16_t* curY,
                    char*     str,
-                   uint16_t  limit,
+                   uint32_t  limit,
                    FontName  fontName,
                    FontSize  fontSize,
                    uint8_t   mode,
-                   bool      drawOption)
+                   bool      drawOption,
+                   bool* isOverPage)
 {
     static int runCnt = 0;
     // log_n("=================================> Time: %d", runCnt++);
@@ -283,6 +286,7 @@ char* renderString(uint16_t  startX,
     // log_n("%scurY: %d", ARROW_STRING, *curY);
     // log_n("%sareaWidth: %d", ARROW_STRING, areaWidth);
     // log_n("%sareaHeight: %d", ARROW_STRING, areaHeight);
+    *isOverPage = false;
     while (*str != 0) {
         /* 读取足够limit字符则退出，由于ASCII和汉字大小不等，可能会差距1个字节
          */
@@ -295,15 +299,16 @@ char* renderString(uint16_t  startX,
                 bHz = 1;
             } else { /* 第一个字符不是汉字 */
                 /* 若剩余空间已无法再绘制一个ASCII字符，则换行 */
-                if (*curX > (startX + areaWidth - size / 2)) {
+                if (*curX >= (startX + areaWidth - size / 2)) {
                     /* 换行操作包括：X重置、Y增加行高、Y增加行距 */
                     *curX = startX;
                     *curY += size;
                     *curY += lineSpace;
                 }
                 /* 若剩余高度不足以再再渲染一行文字，则结束渲染 */
-                if (*curY > (startY + areaHeight - size)) {
+                if (*curY >= (startY + areaHeight - size)) {
                     // log_n("%sRender page finished.", ARROW_STRING);
+                    *isOverPage = true;
                     break;  // 越界返回
                 }
                 /* 绘制ASCII字符。若遇到换行符号，则改为另起一行，并将指针后后移
@@ -326,15 +331,16 @@ char* renderString(uint16_t  startX,
         } else {     /* 处理中文字符 */
             bHz = 0; /* 清除汉字标志 */
             /* 若本行剩余空间无法再绘制汉字，则换行 */
-            if (*curX > (startX + areaWidth - size)) {
+            if (*curX >= (startX + areaWidth - size)) {
                 /* The space left in this line is not enough */
                 *curX = startX;
                 *curY += size;
                 *curY += lineSpace;
             }
             /* 若剩余高度无法再绘制汉字，则结束绘制 */
-            if (*curY > (startY + areaHeight - size)) {
+            if (*curY >= (startY + areaHeight - size)) {
                 // log_n("%sRender page finished.", ARROW_STRING);
+                *isOverPage = true;
                 break;  // 越界返回
             }
             if (drawOption) {
@@ -367,14 +373,15 @@ void Show_Str_Mid(uint16_t x,
     strlenth          = strlen((const char*)str);
     strlenth *= size / 2;
     if (strlenth > len) {
-        Show_Str(x, y, width, height, str, fontName, fontSize, mode);
+        Show_Str(x, y, width, height, str, strlenth, fontName, fontSize, mode, &isOverOnePage);
         log_n("%s not middle", ARROW_STRING);
     } else {
         log_n("%s middle", ARROW_STRING);
         strlenth = (len - strlenth) / 2;
         log_n("strlenth = %d, strlenth+x: %d, y: %d", strlenth, strlenth + x,
               y);
-        Show_Str(strlenth + x, y, width, height, str, fontName, fontSize, mode);
+        Show_Str(strlenth + x, y, width, height, str, strlenth, fontName,
+                 fontSize, mode, &isOverOnePage);
     }
 }
 

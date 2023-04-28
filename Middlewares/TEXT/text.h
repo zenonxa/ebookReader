@@ -15,6 +15,8 @@
 // All rights reserved
 //////////////////////////////////////////////////////////////////////////////////
 
+extern bool isOverOnePage;
+
 // 得到汉字的点阵码
 void Get_HzMat(unsigned char* code,
                unsigned char* mat,
@@ -33,9 +35,11 @@ uint8_t* Show_Str(uint16_t x,
                   uint16_t width,
                   uint16_t height,
                   uint8_t* str,
+                  uint32_t lenLimit,
                   FontName fontName,
                   FontSize fontSize,
-                  uint8_t  mode);
+                  uint8_t  mode,
+                  bool* isOverPage);
 void     Show_Str_Mid(uint16_t x,
                       uint16_t y,
                       uint16_t width,
@@ -46,16 +50,17 @@ void     Show_Str_Mid(uint16_t x,
                       uint16_t len,
                       uint8_t  mode);
 uint8_t  getLineSpace(FontSize fontSize);
-char* renderString(uint16_t  startX,
-                   uint16_t  startY,
-                   uint16_t  areaWidth,
-                   uint16_t  areaHeight,
-                   uint16_t* curX,
-                   uint16_t* curY,
-                   char*     str,
-                   uint16_t  limit,
-                   FontName  fontName,
-                   FontSize  fontSize,
-                   uint8_t   mode,
-                   bool      drawOption);
+char*    renderString(uint16_t  startX,
+                      uint16_t  startY,
+                      uint16_t  areaWidth,
+                      uint16_t  areaHeight,
+                      uint16_t* curX,
+                      uint16_t* curY,
+                      char*     str,
+                      uint32_t  limit,
+                      FontName  fontName,
+                      FontSize  fontSize,
+                      uint8_t   mode,
+                      bool      drawOption,
+                      bool* isOverPage);
 #endif

@@ -43,7 +43,7 @@ uint16_t COLUMN_LIMIT_PX24;
 uint16_t COLUMN_LIMIT_PX32;
 
 /* 目录表的最大长度： 10000个章节 */
-const uint32_t DIR_TABLE_MAX_SIZE = 10000;
+const uint32_t DIR_TABLE_MAX_SIZE = 100;
 uint32_t*      dirTable           = NULL;
 uint16_t       dirTableIndex      = 0; /* 目录表的索引指针 */
 uint16_t       dirTableHead       = 0; /* 第一章 */
@@ -55,17 +55,16 @@ uint32_t       chapterPageTableBuf[2][CHAPTER_PAGE_TABLE_MAX_SIZE];
 uint32_t* prevChapterPageTable = chapterPageTableBuf[0]; /* 上一章页码表 */
 uint32_t* curChapterPageTable = chapterPageTableBuf[1]; /* 本章的页码表 */
 
-uint32_t curChapterPageTableIndex  = 0; /* 本章的页码表的索引指针 */
-uint32_t curChapterPageTableTail   = 0; /* 本章的最后一页 */
-uint32_t prevChapterPageTableIndex = 0; /* 上一章页码表的索引指针 */
-uint32_t prevChapterPageTableTail  = 0; /* 上一章的最后一页 */
+int32_t curChapterPageTableIndex  = 0;  /* 本章的页码表的索引指针 */
+int32_t curChapterPageTableTail   = -1; /* 本章的最后一页 */
+int32_t prevChapterPageTableIndex = 0;  /* 上一章页码表的索引指针 */
+int32_t prevChapterPageTableTail  = -1; /* 上一章的最后一页 */
 
 uint16_t curChapter = 0;
 
-uint32_t curOffset                            = 0;
-uint32_t generatingDirTableOffset             = 0;
-uint32_t generatingCurChapterPageTableOffset  = 0;
-uint32_t generatingPrevChapterPageTableOffset = 0;
+uint32_t curHeadOffset            = 0;
+uint32_t curOffset                = 0;
+uint32_t generatingDirTableOffset = 0;
 // uint32_t offsetGeneratingCurChapterPageTable = 0;
 
 bool needGenerateDirTable     = true;  /* 需要生成目录表的标志 */
@@ -85,7 +84,8 @@ bool firstTimeIntoGeneratingPrevChapterPageTable = true;
 /* 上一章页码表生成完成的标志 */
 bool generatePrevChapterPageTableFinished = false;
 
-bool noTouchEvent = true;
+bool noTouchEvent  = true;
+bool isOverOnePage = false;
 
 #define BOOKNAME_Buffer_Size 5
 char**  booknameBuffer[BOOKNAME_Buffer_Size];
@@ -124,6 +124,16 @@ const char tmpPath[] = "0:BOOK/";
         log_n("dir.dptr: %d", dir.dptr);                                       \
     } while (0)
 
+#define readTxt(pFIL, offset, buff, byte)                                      \
+    do {                                                                       \
+        uint32_t tmpOffset = f_tell(pFIL);                                     \
+        f_lseek(pFIL, offset);                                                 \
+        f_read(pFIL, buff, byte, &br);                                         \
+        buff[(br == byte) ? (byte - 1) : br] = 0;                              \
+        log_n("offset[%d]: %s", offset, buff);                                 \
+        f_lseek(pFIL, tmpOffset);                                              \
+    } while (0)
+
 int main(void)
 {
     bool onceTag = true;
@@ -138,7 +148,7 @@ int main(void)
     uint16_t   size      = getSize(fontSizeSelect);
     uint16_t   lineSpace = getLineSpace(fontSizeSelect);
 
-    page_buffer[0] = tmp_buf;
+    // page_buffer[0] = tmp_buf;
     /* 执行必要的初始化操作 */
     InitForMain();
 
@@ -201,10 +211,10 @@ int main(void)
                     DrawOption_Delay); /* 刷新书名 */
     renderHomePage();                  /* 渲染 Home 界面 */
     createReadingArea();
-    // res = f_open(main_file, "0:BOOK/2.txt", FA_READ);
-    // check_value_equal(res, FR_OK, "Fail to open file 0:BOOK/1.txt.");
-    // log_n("%sTest read start.", ARROW_STRING);
-    // CreatePageIndex("0:BOOK/1.txt");
+    // f_open(main_file, "0:BOOK/1.TXT", FA_READ);
+    // renderText(16375);
+    // while (1)
+    //     ;
     while (1) {
         if (noTouchEvent == false) {
             /* 状态机设计：
@@ -276,34 +286,128 @@ int main(void)
                     } else if (slideDirestion == Slide_To_Left) {
                         if (curTouchQueryQueue == &readingTouchQueryQueue) {
                             /* 阅读界面：下一页 */
-                            // if ((curChapterPageTableIndex != 0) &&
-                            // (curChapterPageTable[curChapterPageTableIndex] >
-                            // ))
-                            curOffset =
-                                curChapterPageTable[++curChapterPageTableIndex];
-                            renderText(curOffset);
+#    if 1
+                            /* 在本章页码表生成完成后，并且电子书尚未读完时，才允许向下翻页
+                             */
+                            if ((curOffset < f_size(main_file)) &&
+                                (generateCurChapterPageTableFinished == true)) {
+                                ++curChapterPageTableIndex;
+                                if (curChapterPageTableIndex >
+                                    curChapterPageTableTail) {
+                                    ++dirTableIndex; /* 下一章 */
+                                    prevChapterPageTableTail =
+                                        curChapterPageTableTail;
+                                    prevChapterPageTableIndex =
+                                        prevChapterPageTableTail;
+                                    curChapterPageTableTail  = -1;
+                                    curChapterPageTableIndex = 0;
+                                    swapVal(&curChapterPageTable,
+                                            &prevChapterPageTable,
+                                            ValType_UINT32_POINTER);
+                                    needGenerateCurChapterPageTable  = true;
+                                    needGeneratePrevChapterPageTable = false;
+                                    generatePrevChapterPageTableFinished = true;
+                                    firstTimeIntoGeneratingCurChapterPageTable =
+                                        true;
+                                    generateCurChapterPageTableFinished = false;
+                                    curOffset = dirTable[dirTableIndex];
+                                    LED0(1);
+                                }
+                                log_n("Before render a page. curOffset: %d",
+                                      curOffset);
+                                renderText(curOffset);
+                                log_n("After render a page. curOffset: %d",
+                                      curOffset);
+                            }
+#    endif
+#    if 0
+                            if (!f_eof(main_file)) {
+                                /* 如果下一页是新的一章，则进行本章页码表和上章页码表的相关数据的更新
+                                 */
+                                ++curChapterPageTableIndex;
+                                if (curOffset >= dirTable[dirTableIndex]) {
+                                    ++dirTableIndex; /* 更新章节序号至下一章 */
+                                    /* 本章页码表成为上章页码表 */
+                                    swapVal(&curChapterPageTable,
+                                            &prevChapterPageTable,
+                                            ValType_UINT32_POINTER);
+                                    /* 上章节的尾指针和当前指针都指向上章的最后一页
+                                     */
+                                    prevChapterPageTableIndex =
+                                        prevChapterPageTableTail =
+                                            curChapterPageTableTail;
+                                    /* 本章节页码表置空 */
+                                    curChapterPageTableTail  = -1;
+                                    curChapterPageTableIndex = -1;
+                                    if (generatePrevChapterPageTableFinished ==
+                                        true) {
+                                        /* 若已有上章页码表，不需要再重新生成 */
+                                        needGeneratePrevChapterPageTable =
+                                            false;
+                                        // generatePrevChapterPageTableFinished
+                                        // =
+                                        //     true;
+                                    } else {
+                                        needGeneratePrevChapterPageTable = true;
+                                    }
+                                    /* 需要重新生成本章页码表 */
+                                    needGenerateCurChapterPageTable = true;
+                                    firstTimeIntoGeneratingCurChapterPageTable =
+                                        true;
+                                    generateCurChapterPageTableFinished = false;
+                                }
+                                log_n("Before render a page. curOffset: %d",
+                                      curOffset);
+                                renderText(curOffset);
+                                log_n("After render a page. curOffset: %d",
+                                      curOffset);
+                            }
+#    endif
                         }
                     } else if (slideDirestion == Slide_To_Right) {
                         /* 阅读界面：上一页 */
+                        /* 是否在本章的第一页？ */
                         if (curChapterPageTableIndex > 0) {
                             curOffset =
                                 curChapterPageTable[--curChapterPageTableIndex];
+                            renderText(curOffset);
                         } else {
-                            swapVal(&curChapterPageTable, &prevChapterPageTable,
-                                    ValType_UINT32_POINTER);
-                            swapVal(&curChapterPageTableIndex,
-                                    &prevChapterPageTableIndex, ValType_UINT32);
-                            swapVal(&curChapterPageTableTail,
-                                    &prevChapterPageTableTail, ValType_UINT32);
-                            curChapterPageTableIndex = curChapterPageTableTail;
-                            curOffset =
-                                curChapterPageTable[curChapterPageTableIndex];
-                            --dirTableIndex;
-                            needGeneratePrevChapterPageTable            = true;
-                            firstTimeIntoGeneratingPrevChapterPageTable = true;
-                            generatePrevChapterPageTableFinished        = false;
+                            /* 上一章未生成完成，或不在首章第一页？ */
+                            if ((generatePrevChapterPageTableFinished ==
+                                 true) &&
+                                !((dirTableIndex == dirTableHead) &&
+                                  (curChapterPageTableIndex == 0))) {
+                                swapVal(&curChapterPageTable,
+                                        &prevChapterPageTable,
+                                        ValType_UINT32_POINTER);
+                                curChapterPageTableIndex =
+                                    curChapterPageTableTail =
+                                        prevChapterPageTableTail;
+                                prevChapterPageTableTail  = -1;
+                                prevChapterPageTableIndex = 0;
+                                // swapVal(&curChapterPageTableIndex,
+                                //         &prevChapterPageTableIndex,
+                                //         ValType_UINT32);
+                                // swapVal(&curChapterPageTableTail,
+                                //         &prevChapterPageTableTail,
+                                //         ValType_UINT32);
+                                // curChapterPageTableIndex =
+                                //     curChapterPageTableTail;
+                                curOffset = curChapterPageTable
+                                    [curChapterPageTableTail];
+                                --dirTableIndex;
+                                if (dirTableIndex > dirTableHead) {
+                                    needGeneratePrevChapterPageTable = true;
+                                    firstTimeIntoGeneratingPrevChapterPageTable =
+                                        true;
+                                    generatePrevChapterPageTableFinished =
+                                        false;
+                                    LED0(1);
+                                }
+                                renderText(curOffset);
+                            }
                         }
-                        renderText(curOffset);
+                        //                        renderText(curOffset);
                         // if (curOffset == dirTable[curChapter]) {
                         //     curOffset = ;
                         // } else {
@@ -334,7 +438,8 @@ int main(void)
                 char buf[30] = {0};
                 sprintf(buf, "%2d", booknameIndex);
                 fillArea(0, 0, 50, 30, RGB888toRGB565(0xffffff));
-                Show_Str(0, 0, 50, 30, (uint8_t*)buf, Font_SimSun, PX24, 0);
+                Show_Str(0, 0, 50, 30, (uint8_t*)buf, strlen(buf), Font_SimSun,
+                         PX24, 0, &isOverOnePage);
 #    endif
             } else if (touchState == TouchState_OnPress) {
                 /* 查询控件队列，落点是否位于某个具体的控件上 */
@@ -429,6 +534,14 @@ int main(void)
             }
 #    endif
         }
+        /* 打印查看预渲染偏移 */
+        // if ((onceTag != false) &&
+        //     (generateCurChapterPageTableFinished == true)) {
+        //     for (uint32_t i = 0; i <= curChapterPageTableTail; ++i) {
+        //         readTxt(main_file, curChapterPageTable[i], tmp_buf, 20);
+        //     }
+        //     onceTag = false;
+        // }
     }
 #endif /* Action Once */
     while (1) {
@@ -454,6 +567,9 @@ void InitForMain(void)
     W25QXX_Init();
     TIM3_Init(10000 - 1, 72 - 1);
     res = exfuns_init();
+    for (uint8_t i = 0; i < PAGE_NUM; ++i) {
+        page_buffer[i] = mymalloc(SRAMIN, PAGE_SIZE);
+    }
     check_value_equal(res, 0, "Fail to do exfuns_init()");
     LogParam_Init();
 }
@@ -971,10 +1087,10 @@ void createReadingArea(void)
     ROW_LIMIT_PX16    = textAreaHeight / (getSize(PX16) + getLineSpace(PX16));
     ROW_LIMIT_PX24    = textAreaHeight / (getSize(PX24) + getLineSpace(PX24));
     ROW_LIMIT_PX32    = textAreaHeight / (getSize(PX32) + getLineSpace(PX32));
-    // log_n("[ReadingArea] x: %d", ((Obj*)readingArea)->x);
-    // log_n("[ReadingArea] y: %d", ((Obj*)readingArea)->y);
-    // log_n("[ReadingArea] width: %d", ((Obj*)readingArea)->width);
-    // log_n("[ReadingArea] height: %d", ((Obj*)readingArea)->height);
+    log_n("[ReadingArea] x: %d", ((Obj*)readingArea)->x);
+    log_n("[ReadingArea] y: %d", ((Obj*)readingArea)->y);
+    log_n("[ReadingArea] width: %d", ((Obj*)readingArea)->width);
+    log_n("[ReadingArea] height: %d", ((Obj*)readingArea)->height);
     // log_n("[ReadingArea] COLUMN_LIMIT_PX16: %d", COLUMN_LIMIT_PX16);
     // log_n("[ReadingArea] COLUMN_LIMIT_PX24: %d", COLUMN_LIMIT_PX24);
     // log_n("[ReadingArea] COLUMN_LIMIT_PX32: %d", COLUMN_LIMIT_PX32);
@@ -1097,7 +1213,7 @@ void bookshelfBtnOnClicked(Button* bookBtn)
     res = f_open(main_file, path, FA_READ);
     check_value_equal(res, FR_OK, "Failed to open file [%s], res [%d]", path,
                       res);
-    curOffset  = 0;
+    curOffset  = 0; /* 读取书签位置，暂定为0 */
     curChapter = 0;
     // res = f_read(main_file, page_buffer[0], PAGE_SIZE, &br);
     // check_value_equal(res, FR_OK, "Failed to read from file [%s]", path);
@@ -1133,20 +1249,35 @@ void renderText(uint32_t offset)
 {
     uint8_t        res;
     char*          str;
-    const uint16_t BUF_SIZE = 1800;
-    uint16_t       chapter  = 0;
+    const uint16_t BUF_SIZE     = 1700;
+    uint16_t       chapter      = 0;
+    uint32_t       textLenLimit = 4096;
     // char*          buf      = mymalloc(SRAMEX, BUF_SIZE * sizeof(uint16_t));
     char* buf = page_buffer[0];
     f_lseek(main_file, offset);
     res = f_read(main_file, buf, BUF_SIZE, &br);
     if (br != BUF_SIZE) {
         buf[br] = 0;
+    } else {
+        buf[BUF_SIZE - 1] = 0;
     }
     atk_md0700_clear(GUI_getBackColor());
-    str = Show_Str(((Obj*)readingArea)->x, ((Obj*)readingArea)->y,
-                   ((Obj*)readingArea)->width, ((Obj*)readingArea)->height,
-                   page_buffer[0], (FontName)fontNameSelect,
-                   (FontSize)fontSizeSelect, 1);
+    // if (generateCurChapterPageTableFinished == true) {
+    //     textLenLimit = curChapterPageTable[curChapterPageTableIndex + 1] -
+    //                    curOffset;
+    // } else {
+    //     textLenLimit = br;
+    // }
+    // if (dirTableTail > 1) {
+    //     textLenLimit  = dirTable[dirTableIndex + 1] - curOffset;
+    // } else {
+    //     textLenLimit = 4096;
+    // }
+    str           = Show_Str(((Obj*)readingArea)->x, ((Obj*)readingArea)->y,
+                             ((Obj*)readingArea)->width, ((Obj*)readingArea)->height,
+                             page_buffer[0], textLenLimit, (FontName)fontNameSelect,
+                             (FontSize)fontSizeSelect, 1, &isOverOnePage);
+    curHeadOffset = curOffset;
     curOffset += (str - buf);
 }
 
@@ -1154,7 +1285,7 @@ void renderText(uint32_t offset)
  * @description: 根据本页的首字节偏移，获取当前章节序号
  * @return {uint16_t} 当前章节序号
  */
-uint16_t getCurChapterIndex(void)
+uint16_t getDirTableIndex(void)
 {
     uint16_t chapter = 0;
     for (uint16_t i = 0; i <= dirTableTail; ++i) {
@@ -1185,22 +1316,26 @@ void ShieldHomePageWidget(void) {}
 
 void handleGenerationOfCurChapterPageTable(void)
 {
-    static uint16_t x               = 0;
-    static uint16_t y               = 0;
-    static uint16_t curChapterIndex = 0;
+    static uint16_t x                                   = 0;
+    static uint16_t y                                   = 0;
+    static uint32_t generatingCurChapterPageTableOffset = 0;
+    // static uint16_t curChapterIndex = 0;
     if (firstTimeIntoGeneratingCurChapterPageTable == true) {
         firstTimeIntoGeneratingCurChapterPageTable = false;
         x                                          = ((Obj*)readingArea)->x;
         y                                          = ((Obj*)readingArea)->y;
-        curChapterPageTableIndex                   = getCurChapterIndex();
-        curChapterIndex                            = curChapterPageTableIndex;
+        /* 更新当前章序号 */
+        dirTableIndex = getDirTableIndex();
+        curChapterPageTable[++curChapterPageTableTail] =
+            generatingCurChapterPageTableOffset = dirTable[dirTableIndex];
+        // curChapterIndex = dirTableIndex;
     }
     handleGenerationOfChapterPageTable(
         &x, &y, &generatingCurChapterPageTableOffset,
-        dirTable[curChapterIndex + 1], &generateCurChapterPageTableFinished,
+        dirTable[dirTableIndex + 1], &generateCurChapterPageTableFinished,
         curChapterPageTable, &curChapterPageTableTail);
     if ((generateCurChapterPageTableFinished == true) &&
-        (curChapterIndex != dirTableHead) &&
+        (dirTableIndex != dirTableHead) &&
         (needGeneratePrevChapterPageTable == false)) {
         needGeneratePrevChapterPageTable = true;
     }
@@ -1208,20 +1343,23 @@ void handleGenerationOfCurChapterPageTable(void)
 
 void handleGenerationOfPrevChapterPageTable(void)
 {
-    static uint16_t x                = 0;
-    static uint16_t y                = 0;
-    static uint16_t prevChapterIndex = 0;
+    static uint16_t x                                    = 0;
+    static uint16_t y                                    = 0;
+    static uint32_t generatingPrevChapterPageTableOffset = 0;
+    // static uint16_t prevChapterIndex = 0;
     if (firstTimeIntoGeneratingPrevChapterPageTable == true) {
         firstTimeIntoGeneratingPrevChapterPageTable = false;
         x                                           = ((Obj*)readingArea)->x;
         y                                           = ((Obj*)readingArea)->y;
-        curChapterPageTableIndex                    = getCurChapterIndex();
-        prevChapterIndex = curChapterPageTableIndex - 1;
+        dirTableIndex                               = getDirTableIndex() - 1;
+        // prevChapterIndex                            = dirTableIndex - 1;
+        prevChapterPageTable[++prevChapterPageTableTail] =
+            generatingPrevChapterPageTableOffset = dirTable[dirTableIndex - 1];
     }
     handleGenerationOfChapterPageTable(
-        &x, &y, &generatingPrevChapterPageTableOffset,
-        dirTable[prevChapterIndex + 1], &generatePrevChapterPageTableFinished,
-        prevChapterPageTable, &prevChapterPageTableTail);
+        &x, &y, &generatingPrevChapterPageTableOffset, dirTable[dirTableIndex],
+        &generatePrevChapterPageTableFinished, prevChapterPageTable,
+        &prevChapterPageTableTail);
 }
 
 /**
@@ -1235,6 +1373,9 @@ void handleGenerationOfPrevChapterPageTable(void)
  * @param {uint32_t*} pageTableIndex 当前
  * @return {*}
  */
+#ifndef LOG_handleGenerationOfChapterPageTable
+#    define LOG_handleGenerationOfChapterPageTable 1
+#endif
 void handleGenerationOfChapterPageTable(uint16_t* x,
                                         uint16_t* y,
                                         uint32_t* pOffset,
@@ -1243,27 +1384,28 @@ void handleGenerationOfChapterPageTable(uint16_t* x,
                                         uint32_t* pageTable,
                                         uint32_t* pageTableIndex)
 {
+    uint8_t        res;
     static char    preRenderCh[2];
     static uint8_t preRenderChOffset = 0;
     static bool    isCompleteChar    = true;
     uint16_t       width             = ((Obj*)readingArea)->width;
     uint16_t       height            = ((Obj*)readingArea)->height;
-    uint8_t        res;
-    uint32_t       tmpOffset = f_tell(main_file);
+    uint32_t       tmpOffset = f_tell(main_file); /* 保存当前偏移 */
     uint8_t        size      = getSize(readingArea->font.fontSize);
     uint8_t        lineSpace = getLineSpace(readingArea->font.fontSize);
     uint16_t       startX    = ((Obj*)readingArea)->x;
     uint16_t       startY    = ((Obj*)readingArea)->y;
-    uint16_t limitX = ((Obj*)readingArea)->x + ((Obj*)readingArea)->width - 1;
-    uint16_t limitY = ((Obj*)readingArea)->y + ((Obj*)readingArea)->height - 1;
+    uint16_t       limitX = ((Obj*)readingArea)->x + ((Obj*)readingArea)->width;
+    uint16_t limitY = ((Obj*)readingArea)->y + ((Obj*)readingArea)->height;
     bool     isHz   = false; /* 是否是汉字？ */
-    bool     isCRLF = false; /* 是否为回车或换行？ */
-    /* 首次进入章节页码表生成过程，则获取 */
+    bool     isCR   = false; /* 是否为回车？ */
 
     f_lseek(main_file, *pOffset);
     if (f_eof(main_file) || (*pOffset >= offsetLimit)) {
         /* 若文件已读完，或偏移等于下一章的首字节偏移，则表示读完了 */
         *finishedFlag = true;
+        LED0(0);
+#if LOG_handleGenerationOfChapterPageTable
         if (pageTable == curChapterPageTable) {
             log_n("%s Cur Chapter Page Table. [index]: %d", ARROW_STRING,
                   *pageTableIndex);
@@ -1272,8 +1414,11 @@ void handleGenerationOfChapterPageTable(uint16_t* x,
                   *pageTableIndex);
         }
         for (int i = 0; i <= *pageTableIndex; ++i) {
-            log_n("[%d]offset: %d", i, pageTable[i]);
+            char tmpBuf[21];
+            readTxt(main_file, pageTable[i], tmpBuf, 20);
+            // log_n("[%d]offset: %d", i, pageTable[i]);
         }
+#endif
     } else {
         /* 读取一个完整的字符（汉字字符或ASCII字符） */
         res = f_read(main_file, preRenderCh + preRenderChOffset, 1, &br);
@@ -1286,47 +1431,52 @@ void handleGenerationOfChapterPageTable(uint16_t* x,
         } else if ((isCompleteChar == false) && (preRenderChOffset != 0)) {
             isCompleteChar = true;
         }
+        /* 读到一个完整的字符后，才执行下面操作 */
         if (isCompleteChar == true) {
             isHz = (preRenderChOffset != 0) ? true : false;
             if (isHz == true) { /* 汉字？ */
                 *x += size;
             } else { /* ASCII */
-                isCRLF =
-                    ((preRenderCh[0] == '\n') || (preRenderCh[0] == '\r')) ?
-                        true :
-                        false;
-                if (isCRLF == true) {
-                    /* 回车or换行？*/
+                isCR = (preRenderCh[0] == '\r') ? true : false;
+                if (isCR == true) {
+                    /* 回车？*/
                     *x = startX;
                     *y += size;
                     *y += lineSpace;
-                    // goto END_OF_HANDLE_GENERATION_OF_CHAPTER_PAGE_TABLE;
+                    *pOffset += 1;
                 } else { /* 普通ASCII字符*/
                     *x += (size / 2);
                 }
             }
-            if (*x > limitX) { /* 宽度越界则换行 */
+            if (*x >= limitX) { /* 宽度越界则换行 */
                 *x = startX;
                 if (isHz == true) {
                     *x += size;
-                } else if (isCRLF == false) {
+                } else if (isCR == false) {
                     *x += (size / 2);
                 }
                 *y += size;
                 *y += lineSpace;
             }
-            if (*y > limitY) { /* 高度越界则记录一页 */
+            if (*y >= limitY) { /* 高度越界则记录一页 */
                 *y = startY;
-                pageTable[++(*pageTableIndex)] =
-                    *pOffset - (preRenderChOffset + 1);
-                /* 打印此章节每一页的首字节偏移量 */
-                if (pOffset == &generatingCurChapterPageTableOffset) {
-                    log_n("[curChapterPageTableTail]: %d",
-                          curChapterPageTableTail);
-                } else if (pOffset == &generatingPrevChapterPageTableOffset) {
-                    log_n("[prevChapterPageTableTail]: %d",
-                          prevChapterPageTableTail);
+                if (*pOffset < offsetLimit) {
+                    pageTable[++(*pageTableIndex)] =
+                        *pOffset - (preRenderChOffset + 1);
                 }
+#if LOG_handleGenerationOfChapterPageTable
+                /* 打印此章节每一页的首字节偏移量 */
+                //                if (pOffset ==
+                //                &generatingCurChapterPageTableOffset) {
+                //                    log_n("[curChapterPageTableTail]: %d",
+                //                          curChapterPageTableTail);
+                //                } else if (pOffset ==
+                //                &generatingPrevChapterPageTableOffset) {
+                //                    log_n("[prevChapterPageTableTail]: %d",
+                //                          prevChapterPageTableTail);
+                //                }
+                log_n("[ChapterPageTableTail]: %d", *pageTableIndex);
+#endif
             }
             preRenderChOffset = 0;
         }
@@ -1385,11 +1535,12 @@ void handleGenerationOfDirTable(void)
                     charCnt     = 0;
                     f_lseek(main_file, tmpSeek);
                     dirTable[++dirTableTail] = offset_DI;
+                    /* 如果是第一章 */
                     if ((strncmp(chapter, Chapter_Str_First_1,
                                  strlen(Chapter_Str_First_1)) == 0) ||
                         (strncmp(chapter, Chapter_Str_First_2,
                                  strlen(Chapter_Str_First_2)) == 0)) {
-                        dirTableHead = dirTableTail;
+                        dirTableIndex = dirTableHead = dirTableTail;
                     }
                     log_n("[%d]%s offset: %d || [Ch_1st]: %d", dirTableTail,
                           chapter, offset_DI, dirTableHead);

@@ -88,7 +88,8 @@ u8 exfuns_init(void)
 
 	dzk = (u8*)mymalloc(SRAMIN, MAX_DZK_SIZE);
     pageNumTBL = (uint32_t*)mymalloc(SRAMEX, PAGE_INDEX_SIZE*sizeof(uint32_t));
-    dirTable = mymalloc(SRAMEX, sizeof(uint32_t)*DIR_TABLE_MAX_SIZE);
+    dirTable = mymalloc(SRAMIN, sizeof(uint32_t)*DIR_TABLE_MAX_SIZE);
+
 
     if ((i == FF_VOLUMES) && main_file && vice_file && temp_file && fatbuf &&
         flash_buffer && logBuffer && dzk && pageNumTBL && dirTable) {
