@@ -433,7 +433,7 @@ int main(void)
                 clearTouchFlag(&flag);
                 touchState   = Touch_State_None;
                 noTouchEvent = true;
-#    if 1
+#    if 0
                 /* 查看当前dir指针偏移 */
                 char buf[30] = {0};
                 sprintf(buf, "%2d", booknameIndex);
@@ -1067,20 +1067,24 @@ void renderHomePage(void)
 void createReadingArea(void)
 {
     const uint16_t textAreaWidth  = ATK_MD0700_LCD_WIDTH * 4 / 5;
-    const uint16_t textAreaHeight = ATK_MD0700_LCD_HEIGHT * 4 / 5;
+    const uint16_t textAreaHeight = ATK_MD0700_LCD_HEIGHT * 9 / 10 - 100;
     setPublicFont((FontName)fontNameSelect, (FontSize)fontSizeSelect,
                   RGB888toRGB565(0x000000));
     setPublicBorder(RGB888_BLACK, 3, BORDER_ALL);
+    // readingArea =
+    //     NewTextarea((ATK_MD0700_LCD_WIDTH - textAreaWidth) / 2,
+    //                 (ATK_MD0700_LCD_HEIGHT - textAreaHeight) / 2,
+    //                 textAreaWidth, textAreaHeight, LocateType_Absolute,
+    //                 &publicFont, &publicBorder, RGB888toRGB565(0xffffff));
     readingArea =
-        NewTextarea((ATK_MD0700_LCD_WIDTH - textAreaWidth) / 2,
-                    (ATK_MD0700_LCD_HEIGHT - textAreaHeight) / 2, textAreaWidth,
-                    textAreaHeight, LocateType_Absolute, &publicFont,
-                    &publicBorder, RGB888toRGB565(0xffffff));
+        NewTextarea((ATK_MD0700_LCD_WIDTH - textAreaWidth) / 2, 80,
+                    textAreaWidth, textAreaHeight, LocateType_Absolute,
+                    &publicFont, &publicBorder, RGB888toRGB565(0xffffff));
     readingArea->str = NULL;
     /* 把导航栏加入阅读界面 */
-    // init_LinkedList(&readingTouchQueryQueue, NodeDataType_Obj);
-    // publicElemData.obj = (Obj*)navigationBar;
-    // push_tail(&readingTouchQueryQueue, &publicElemData);
+    init_LinkedList(&readingTouchQueryQueue, NodeDataType_Obj);
+    publicElemData.obj = (Obj*)navigationBar;
+    push_tail(&readingTouchQueryQueue, &publicElemData);
     COLUMN_LIMIT_PX16 = textAreaWidth / (getSize(PX16) / 2);
     COLUMN_LIMIT_PX24 = textAreaWidth / (getSize(PX24) / 2);
     COLUMN_LIMIT_PX32 = textAreaWidth / (getSize(PX32) / 2);
@@ -1218,6 +1222,9 @@ void bookshelfBtnOnClicked(Button* bookBtn)
     // res = f_read(main_file, page_buffer[0], PAGE_SIZE, &br);
     // check_value_equal(res, FR_OK, "Failed to read from file [%s]", path);
     // page_buffer[0][br] = '\0';
+    fillArea(((Obj*)bookshelf)->x - 10, ((Obj*)bookshelf)->y - 10,
+             ((Obj*)bookshelf)->width + 20, ((Obj*)bookshelf)->height + 20,
+             GUI_getBackColor());
     log_n("Rerender LCD panel.");
     renderText(curOffset);
     /* 暂时设置为每次打开都需要读取目录 */
@@ -1261,18 +1268,22 @@ void renderText(uint32_t offset)
     } else {
         buf[BUF_SIZE - 1] = 0;
     }
-    atk_md0700_clear(GUI_getBackColor());
+    // atk_md0700_clear(GUI_getBackColor());
+    fillArea(((Obj*)readingArea)->x, ((Obj*)readingArea)->y,
+             ((Obj*)readingArea)->width, ((Obj*)readingArea)->height,
+             GUI_getBackColor());
     // if (generateCurChapterPageTableFinished == true) {
     //     textLenLimit = curChapterPageTable[curChapterPageTableIndex + 1] -
     //                    curOffset;
     // } else {
     //     textLenLimit = br;
     // }
-    // if (dirTableTail > 1) {
-    //     textLenLimit  = dirTable[dirTableIndex + 1] - curOffset;
-    // } else {
-    //     textLenLimit = 4096;
-    // }
+    if ((dirTableTail > 0) && (dirTableIndex > 0) &&
+        (dirTableTail > dirTableIndex)) {
+        textLenLimit = dirTable[dirTableIndex + 1] - curOffset;
+    } else {
+        textLenLimit = 4096;
+    }
     str           = Show_Str(((Obj*)readingArea)->x, ((Obj*)readingArea)->y,
                              ((Obj*)readingArea)->width, ((Obj*)readingArea)->height,
                              page_buffer[0], textLenLimit, (FontName)fontNameSelect,
@@ -1458,7 +1469,7 @@ void handleGenerationOfChapterPageTable(uint16_t* x,
                 *y += size;
                 *y += lineSpace;
             }
-            if (*y >= limitY) { /* 高度越界则记录一页 */
+            if ((*y + size) >= limitY) { /* 高度越界则记录一页 */
                 *y = startY;
                 if (*pOffset < offsetLimit) {
                     pageTable[++(*pageTableIndex)] =
