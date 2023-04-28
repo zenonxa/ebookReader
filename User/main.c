@@ -366,53 +366,56 @@ int main(void)
                         }
                     } else if (slideDirestion == Slide_To_Right) {
                         /* 阅读界面：上一页 */
-                        /* 是否在本章的第一页？ */
-                        if (curChapterPageTableIndex > 0) {
-                            curOffset =
-                                curChapterPageTable[--curChapterPageTableIndex];
-                            renderText(curOffset);
-                        } else {
-                            /* 上一章未生成完成，或不在首章第一页？ */
-                            if ((generatePrevChapterPageTableFinished ==
-                                 true) &&
-                                !((dirTableIndex == dirTableHead) &&
-                                  (curChapterPageTableIndex == 0))) {
-                                swapVal(&curChapterPageTable,
-                                        &prevChapterPageTable,
-                                        ValType_UINT32_POINTER);
-                                curChapterPageTableIndex =
-                                    curChapterPageTableTail =
-                                        prevChapterPageTableTail;
-                                prevChapterPageTableTail  = -1;
-                                prevChapterPageTableIndex = 0;
-                                // swapVal(&curChapterPageTableIndex,
-                                //         &prevChapterPageTableIndex,
-                                //         ValType_UINT32);
-                                // swapVal(&curChapterPageTableTail,
-                                //         &prevChapterPageTableTail,
-                                //         ValType_UINT32);
-                                // curChapterPageTableIndex =
-                                //     curChapterPageTableTail;
+                        if (curTouchQueryQueue == &readingTouchQueryQueue) {
+                            /* 是否在本章的第一页？ */
+                            if (curChapterPageTableIndex > 0) {
+                                
                                 curOffset = curChapterPageTable
-                                    [curChapterPageTableTail];
-                                --dirTableIndex;
-                                if (dirTableIndex > dirTableHead) {
-                                    needGeneratePrevChapterPageTable = true;
-                                    firstTimeIntoGeneratingPrevChapterPageTable =
-                                        true;
-                                    generatePrevChapterPageTableFinished =
-                                        false;
-                                    LED0(1);
-                                }
+                                    [--curChapterPageTableIndex];
                                 renderText(curOffset);
+                            } else {
+                                /* 上一章未生成完成，或不在首章第一页？ */
+                                if ((generatePrevChapterPageTableFinished ==
+                                     true) &&
+                                    !((dirTableIndex == dirTableHead) &&
+                                      (curChapterPageTableIndex == 0))) {
+                                    swapVal(&curChapterPageTable,
+                                            &prevChapterPageTable,
+                                            ValType_UINT32_POINTER);
+                                    curChapterPageTableIndex =
+                                        curChapterPageTableTail =
+                                            prevChapterPageTableTail;
+                                    prevChapterPageTableTail  = -1;
+                                    prevChapterPageTableIndex = 0;
+                                    // swapVal(&curChapterPageTableIndex,
+                                    //         &prevChapterPageTableIndex,
+                                    //         ValType_UINT32);
+                                    // swapVal(&curChapterPageTableTail,
+                                    //         &prevChapterPageTableTail,
+                                    //         ValType_UINT32);
+                                    // curChapterPageTableIndex =
+                                    //     curChapterPageTableTail;
+                                    curOffset = curChapterPageTable
+                                        [curChapterPageTableTail];
+                                    --dirTableIndex;
+                                    if (dirTableIndex > dirTableHead) {
+                                        needGeneratePrevChapterPageTable = true;
+                                        firstTimeIntoGeneratingPrevChapterPageTable =
+                                            true;
+                                        generatePrevChapterPageTableFinished =
+                                            false;
+                                        LED0(1);
+                                    }
+                                    renderText(curOffset);
+                                }
                             }
+                            //                        renderText(curOffset);
+                            // if (curOffset == dirTable[curChapter]) {
+                            //     curOffset = ;
+                            // } else {
+                            //     ;
+                            // }
                         }
-                        //                        renderText(curOffset);
-                        // if (curOffset == dirTable[curChapter]) {
-                        //     curOffset = ;
-                        // } else {
-                        //     ;
-                        // }
                     }
                 } else if ((touchEvent == Touch_Event_ShortPress) ||
                            (touchEvent == Touch_Event_LongPress)) {
