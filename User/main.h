@@ -115,7 +115,7 @@ Obj*   touchQuery(LinkedList* queryQueue, Position* pos);
 Obj*   touchSubQuery(LinkedList* querySubQueue, Position* pos);
 Obj*   touchQueryForWidget(LinkedList* touchQueryQueue, Position* pos);
 void   updateWidgetStateOnTouch(Obj* obj, TouchState state);
-void   refreshBookname(List*      list,
+void   refreshBtnName(List*      list,
                        Button**   booknameBtn,
                        char**     bookname,
                        DrawOption drawOption);
@@ -145,6 +145,11 @@ void   handleGenerationOfChapterPageTable(uint16_t* x,
                                           uint32_t* pageTable,
                                           uint32_t* pageTableIndex);
 void   handleGenerationOfDirTable(void);
+void createDirList(void);
+void chapterBtnOnClicked(Button* button);
+void copyChapterName(void);
+void passChapterPageTableFromPrevToCur(void);
+void passChapterPageTableFromCurToPrev(void);
 #if ACTION_ONCE
 void excuteCommand(void);
 #endif

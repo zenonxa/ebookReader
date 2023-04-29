@@ -22,7 +22,13 @@ uint32_t* pageNumTBL;
 /* 书架列表控件 */
 List* bookshelf = NULL;
 /* 全局导航栏控件 */
-List*    navigationBar = NULL;
+List*    navigationBarAtHome    = NULL;
+List*    navigationBarOnReading = NULL;
+List*    dirList                = NULL; /* 目录表 */
+Button** chapterBtn             = NULL; /* 目录表的章节按钮 */
+char**   chapterName            = NULL; /* 章节名字符串 */
+uint16_t chapterNameIndex = 0; /* 数值上等价于读取的已读取过的章节的数量 */
+Button*  buttonDir     = NULL;
 Button** booknameBtn   = NULL;
 Button*  buttonBack    = NULL;
 Button*  buttonHome    = NULL;
@@ -60,7 +66,8 @@ int32_t curChapterPageTableTail   = -1; /* 本章的最后一页 */
 int32_t prevChapterPageTableIndex = 0;  /* 上一章页码表的索引指针 */
 int32_t prevChapterPageTableTail  = -1; /* 上一章的最后一页 */
 
-uint16_t curChapter = 0;
+// uint16_t curChapter = 0;
+const uint8_t chapterNameLen = 70;
 
 uint32_t curHeadOffset            = 0;
 uint32_t curOffset                = 0;
@@ -102,27 +109,10 @@ uint16_t textAreaHeight = ATK_MD0700_LCD_HEIGHT * 4 / 5;
 
 #define STRING_SIZE 60
 
+#if 0
 WCHAR utf16_string[STRING_SIZE];
 char  gb2312_string[STRING_SIZE * 2];
-
-const char tmpPath[] = "0:BOOK/";
-#define readdir(forward)                                                       \
-    do {                                                                       \
-        FILINFO* pFNO;                                                         \
-        if (forward) {                                                         \
-            pFNO = &fileinfo;                                                  \
-        } else {                                                               \
-            pFNO = NULL;                                                       \
-        }                                                                      \
-        uint8_t res = f_readdir(&dir, pFNO);                                   \
-        check_value_equal(res, FR_OK, "Fail to read dir %s", tmpPath);         \
-        if ((pFNO) != (NULL)) {                                                \
-            log_n("filename: [%s]", fileinfo.fname);                           \
-        } else {                                                               \
-            log_n("Reverse.");                                                 \
-        }                                                                      \
-        log_n("dir.dptr: %d", dir.dptr);                                       \
-    } while (0)
+#endif
 
 #define readTxt(pFIL, offset, buff, byte)                                      \
     do {                                                                       \
@@ -207,10 +197,11 @@ int main(void)
     res = f_opendir(&dir, "0:/BOOK");
     check_value_equal(res, FR_OK, "Open dir fail");
     CopyBookname(&dir, listItemLimit, bookname, 1);
-    refreshBookname(bookshelf, booknameBtn, bookname,
-                    DrawOption_Delay); /* 刷新书名 */
-    renderHomePage();                  /* 渲染 Home 界面 */
+    refreshBtnName(bookshelf, booknameBtn, bookname,
+                   DrawOption_Delay); /* 刷新书名 */
+    renderHomePage();                 /* 渲染 Home 界面 */
     createReadingArea();
+    createDirList();
     // f_open(main_file, "0:BOOK/1.TXT", FA_READ);
     // renderText(16375);
     // while (1)
@@ -257,9 +248,8 @@ int main(void)
                                 for (i = 0; i < listItemLimit; ++i) {
                                     booknameBtn[i]->isPressed = BT_UNPRESSED;
                                 }
-                                refreshBookname(bookshelf, booknameBtn,
-                                                bookname,
-                                                DrawOption_Immediately);
+                                refreshBtnName(bookshelf, booknameBtn, bookname,
+                                               DrawOption_Immediately);
                             }
                         } else if (curTouchQueryQueue ==
                                    &readingTouchQueryQueue) {
@@ -275,9 +265,8 @@ int main(void)
                                 for (i = 0; i < listItemLimit; ++i) {
                                     booknameBtn[i]->isPressed = BT_UNPRESSED;
                                 }
-                                refreshBookname(bookshelf, booknameBtn,
-                                                bookname,
-                                                DrawOption_Immediately);
+                                refreshBtnName(bookshelf, booknameBtn, bookname,
+                                               DrawOption_Immediately);
                             }
                         }
                     } else if (slideDirestion == Slide_To_Left) {
@@ -291,28 +280,15 @@ int main(void)
                                 if (curChapterPageTableIndex >
                                     curChapterPageTableTail) {
                                     ++dirTableIndex; /* 下一章 */
-                                    prevChapterPageTableTail =
-                                        curChapterPageTableTail;
-                                    prevChapterPageTableIndex =
-                                        prevChapterPageTableTail;
-                                    curChapterPageTableTail  = -1;
-                                    curChapterPageTableIndex = 0;
-                                    swapVal(&curChapterPageTable,
-                                            &prevChapterPageTable,
-                                            ValType_UINT32_POINTER);
-                                    needGenerateCurChapterPageTable  = true;
-                                    needGeneratePrevChapterPageTable = false;
-                                    generatePrevChapterPageTableFinished = true;
-                                    firstTimeIntoGeneratingCurChapterPageTable =
-                                        true;
-                                    generateCurChapterPageTableFinished = false;
+                                    passChapterPageTableFromPrevToCur();
                                     curOffset = dirTable[dirTableIndex];
-                                    LED0(1);
                                 }
-                                log_n("Before render a page. curOffset: %d",
+                                log_n("Before paging down. Tail offset of the "
+                                      "page: %d",
                                       curOffset);
                                 renderText(curOffset);
-                                log_n("After render a page. curOffset: %d",
+                                log_n("After paging down. Tail offset of the "
+                                      "page: %d",
                                       curOffset);
                             }
                         }
@@ -325,31 +301,22 @@ int main(void)
                                     [--curChapterPageTableIndex];
                                 renderText(curOffset);
                             } else {
-                                /* 上一章未生成完成，或不在首章第一页？ */
+                                /* 上一章页码表已生成，且不在首章首章页？ */
                                 if ((generatePrevChapterPageTableFinished ==
                                      true) &&
                                     !((dirTableIndex == dirTableHead) &&
                                       (curChapterPageTableIndex == 0))) {
-                                    swapVal(&curChapterPageTable,
-                                            &prevChapterPageTable,
-                                            ValType_UINT32_POINTER);
-                                    curChapterPageTableIndex =
-                                        curChapterPageTableTail =
-                                            prevChapterPageTableTail;
-                                    prevChapterPageTableTail  = -1;
-                                    prevChapterPageTableIndex = 0;
+                                    --dirTableIndex;
+                                    passChapterPageTableFromCurToPrev();
                                     curOffset = curChapterPageTable
                                         [curChapterPageTableTail];
-                                    --dirTableIndex;
-                                    if (dirTableIndex > dirTableHead) {
-                                        needGeneratePrevChapterPageTable = true;
-                                        firstTimeIntoGeneratingPrevChapterPageTable =
-                                            true;
-                                        generatePrevChapterPageTableFinished =
-                                            false;
-                                        LED0(1);
-                                    }
+                                    log_n("Before paging up. Head offset of "
+                                          "the page: %d",
+                                          curHeadOffset);
                                     renderText(curOffset);
+                                    log_n("After paging up. Head offset of the "
+                                          "page: %d",
+                                          curHeadOffset);
                                 }
                             }
                         }
@@ -358,7 +325,8 @@ int main(void)
                            (touchEvent == Touch_Event_LongPress)) {
                     /* 位于主页时，若触摸点位于书架的图书按钮上，则进度阅读界面，并切换组件查询队列
                      */
-                    if (curTouchQueryQueue == &homeTouchQueryQueue) {
+                    // if (curTouchQueryQueue == &homeTouchQueryQueue)
+                    {
                         if ((prev_target) &&
                             (prev_target->type == Obj_Type_Button)) {
                             ((Button*)prev_target)
@@ -373,10 +341,10 @@ int main(void)
                 clearTouchFlag(&flag);
                 touchState   = Touch_State_None;
                 noTouchEvent = true;
-#    if 0
+#    if 1
                 /* 查看当前dir指针偏移 */
                 char buf[30] = {0};
-                sprintf(buf, "%2d", booknameIndex);
+                sprintf(buf, "%2d", chapterNameIndex);
                 fillArea(0, 0, 50, 30, RGB888toRGB565(0xffffff));
                 Show_Str(0, 0, 50, 30, (uint8_t*)buf, strlen(buf), Font_SimSun,
                          PX24, 0, &isOverOnePage);
@@ -473,31 +441,31 @@ void createNavigationBar(void)
 {
     /* 创建导航栏 */
     setPublicBorder(RGB888toRGB565(0x000000), 3, BORDER_NULL);
-    navigationBar =
+    navigationBarAtHome =
         NewList(0, ATK_MD0700_LCD_HEIGHT / 10 * 9, ATK_MD0700_LCD_WIDTH,
                 ATK_MD0700_LCD_HEIGHT / 10, &publicBorder, 0,
                 ATK_MD0700_LCD_HEIGHT / 10, NULL, 0);
-    publicElemData.obj = (Obj*)navigationBar;
+    publicElemData.obj = (Obj*)navigationBarAtHome;
     push_tail(curTouchQueryQueue, &publicElemData);
     /* 创建导航栏中的按钮 */
     setPublicFont(Font_SimSun, PX24, RGB888toRGB565(0x000000));
     setPublicBorder(RGB888toRGB565(0xcccccc), 5, BORDER_FLAG(BORDER_TOP));
     setPublicAlignType(AlignHorizonalType_CENTER, AlignVerticalType_MIDDLE);
-    buttonBack         = NewButton(0, 0, 160, navigationBar->itemHeight,
+    buttonBack         = NewButton(0, 0, 160, navigationBarAtHome->itemHeight,
                                    LocateType_Relative, &publicFont, &publicBorder,
                                    &publicAlignType, navigationBtnOnClicked);
-    buttonHome         = NewButton(160, 0, 160, navigationBar->itemHeight,
+    buttonHome         = NewButton(160, 0, 160, navigationBarAtHome->itemHeight,
                                    LocateType_Relative, &publicFont, &publicBorder,
                                    &publicAlignType, navigationBtnOnClicked);
-    buttonSetting      = NewButton(320, 0, 160, navigationBar->itemHeight,
+    buttonSetting      = NewButton(320, 0, 160, navigationBarAtHome->itemHeight,
                                    LocateType_Relative, &publicFont, &publicBorder,
                                    &publicAlignType, navigationBtnOnClicked);
     buttonBack->str    = navigationBarString[0];
     buttonHome->str    = navigationBarString[1];
     buttonSetting->str = navigationBarString[2];
-    AppendSubListItem(navigationBar, 0, (Obj*)buttonBack);
-    AppendSubListItem(navigationBar, 0, (Obj*)buttonHome);
-    AppendSubListItem(navigationBar, 0, (Obj*)buttonSetting);
+    AppendSubListItem(navigationBarAtHome, 0, (Obj*)buttonBack);
+    AppendSubListItem(navigationBarAtHome, 0, (Obj*)buttonHome);
+    AppendSubListItem(navigationBarAtHome, 0, (Obj*)buttonSetting);
 }
 
 /**
@@ -588,6 +556,121 @@ void createBooknameBuffer(void)
                           "Failed to malloc for booknameBuffer[%d][%d]", i, j);
 }
 
+void createDirList(void)
+{
+    const uint16_t dirListWidth  = 300;
+    const uint16_t dirListHeight = 550;
+    uint16_t       listItemLimit;
+    uint16_t       posY = ((Obj*)navigationBarOnReading)->y - 1 -
+                    buttonDir->border.borderWidth - dirListHeight - 3 - 5;
+    setPublicBorder(RGB888toRGB565(0x000000), 3,
+                    BORDER_FLAG(BORDER_TOP) | BORDER_FLAG(BORDER_BOTTOM) |
+                        BORDER_FLAG(BORDER_RIGHT));
+    dirList = NewList(0, posY, dirListWidth, dirListHeight, &publicBorder, 70,
+                      50, NULL, 1);
+    listItemLimit = dirList->itemList->size;
+    /* 创建目录列表标题栏中的文本域 */
+    setPublicFont(Font_SimSun, PX24, RGB888toRGB565(0x000000));
+    setPublicBorder(RGB888toRGB565(0x000000), 0, BORDER_NULL);
+    Textarea* dirListHeadlineTA =
+        NewTextarea(0, 0, ((Obj*)dirList)->width, dirList->headlineHeight,
+                    LocateType_Relative, &publicFont, &publicBorder,
+                    RGB888toRGB565(0xcccccc));
+    dirListHeadlineTA->str = dirListHeadLineStr;
+    SetListHeadlineTextarea(dirList, dirListHeadlineTA, DrawOption_Delay);
+    /* 为目录列表的章节表项申请字符串控件 */
+    chapterName = (char**)mymalloc(SRAMIN, sizeof(char*) * listItemLimit);
+    check_value_not_equal(chapterName, NULL,
+                          "Failed to malloc for chapterName");
+    for (uint16_t i = 0; i < listItemLimit; ++i) {
+        chapterName[i] = (char*)mymalloc(SRAMIN, sizeof(char) * chapterNameLen);
+        memset(chapterName[i], 0, sizeof(char) * chapterNameLen);
+    }
+    /* 创建章节按钮，添加至目录列表中 */
+    setPublicAlignType(AlignHorizonalType_LEFT, AlignVerticalType_MIDDLE);
+    setPublicBorder(RGB888toRGB565(0x000000), 0, BORDER_NULL);
+    setPublicFont(Font_SimSun, PX16, RGB888toRGB565(0x000000));
+    chapterBtn = mymalloc(GUI_MALLOC_SOURCE, sizeof(Button*) * listItemLimit);
+    check_value_not_equal(chapterBtn, NULL, "Failed to malloc for chapterBtn");
+    memset(chapterBtn, 0, sizeof(Button*) * listItemLimit);
+    for (uint16_t i = 0; i < listItemLimit; ++i) {
+        chapterBtn[i] =
+            NewButton(0, 0, ((Obj*)dirList)->width, dirList->itemHeight,
+                      LocateType_Relative, &publicFont, &publicBorder,
+                      &publicAlignType, &chapterBtnOnClicked);
+        chapterBtn[i]->str = chapterName[i];
+    }
+}
+
+void chapterBtnOnClicked(Button* button)
+{
+    log_n("chapterNameIndex: %d, getItemListSize(dirList): %d",
+          chapterNameIndex, getItemListSize(dirList));
+    log_n("dirTable[Tail]: %d, f_size: %d", dirTable[dirTableTail],
+          f_size(main_file));
+    uint32_t chapterNum =
+        chapterNameIndex -
+        ((dirTable[dirTableTail] == f_size(main_file)) ? 1 : 0);
+    chapterNum -= getItemListSize(dirList);
+    for (int i = 0; i < dirList->itemList->size; ++i) {
+        if (button == chapterBtn[i]) {
+            chapterNum += i;
+            break;
+        }
+    }
+    if (chapterNum <= dirTableTail) {
+        LinkedNodeData data;
+        data.obj = (Obj*)dirList;
+        deleteNode(curTouchQueryQueue, find_data(curTouchQueryQueue, &data));
+        fillMainArea();
+        log_n("Chapter jump. chapterNum: %d", chapterNum);
+        curOffset = dirTable[chapterNum + dirTableHead];
+        renderText(curOffset);
+        /* 根据原来的章节序号，确定是否需要更新本章页码表以及上一章页码表 */
+        
+    }
+}
+
+/**
+ * @description: 
+ * @return {void}
+ */
+void passChapterPageTableFromPrevToCur(void)
+{
+    prevChapterPageTableTail  = curChapterPageTableTail;
+    prevChapterPageTableIndex = prevChapterPageTableTail;
+    curChapterPageTableTail   = -1;
+    curChapterPageTableIndex  = 0;
+    swapVal(&curChapterPageTable, &prevChapterPageTable,
+            ValType_UINT32_POINTER);
+    needGenerateCurChapterPageTable            = true;
+    needGeneratePrevChapterPageTable           = false;
+    generatePrevChapterPageTableFinished       = true;
+    firstTimeIntoGeneratingCurChapterPageTable = true;
+    generateCurChapterPageTableFinished        = false;
+    LED0(1);
+}
+
+/**
+ * @description: 
+ * @return {void}
+ */
+void passChapterPageTableFromCurToPrev(void)
+{
+    swapVal(&curChapterPageTable, &prevChapterPageTable,
+            ValType_UINT32_POINTER);
+    curChapterPageTableIndex = curChapterPageTableTail =
+        prevChapterPageTableTail;
+    prevChapterPageTableTail  = -1;
+    prevChapterPageTableIndex = 0;
+    if (dirTableIndex > dirTableHead) {
+        needGeneratePrevChapterPageTable            = true;
+        firstTimeIntoGeneratingPrevChapterPageTable = true;
+        generatePrevChapterPageTableFinished        = false;
+        LED0(1);
+    }
+}
+
 void LED_Toggle(void)
 {
     static uint8_t i = 0;
@@ -669,7 +752,9 @@ void show_logo(uint8_t* logoPicture, uint16_t delayTime_ms)
  */
 void fillMainArea(void)
 {
-    fillArea(0, 0, ATK_MD0700_LCD_WIDTH, ATK_MD0700_LCD_HEIGHT / 10 * 9 - 1,
+    fillArea(0, 0, ATK_MD0700_LCD_WIDTH,
+             ATK_MD0700_LCD_HEIGHT - 1 - ((Obj*)buttonHome)->height -
+                 buttonHome->border.borderWidth,
              GUI_getBackColor());
 }
 
@@ -908,29 +993,29 @@ void CopyBookname(DIR* dir, uint8_t limit, char** bookname, bool forward)
  * @param {DrawOption} drawOption 绘制选项（立即绘制，或稍后手动绘制）
  * @return {void}
  */
-void refreshBookname(List*      list,
-                     Button**   booknameBtn,
-                     char**     bookname,
-                     DrawOption drawOption)
+void refreshBtnName(List*      list,
+                    Button**   nameBtnArr,
+                    char**     nameArr,
+                    DrawOption drawOption)
 {
     uint8_t i = 0;
     for (i = 0; i < list->itemList->size; i++) {
         // 若无法搜索到书名，后续内容不渲染
-        if (bookname[i][0] == 0) {
+        if (nameArr[i][0] == 0) {
             break;
         }
         // 如果按钮中有书名，但按钮曾被移出链表，则重新添加回来
         LinkedNodeData data;
-        data.obj = (Obj*)booknameBtn[i];
+        data.obj = (Obj*)nameBtnArr[i];
         if (find_data(getSubList(list, i), &data) == NULL) {
-            AppendSubListItem(list, i, (Obj*)booknameBtn[i]);
+            AppendSubListItem(list, i, (Obj*)nameBtnArr[i]);
         }
     }
     // 若存在空字符串的按钮，则移出链表
     for (; i < list->itemList->size; i++) {
         LinkedNodeData data;
-        data.obj = (Obj*)booknameBtn[i];
-        booknameBtn[i]->DrawButton(booknameBtn[i]);
+        data.obj = (Obj*)nameBtnArr[i];
+        nameBtnArr[i]->DrawButton(nameBtnArr[i]);
         deleteNode(getSubList(list, i), find_data(getSubList(list, i), &data));
     }
     /* 根据参数决定是否立即重新绘制 */
@@ -939,20 +1024,72 @@ void refreshBookname(List*      list,
     }
 }
 
+void copyChapterName(void)
+{
+    uint16_t        i;
+    static uint16_t chapterCnt = 0;
+    uint32_t        tmpOffset  = f_tell(main_file);
+    if (dirTableTail > 0) {
+        chapterCnt = dirTableTail - dirTableHead + 1;
+    } else {
+        return;
+    }
+    for (i = 0; i < dirList->itemList->size; ++i) {
+        if (chapterNameIndex >= chapterCnt) {
+            break;
+        }
+        /* 读章节名 */
+        uint16_t pos = 0;
+        f_lseek(main_file, dirTable[chapterNameIndex + dirTableHead]);
+        f_read(main_file, chapterName[i], chapterNameLen, &br);
+        bool     isHz  = false;
+        uint16_t chPos = 0;
+        uint16_t j;
+        for (j = 0; j < br; ++j) {
+            if (isHz == false) {
+                if (chapterName[i][j] & 0x80) {
+                    isHz  = true;
+                    chPos = j;
+                    continue;
+                }
+                chPos = j;
+                if ((chapterName[i][j] == '.') || (chapterName[i][j] == '?') ||
+                    (chapterName[i][j] == '!') || (chapterName[i][j] == '\n') ||
+                    (chapterName[i][j] == '\r')) {
+                    break;
+                }
+            } else {
+                isHz = false;
+                if ((strncmp(chapterName[i] + j, gbk_full_stop, 2) == 0) ||
+                    (strncmp(chapterName[i] + j, gbk_exclamatory_mark, 2) ==
+                     0) ||
+                    (strncmp(chapterName[i] + j, gbk_question_mark, 2) == 0)) {
+                    break;
+                }
+            }
+        }
+        // if ((j + ((isHz == true) ? 1 : 0)) >= br) {
+        //     chapterName[j] = 0;
+        // }
+        chapterName[i][j] = 0;
+        ++chapterNameIndex;
+    }
+    for (; i < dirList->itemList->size; ++i) {
+        chapterName[i][0] = 0;
+    }
+    f_lseek(main_file, tmpOffset);
+}
+
 /**
  * @description: 刷新主页
  * @return {void}
  */
 void renderHomePage(void)
 {
-    if (curTouchQueryQueue != &homeTouchQueryQueue) {
-        readDirRevese(&dir, getItemListSize(bookshelf));
-    }
     /* 刷新主界面书架、导航栏 */
-    // refreshBookname(bookshelf, booknameBtn, bookname, DrawOption_Delay);
     atk_md0700_clear(BACKGROUND_COLOR);
     bookshelf->DrawList(bookshelf);
-    navigationBar->DrawList(navigationBar);
+    navigationBarAtHome->DrawList(navigationBarAtHome);
 }
 
 void createReadingArea(void)
@@ -972,9 +1109,25 @@ void createReadingArea(void)
                     textAreaWidth, textAreaHeight, LocateType_Absolute,
                     &publicFont, &publicBorder, RGB888toRGB565(0xffffff));
     readingArea->str = NULL;
-    /* 把导航栏加入阅读界面 */
+    /* 建立阅读界面的导航栏 */
+    setPublicBorder(RGB888toRGB565(0x000000), 3, BORDER_NULL);
+    navigationBarOnReading =
+        NewList(0, ATK_MD0700_LCD_HEIGHT / 10 * 9, ATK_MD0700_LCD_WIDTH,
+                ATK_MD0700_LCD_HEIGHT / 10, &publicBorder, 0,
+                ATK_MD0700_LCD_HEIGHT / 10, NULL, 0);
+    setPublicFont(Font_SimSun, PX24, RGB888toRGB565(0x000000));
+    setPublicBorder(RGB888toRGB565(0xcccccc), 5, BORDER_FLAG(BORDER_TOP));
+    setPublicAlignType(AlignHorizonalType_CENTER, AlignVerticalType_MIDDLE);
+    buttonDir      = NewButton(0, 0, 160, navigationBarAtHome->itemHeight,
+                               LocateType_Relative, &publicFont, &publicBorder,
+                               &publicAlignType, navigationBtnOnClicked);
+    buttonDir->str = navigationBarString[3];
+    AppendSubListItem(navigationBarOnReading, 0, (Obj*)buttonDir);
+    AppendSubListItem(navigationBarOnReading, 0, (Obj*)buttonHome);
+    AppendSubListItem(navigationBarOnReading, 0, (Obj*)buttonSetting);
+    /* 把阅读界面导航栏加入阅读界面 */
     init_LinkedList(&readingTouchQueryQueue, NodeDataType_Obj);
-    publicElemData.obj = (Obj*)navigationBar;
+    publicElemData.obj = (Obj*)navigationBarOnReading;
     push_tail(&readingTouchQueryQueue, &publicElemData);
     COLUMN_LIMIT_PX16 = textAreaWidth / (getSize(PX16) / 2);
     COLUMN_LIMIT_PX24 = textAreaWidth / (getSize(PX24) / 2);
@@ -1108,28 +1261,39 @@ void bookshelfBtnOnClicked(Button* bookBtn)
     res = f_open(main_file, path, FA_READ);
     check_value_equal(res, FR_OK, "Failed to open file [%s], res [%d]", path,
                       res);
-    curOffset  = 0; /* 读取书签位置，暂定为0 */
-    curChapter = 0;
+    // curOffset = 0; /* 读取书签位置，暂定为0 */
     // res = f_read(main_file, page_buffer[0], PAGE_SIZE, &br);
     // check_value_equal(res, FR_OK, "Failed to read from file [%s]", path);
     // page_buffer[0][br] = '\0';
+    /* 一些初始化 */
+    // curChapterPageTableIndex  = 0;  /* 本章的页码表的索引指针 */
+    // curChapterPageTableTail   = -1; /* 本章的最后一页 */
+    // prevChapterPageTableIndex = 0;  /* 上一章页码表的索引指针 */
+    // prevChapterPageTableTail  = -1; /* 上一章的最后一页 */
+    // dirTableIndex = dirTableHead;
     fillArea(((Obj*)bookshelf)->x - 10, ((Obj*)bookshelf)->y - 10,
              ((Obj*)bookshelf)->width + 20, ((Obj*)bookshelf)->height + 20,
              GUI_getBackColor());
     log_n("Rerender LCD panel.");
+    navigationBarOnReading->DrawList(navigationBarOnReading);
     renderText(curOffset);
-    /* 暂时设置为每次打开都需要读取目录 */
-    needGenerateDirTable     = true;
-    generateDirTableFinished = false;
-    /* 进入后设置为需要读取本章，且为首次进入，读取未完成 */
-    needGenerateCurChapterPageTable            = true;
-    firstTimeIntoGeneratingCurChapterPageTable = true;
-    generateCurChapterPageTableFinished        = false;
-    /* 进入后设置为暂不需要读取上一章（本章读取完成后再使能），且为首次进入，读取未完成
-     */
-    needGeneratePrevChapterPageTable            = false;
-    firstTimeIntoGeneratingPrevChapterPageTable = true;
-    generatePrevChapterPageTableFinished        = false;
+    if (dirTableTail < 0) { /* 暂时设置为每次打开都需要读取目录 */
+        needGenerateDirTable     = true;
+        generateDirTableFinished = false;
+        /* 进入后设置为需要读取本章，且为首次进入，读取未完成 */
+        needGenerateCurChapterPageTable            = true;
+        firstTimeIntoGeneratingCurChapterPageTable = true;
+        generateCurChapterPageTableFinished        = false;
+        /* 进入后设置为暂不需要读取上一章（本章读取完成后再使能），且为首次进入，读取未完成
+         */
+        needGeneratePrevChapterPageTable            = false;
+        firstTimeIntoGeneratingPrevChapterPageTable = true;
+        generatePrevChapterPageTableFinished        = false;
+    }
+    /* 本章已准备好，则亮灯提醒用户可翻页 */
+    if (generateCurChapterPageTableFinished == true) {
+        LED0(0);
+    }
 }
 
 void renderText(uint32_t offset)
@@ -1151,12 +1315,12 @@ void renderText(uint32_t offset)
     fillArea(((Obj*)readingArea)->x, ((Obj*)readingArea)->y,
              ((Obj*)readingArea)->width, ((Obj*)readingArea)->height,
              GUI_getBackColor());
-    if ((dirTableTail > 0) && (dirTableIndex > 0) &&
-        (dirTableTail > dirTableIndex)) {
-        textLenLimit = dirTable[dirTableIndex + 1] - curOffset;
-    } else {
-        textLenLimit = 4096;
-    }
+    // if ((dirTableTail > 0) && (dirTableIndex > 0) &&
+    //     (dirTableTail > dirTableIndex)) {
+    //     textLenLimit = dirTable[dirTableIndex + 1] - curOffset;
+    // } else {
+    //     textLenLimit = 4096;
+    // }
     str           = Show_Str(((Obj*)readingArea)->x, ((Obj*)readingArea)->y,
                              ((Obj*)readingArea)->width, ((Obj*)readingArea)->height,
                              page_buffer[0], textLenLimit, (FontName)fontNameSelect,
@@ -1173,7 +1337,7 @@ uint16_t getDirTableIndex(void)
 {
     uint16_t chapter = 0;
     for (uint16_t i = 0; i <= dirTableTail; ++i) {
-        if (dirTable[i] > curOffset) {
+        if (dirTable[i] > curHeadOffset) {
             chapter = i - 1;
             break;
         }
@@ -1188,8 +1352,28 @@ uint16_t getDirTableIndex(void)
  */
 void navigationBtnOnClicked(Button* button)
 {
-    if (button == buttonBack) {
+    if (button == buttonDir) {
+        LinkedNodeData data;
+        data.obj             = (Obj*)dirList;
+        LinkedNode* node_res = NULL;
+        if ((node_res = find_data(curTouchQueryQueue, &data)) == NULL) {
+            push_head(curTouchQueryQueue, &data);
+            chapterNameIndex = 0;
+            fillArea(((Obj*)dirList)->x, ((Obj*)dirList)->y,
+                     ((Obj*)dirList)->width, ((Obj*)dirList)->height,
+                     GUI_getBackColor());
+            copyChapterName();
+            refreshBtnName(dirList, chapterBtn, chapterName, DrawOption_Delay);
+            dirList->DrawList(dirList);
+        } else {
+            deleteNode(curTouchQueryQueue, node_res);
+            fillMainArea();
+            curOffset = curHeadOffset;
+            renderText(curOffset);
+        }
     } else if (button == buttonHome) {
+        LED0(1);
+        curOffset = curHeadOffset;
         renderHomePage();
         curTouchQueryQueue = &homeTouchQueryQueue;
     } else if (button == buttonSetting) {
@@ -1232,7 +1416,7 @@ void handleGenerationOfPrevChapterPageTable(void)
         firstTimeIntoGeneratingPrevChapterPageTable = false;
         x                                           = ((Obj*)readingArea)->x;
         y                                           = ((Obj*)readingArea)->y;
-        dirTableIndex                               = getDirTableIndex() - 1;
+        dirTableIndex                               = getDirTableIndex();
         prevChapterPageTable[++prevChapterPageTableTail] =
             generatingPrevChapterPageTableOffset = dirTable[dirTableIndex - 1];
     }
@@ -1455,7 +1639,7 @@ void handleGenerationOfDirTable(void)
 #endif
     } else {
         dirTable[++dirTableTail] =
-            f_tell(main_file) + 1; /* 目录表项的最大一项表示文件的最大偏移+1 */
+            f_tell(main_file); /* 目录表项的最大一项表示文件的最大偏移+1 */
         generateDirTableFinished = true;
     }
 END_OF_HANDLE_GENERATION_OF_DIR_TABLE:
