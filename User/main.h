@@ -150,6 +150,7 @@ void chapterBtnOnClicked(Button* button);
 void copyChapterName(void);
 void passChapterPageTableFromPrevToCur(void);
 void passChapterPageTableFromCurToPrev(void);
+uint16_t getDirTableIndex(void);
 #if ACTION_ONCE
 void excuteCommand(void);
 #endif

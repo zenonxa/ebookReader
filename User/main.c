@@ -280,7 +280,7 @@ int main(void)
                                 if (curChapterPageTableIndex >
                                     curChapterPageTableTail) {
                                     ++dirTableIndex; /* 下一章 */
-                                    passChapterPageTableFromPrevToCur();
+                                    passChapterPageTableFromCurToPrev();
                                     curOffset = dirTable[dirTableIndex];
                                 }
                                 log_n("Before paging down. Tail offset of the "
@@ -307,7 +307,7 @@ int main(void)
                                     !((dirTableIndex == dirTableHead) &&
                                       (curChapterPageTableIndex == 0))) {
                                     --dirTableIndex;
-                                    passChapterPageTableFromCurToPrev();
+                                    passChapterPageTableFromPrevToCur();
                                     curOffset = curChapterPageTable
                                         [curChapterPageTableTail];
                                     log_n("Before paging up. Head offset of "
@@ -344,7 +344,7 @@ int main(void)
 #    if 1
                 /* 查看当前dir指针偏移 */
                 char buf[30] = {0};
-                sprintf(buf, "%2d", chapterNameIndex);
+                sprintf(buf, "%2d", getDirTableIndex());
                 fillArea(0, 0, 50, 30, RGB888toRGB565(0xffffff));
                 Show_Str(0, 0, 50, 30, (uint8_t*)buf, strlen(buf), Font_SimSun,
                          PX24, 0, &isOverOnePage);
@@ -619,23 +619,86 @@ void chapterBtnOnClicked(Button* button)
         }
     }
     if (chapterNum <= dirTableTail) {
+        uint16_t       chapter_old = dirTableIndex;
         LinkedNodeData data;
         data.obj = (Obj*)dirList;
         deleteNode(curTouchQueryQueue, find_data(curTouchQueryQueue, &data));
         fillMainArea();
         log_n("Chapter jump. chapterNum: %d", chapterNum);
         curOffset = dirTable[chapterNum + dirTableHead];
+        LED0(1);
         renderText(curOffset);
         /* 根据原来的章节序号，确定是否需要更新本章页码表以及上一章页码表 */
-        
+        dirTableIndex = getDirTableIndex();
+        if (dirTableIndex > chapter_old) {
+            /* 如果是向后跳转，必须重新生成本章页码表 */
+            generateCurChapterPageTableFinished        = false;
+            firstTimeIntoGeneratingCurChapterPageTable = true;
+            needGenerateCurChapterPageTable            = true;
+            /* 如果是向后跳转到下一个章节，且本章页码表已生成完成，则将本章页码表传递给上一章页码表
+             */
+            /* 否则，要求跳转后重新生成上章页码表 */
+            if ((dirTableIndex == chapter_old + 1) &&
+                (generateCurChapterPageTableFinished == true)) {
+                passChapterPageTableFromCurToPrev();
+            } else {
+                generatePrevChapterPageTableFinished        = false;
+                firstTimeIntoGeneratingPrevChapterPageTable = true;
+            }
+        } else if (dirTableIndex < chapter_old) {
+            /* 如果是向前跳转到上一个章节，切上章页码表已生成完成，则将上章页码表传递给本章页码表
+             */
+            /* 否则，要求跳转后重新生成本章页码表 */
+            /* 如果是向前跳转，只要跳转后不是第一章，则要求生成上章页码表 */
+            if (dirTableIndex > dirTableHead) {
+                generatePrevChapterPageTableFinished        = false;
+                firstTimeIntoGeneratingPrevChapterPageTable = true;
+            }
+            if ((dirTableIndex == chapter_old - 1) &&
+                (generatePrevChapterPageTableFinished == true)) {
+                passChapterPageTableFromPrevToCur();
+                curChapterPageTableIndex = 0;
+            } else {
+                needGenerateCurChapterPageTable            = true;
+                firstTimeIntoGeneratingCurChapterPageTable = true;
+                generateCurChapterPageTableFinished        = false;
+            }
+            /* 由于need信号在本章页码表生成算法结尾执行，故要考虑设置信号的时机 */
+            if (generateCurChapterPageTableFinished == true) {
+                needGeneratePrevChapterPageTable = true;
+            }
+        }
     }
 }
 
 /**
- * @description: 
+ * @description:
  * @return {void}
  */
 void passChapterPageTableFromPrevToCur(void)
+{
+    swapVal(&curChapterPageTable, &prevChapterPageTable,
+            ValType_UINT32_POINTER);
+    curChapterPageTableIndex = curChapterPageTableTail =
+        prevChapterPageTableTail;
+    prevChapterPageTableTail            = -1;
+    prevChapterPageTableIndex           = 0;
+    needGenerateCurChapterPageTable     = false;
+    generateCurChapterPageTableFinished = true;
+    if (dirTableIndex > dirTableHead) {
+        /* 如果不是第一章，则需重新生成上章页码表 */
+        needGeneratePrevChapterPageTable            = true;
+        firstTimeIntoGeneratingPrevChapterPageTable = true;
+        generatePrevChapterPageTableFinished        = false;
+        LED0(1);
+    }
+}
+
+/**
+ * @description:
+ * @return {void}
+ */
+void passChapterPageTableFromCurToPrev(void)
 {
     prevChapterPageTableTail  = curChapterPageTableTail;
     prevChapterPageTableIndex = prevChapterPageTableTail;
@@ -643,32 +706,14 @@ void passChapterPageTableFromPrevToCur(void)
     curChapterPageTableIndex  = 0;
     swapVal(&curChapterPageTable, &prevChapterPageTable,
             ValType_UINT32_POINTER);
+    /* 不需要重新生成上一章页码表 */
+    needGeneratePrevChapterPageTable     = false;
+    generatePrevChapterPageTableFinished = true;
+    /* 需要重新生成本章页码表 */
     needGenerateCurChapterPageTable            = true;
-    needGeneratePrevChapterPageTable           = false;
-    generatePrevChapterPageTableFinished       = true;
     firstTimeIntoGeneratingCurChapterPageTable = true;
     generateCurChapterPageTableFinished        = false;
     LED0(1);
-}
-
-/**
- * @description: 
- * @return {void}
- */
-void passChapterPageTableFromCurToPrev(void)
-{
-    swapVal(&curChapterPageTable, &prevChapterPageTable,
-            ValType_UINT32_POINTER);
-    curChapterPageTableIndex = curChapterPageTableTail =
-        prevChapterPageTableTail;
-    prevChapterPageTableTail  = -1;
-    prevChapterPageTableIndex = 0;
-    if (dirTableIndex > dirTableHead) {
-        needGeneratePrevChapterPageTable            = true;
-        firstTimeIntoGeneratingPrevChapterPageTable = true;
-        generatePrevChapterPageTableFinished        = false;
-        LED0(1);
-    }
 }
 
 void LED_Toggle(void)
@@ -1315,12 +1360,12 @@ void renderText(uint32_t offset)
     fillArea(((Obj*)readingArea)->x, ((Obj*)readingArea)->y,
              ((Obj*)readingArea)->width, ((Obj*)readingArea)->height,
              GUI_getBackColor());
-    // if ((dirTableTail > 0) && (dirTableIndex > 0) &&
-    //     (dirTableTail > dirTableIndex)) {
-    //     textLenLimit = dirTable[dirTableIndex + 1] - curOffset;
-    // } else {
-    //     textLenLimit = 4096;
-    // }
+    if ((dirTableTail > 0) && (dirTableIndex > 0) &&
+        (dirTableTail > dirTableIndex)) {
+        textLenLimit = dirTable[dirTableIndex + 1] - curOffset;
+    } else {
+        textLenLimit = 4096;
+    }
     str           = Show_Str(((Obj*)readingArea)->x, ((Obj*)readingArea)->y,
                              ((Obj*)readingArea)->width, ((Obj*)readingArea)->height,
                              page_buffer[0], textLenLimit, (FontName)fontNameSelect,
@@ -1387,22 +1432,29 @@ void handleGenerationOfCurChapterPageTable(void)
     static uint16_t x                                   = 0;
     static uint16_t y                                   = 0;
     static uint32_t generatingCurChapterPageTableOffset = 0;
-    if (firstTimeIntoGeneratingCurChapterPageTable == true) {
-        firstTimeIntoGeneratingCurChapterPageTable = false;
-        x                                          = ((Obj*)readingArea)->x;
-        y                                          = ((Obj*)readingArea)->y;
-        /* 更新当前章序号 */
-        dirTableIndex = getDirTableIndex();
-        curChapterPageTable[++curChapterPageTableTail] =
-            generatingCurChapterPageTableOffset = dirTable[dirTableIndex];
+    if (generateCurChapterPageTableFinished == false) {
+        if (firstTimeIntoGeneratingCurChapterPageTable == true) {
+            firstTimeIntoGeneratingCurChapterPageTable = false;
+            x                                          = ((Obj*)readingArea)->x;
+            y                                          = ((Obj*)readingArea)->y;
+            curChapterPageTableTail                    = -1;
+            curChapterPageTableIndex                   = 0;
+            /* 更新当前章序号 */
+            dirTableIndex = getDirTableIndex();
+            curChapterPageTable[++curChapterPageTableTail] =
+                generatingCurChapterPageTableOffset = dirTable[dirTableIndex];
+        }
+        handleGenerationOfChapterPageTable(
+            &x, &y, &generatingCurChapterPageTableOffset,
+            dirTable[dirTableIndex + 1], &generateCurChapterPageTableFinished,
+            curChapterPageTable, &curChapterPageTableTail);
     }
-    handleGenerationOfChapterPageTable(
-        &x, &y, &generatingCurChapterPageTableOffset,
-        dirTable[dirTableIndex + 1], &generateCurChapterPageTableFinished,
-        curChapterPageTable, &curChapterPageTableTail);
+    /* 本章页码表生成完成后，若上章页码表未生成完成，且此时不在首章，则设置需要生成上章页码表的信号
+     */
     if ((generateCurChapterPageTableFinished == true) &&
-        (dirTableIndex != dirTableHead) &&
-        (needGeneratePrevChapterPageTable == false)) {
+        (generatePrevChapterPageTableFinished == false) &&
+        (dirTableIndex != dirTableHead)
+        /*&& (needGeneratePrevChapterPageTable == false)*/) {
         needGeneratePrevChapterPageTable = true;
     }
 }
@@ -1416,6 +1468,7 @@ void handleGenerationOfPrevChapterPageTable(void)
         firstTimeIntoGeneratingPrevChapterPageTable = false;
         x                                           = ((Obj*)readingArea)->x;
         y                                           = ((Obj*)readingArea)->y;
+        prevChapterPageTableTail                    = -1;
         dirTableIndex                               = getDirTableIndex();
         prevChapterPageTable[++prevChapterPageTableTail] =
             generatingPrevChapterPageTableOffset = dirTable[dirTableIndex - 1];
@@ -1424,6 +1477,9 @@ void handleGenerationOfPrevChapterPageTable(void)
         &x, &y, &generatingPrevChapterPageTableOffset, dirTable[dirTableIndex],
         &generatePrevChapterPageTableFinished, prevChapterPageTable,
         &prevChapterPageTableTail);
+    // if (generatePrevChapterPageTableFinished == true) {
+    //     prevChapterPageTableIndex = prevChapterPageTableTail;
+    // }
 }
 
 /**
