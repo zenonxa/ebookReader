@@ -150,11 +150,13 @@ COLOR_DATTYPE GUI_getForeColor(void);
 void          GUI_setBackColor(COLOR_DATTYPE color);
 COLOR_DATTYPE GUI_getBackColor(void);
 uint16_t      GUI_GetXORColor(uint16_t color);
-void          GUI_DrawStr(Obj* obj, const char* str);
+void          GUI_DrawStr(Obj* obj, const char* str, AlignType* pAlignType);
 bool          GUI_isTarget(Obj* obj, Position* point);
 bool          GUI_GetBorderFlag(Obj* obj, BorderFlagBit botderFlagBit);
 void          draw_widget(Obj* obj);
-void          drawBorder(Obj* obj, Border* border);
+void          drawBorder_base(Obj* obj, Border* border, COLOR_DATTYPE color);
+void          drawBorder(Obj* obj);
+void          clearBorder(Obj* obj);
 bool          checkBoundary(uint16_t x,
                             uint16_t y,
                             uint16_t width,
@@ -171,10 +173,20 @@ void          setPublicAlignType(AlignHorizonalType horizonal,
                                  AlignVerticalType  vertical);
 Border*       getObjBorder(Obj* obj);
 void          ObjSkin(Obj* obj);
-void fillArea(u16 x, u16 y, u16 width, u16 height, COLOR_DATTYPE color);
-bool GUI_isInArea(uint16_t  x,
-                  uint16_t  y,
-                  uint16_t  width,
-                  uint16_t  height,
-                  Position* pos);
+void    fillArea(u16 x, u16 y, u16 width, u16 height, COLOR_DATTYPE color);
+bool    GUI_isInArea(uint16_t  x,
+                     uint16_t  y,
+                     uint16_t  width,
+                     uint16_t  height,
+                     Position* pos);
+Border* getBorder(Obj* obj);
+void    drawSelectBox_base(Obj*          obj,
+                           uint16_t      boxBorderWidth,
+                           uint16_t      space,
+                           COLOR_DATTYPE boxBorderColor);
+void    drawSelectBox(Obj*          obj,
+                      uint16_t      boxBorderWidth,
+                      uint16_t      space,
+                      COLOR_DATTYPE boxBorderColor);
+void    clearSelectBox(Obj* obj, uint16_t boxBorderWidth, uint16_t space);
 #endif

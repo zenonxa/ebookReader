@@ -60,7 +60,7 @@ void DrawListDefault(List* list)
     uint16_t    x       = ((Obj*)list)->x;
     uint16_t    y       = ((Obj*)list)->y;
     LinkedNode* subList = list->itemList->head;
-    drawBorder((Obj*)list, &list->border);
+    drawBorder((Obj*)list);
     LinkedNode* node = subList->nodeData.subList.head;
     if (list->headlineTextarea) {
         if (!checkBoundary(x, y, ((Obj*)list)->width, list->headlineHeight,
@@ -154,7 +154,13 @@ void AppendSubListItem(List* list, uint16_t index, Obj* obj)
         obj->y += y;
         obj->locateType = LocateType_Absolute;
     }
-    push_tail(&node->nodeData.subList, &data);
+    // if ((obj->x >= ((Obj*)list)->x) &&
+    //     (obj->x < ((Obj*)list)->x + ((Obj*)list)->width) &&
+    //     (obj->y >= ((Obj*)list)->y) &&
+    //     (obj->y < ((Obj*)list)->y + ((Obj*)list)->height)) 
+        {
+        push_tail(&node->nodeData.subList, &data);
+    }
 }
 
 void drawDividingLineOnCursor(List* list, uint16_t x, uint16_t y)
@@ -171,7 +177,8 @@ void drawDividingLine(List* list, uint16_t* pX, uint16_t* pY, uint8_t height)
 {
     *pY += height;
     if (list->dividingLineHeight > 0) {
-        uint16_t color = RGB888toRGB565(0x325543);
+        // uint16_t color = RGB888toRGB565(0x325543);
+        uint16_t color = RGB565_WHITE - GUI_getBackColor();
         atk_md0700_fill(*pX, *pY, *pX + ((Obj*)list)->width - 1,
                         *pY + list->dividingLineHeight - 1, &color,
                         SINGLE_COLOR_BLOCK);

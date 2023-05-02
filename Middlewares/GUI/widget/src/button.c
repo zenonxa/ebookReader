@@ -17,7 +17,7 @@ void Obj_Skin_base(Obj* obj, COLOR_DATTYPE color);
 void draw_ButtonBorder(Button* button);
 void BtDefaultText(Button* button);
 void BtText(Button* button);
-void OnClickedDefault(void);
+void ButtonOnClickedDefault(void);
 
 Button* NewButton(u16        xpos,
                   u16        ypos,
@@ -48,7 +48,7 @@ Button* NewButton(u16        xpos,
     if (OnClicked) {
         button->OnClicked = OnClicked;
     } else {
-        button->OnClicked = &OnClickedDefault;
+        button->OnClicked = &ButtonOnClickedDefault;
     }
     return button;
 }
@@ -86,7 +86,7 @@ void Obj_SkinPressed(Obj* obj)
 
 void Obj_SkinUnPressed(Obj* obj)
 {
-    Obj_Skin_base(obj, RGB888toRGB565(0xffffff));
+    Obj_Skin_base(obj, GUI_getBackColor());
 }
 
 void Obj_Skin_base(Obj* obj, COLOR_DATTYPE color)
@@ -97,7 +97,7 @@ void Obj_Skin_base(Obj* obj, COLOR_DATTYPE color)
 
 void draw_ButtonBorder(Button* button)
 {
-    drawBorder((Obj*)button, &button->border);
+    drawBorder((Obj*)button);
 }
 
 void BtDefaultText(Button* button)
@@ -109,6 +109,9 @@ void BtText(Button* button)
 {
     // u16 length;
     if (button->str != 0) {
+        FontName fontName = GUI_GetFontName();
+        FontSize fontSize = GUI_GetFontSize();
+        COLOR_DATTYPE foreColor = GUI_getForeColor();
         GUI_SetFontName((FontName)button->font.fontName);
         GUI_SetFontSize((FontSize)button->font.fontSize);
         // length = strlen(button->str);
@@ -124,12 +127,15 @@ void BtText(Button* button)
         //              ((Obj*)button)->width, 1);
         setPublicAlignType(button->alignType.horizonal,
                            button->alignType.vertical);
-        GUI_DrawStr(&button->obj, button->str);
+        GUI_DrawStr(&button->obj, button->str, &publicAlignType);
         // CUIGUI_DrawStr(((Obj*)button)->x + (((Obj*)button)->width - length) /
         // 2,
         //                ((Obj*)button)->y +
         //                    (((Obj*)button)->height - button->fontSize) / 2,
         //                button->fontColor, button->str);
+        GUI_SetFontName(fontName);
+        GUI_SetFontSize(fontSize);
+        GUI_setForeColor(foreColor);
     }
 }
 
@@ -159,7 +165,7 @@ void ButtonSetStr(Button* button, const char* str)
     button->DrawButton(button);
 }
 
-void OnClickedDefault(void)
+void ButtonOnClickedDefault(void)
 {
     ;
 }

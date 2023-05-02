@@ -71,6 +71,25 @@ typedef enum {
 typedef enum {
     FAT_DRV_SDCARD = 0,
 } FatfsLogicDriverNumber;
+
+/* 公共设备配置 */
+typedef struct
+{
+    uint8_t  fontNameSelect;
+    uint8_t  fontSizeSelect;
+    COLOR_DATTYPE foreColor;
+    COLOR_DATTYPE backColor;
+} DeviceData;
+
+/* 图书配置 */
+typedef struct
+{
+    uint32_t bookmark; /* 书签位置 */
+    // uint32_t* dirTable; /* 目录表 */
+    uint32_t dirTableTail;
+    uint32_t dirTableOffset;
+    uint32_t dirTableFinished;
+} EbookData;
 /********************************************************/
 
 /********************************************************************************************/
@@ -109,48 +128,67 @@ void mount_SD_Card(void);
 void LED_Toggle(void);
 void LED_flashing(
     uint16_t time_span_ms); /* LED0 and LED1, flashing as the given time span */
-void   show_logo(uint8_t* logoPicture, uint16_t delayTime_ms);
-void   fillMainArea(void);
-Obj*   touchQuery(LinkedList* queryQueue, Position* pos);
-Obj*   touchSubQuery(LinkedList* querySubQueue, Position* pos);
-Obj*   touchQueryForWidget(LinkedList* touchQueryQueue, Position* pos);
-void   updateWidgetStateOnTouch(Obj* obj, TouchState state);
-void   refreshBtnName(List*      list,
-                       Button**   booknameBtn,
-                       char**     bookname,
-                       DrawOption drawOption);
-void   CopyBookname(DIR* dir, uint8_t limit, char** bookname, bool forward);
-void   readDirRevese(DIR* dir, uint8_t limit);
-void   bookshelfBtnOnClicked(Button* bookBtn);
-void   navigationBtnOnClicked(Button* button);
-WCHAR* wchncpy(WCHAR* dest, WCHAR* src, int cnt);
-WCHAR* convert_GB2312_to_Unicode(WCHAR* pUnicode, char* pGB2312);
-char*  convert_Unicode_to_GB2312(char* pGB2312, WCHAR* pUnicode);
-void   renderHomePage(void);
-void   InitForMain(void);
-void   createNavigationBar(void);
-void   createBookshelf(void);
-void   createReadingArea(void);
-void   createBooknameBuffer(void);
-void   CreatePageIndex(char* filePath);
-void   clearReadingArea(void);
-void   renderText(uint32_t offset);
-void   handleGenerationOfCurChapterPageTable(void);
-void   handleGenerationOfPrevChapterPageTable(void);
-void   handleGenerationOfChapterPageTable(uint16_t* x,
-                                          uint16_t* y,
-                                          uint32_t* pOffset,
-                                          uint32_t  offsetLimit,
-                                          bool*     finishedFlag,
-                                          uint32_t* pageTable,
-                                          uint32_t* pageTableIndex);
-void   handleGenerationOfDirTable(void);
-void createDirList(void);
-void chapterBtnOnClicked(Button* button);
-void copyChapterName(void);
-void passChapterPageTableFromPrevToCur(void);
-void passChapterPageTableFromCurToPrev(void);
+void     show_logo(uint8_t* logoPicture, uint16_t delayTime_ms);
+void     fillMainArea(COLOR_DATTYPE color);
+Obj*     touchQuery(LinkedList* queryQueue, Position* pos);
+Obj*     touchSubQuery(LinkedList* querySubQueue, Position* pos);
+Obj*     touchQueryForWidget(LinkedList* touchQueryQueue, Position* pos);
+void     updateWidgetStateOnTouch(Obj* obj, TouchState state);
+void     refreshBtnName(List*      list,
+                        Button**   booknameBtn,
+                        char**     bookname,
+                        DrawOption drawOption);
+void     CopyBookname(DIR* dir, uint8_t limit, char** bookname, bool forward);
+void     readDirRevese(DIR* dir, uint8_t limit);
+void     bookshelfBtnOnClicked(Button* bookBtn);
+void     navigationBtnOnClicked(Button* button);
+WCHAR*   wchncpy(WCHAR* dest, WCHAR* src, int cnt);
+WCHAR*   convert_GB2312_to_Unicode(WCHAR* pUnicode, char* pGB2312);
+char*    convert_Unicode_to_GB2312(char* pGB2312, WCHAR* pUnicode);
+void     renderHomePage(void);
+void     InitForMain(void);
+void     createNavigationBar(void);
+void     createBookshelf(void);
+void     createReadingArea(void);
+void     createBooknameBuffer(void);
+void     CreatePageIndex(char* filePath);
+void     clearReadingArea(void);
+void     createSettingMenu(void);
+void     renderText(uint32_t offset);
+void     handleGenerationOfCurChapterPageTable(void);
+void     handleGenerationOfPrevChapterPageTable(void);
+void     handleGenerationOfChapterPageTable(uint16_t* x,
+                                            uint16_t* y,
+                                            uint32_t* pOffset,
+                                            uint32_t  offsetLimit,
+                                            bool*     finishedFlag,
+                                            uint32_t* pageTable,
+                                            uint32_t* pageTableIndex);
+void     handleGenerationOfDirTable(void);
+void     createDirList(void);
+void     chapterBtnOnClicked(Button* button);
+void     copyChapterName(void);
+void     passChapterPageTableFromPrevToCur(void);
+void     passChapterPageTableFromCurToPrev(void);
 uint16_t getDirTableIndex(void);
+void settingMenuBtnOnClicked(Button* button);
+void createSettingMenuBtn(Button** btnArr,
+                          uint16_t btnCnt,
+                          uint16_t startX,
+                          uint16_t restWidth,
+                          uint16_t btnWidth,
+                          uint16_t btnHeight,
+                          uint16_t lineIndex);
+uint16_t getColorIndex(COLOR_DATTYPE* colorArr, uint16_t colorCnt, uint16_t color);
+void createSettingMenuTa(Textarea**     taArr,
+                         uint16_t       taCnt,
+                         COLOR_DATTYPE* colorArr,
+                         uint16_t       startX,
+                         uint16_t       restWidth,
+                         uint16_t       taWidth,
+                         uint16_t       taHeight,
+                         uint16_t       lineIndex);
+void settingMenuTaOnClicked(Textarea* textarea);
 #if ACTION_ONCE
 void excuteCommand(void);
 #endif

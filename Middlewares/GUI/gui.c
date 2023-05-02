@@ -25,11 +25,19 @@ void fillArea(u16 x, u16 y, u16 width, u16 height, COLOR_DATTYPE color);
 
 void GUI_setForeColor(COLOR_DATTYPE color)
 {
+    // COLOR_DATTYPE backColor = GUI_getBackColor();
+    // if (color == backColor) {
+    //     GUI_setBackColor(RGB565_WHITE-backColor);
+    // }
     *pGUI_FOREGROUND_COLOR = color;
 }
 
 void GUI_setBackColor(COLOR_DATTYPE color)
 {
+    // COLOR_DATTYPE foreColor = GUI_getForeColor();
+    // if (color == foreColor) {
+    //     GUI_setForeColor(RGB565_WHITE-foreColor);
+    // }
     *pGUI_BACKGROUND_COLOR = color;
 }
 
@@ -67,14 +75,14 @@ uint16_t GUI_GetXORColor(uint16_t color)
     return (0xffff - color);
 }
 
-void GUI_DrawStr(Obj* obj, const char* str)
+void GUI_DrawStr(Obj* obj, const char* str, AlignType* pAlignType)
 {
     uint16_t x       = obj->x;
     uint16_t y       = obj->y;
     uint16_t len     = getSize(GUI_GetFontSize()) / 2 * strlen(str);
     uint16_t lineCnt = len / obj->width + (len % obj->width ? 1 : 0);
     if (len <= obj->width) {
-        switch (publicAlignType.horizonal) {
+        switch (pAlignType->horizonal) {
             case AlignHorizonalType_LEFT: x = obj->x; break;
             case AlignHorizonalType_RIGHT: x = obj->x + obj->width - len; break;
             case AlignHorizonalType_CENTER:
@@ -84,7 +92,7 @@ void GUI_DrawStr(Obj* obj, const char* str)
         }
     }
     if (lineCnt * getSize(GUI_GetFontSize()) <= obj->height) {
-        switch (publicAlignType.vertical) {
+        switch (pAlignType->vertical) {
             case AlignVerticalType_TOP: y = obj->y; break;
             case AlignVerticalType_BOTTOM:
                 y = obj->y + obj->height - lineCnt * getSize(GUI_GetFontSize());
@@ -105,8 +113,8 @@ void GUI_DrawStr(Obj* obj, const char* str)
     // }
     // Show_Str_Mid(x, y, obj->width, obj->height, (uint8_t*)str,
     //              GUI_GetFontName(), GUI_GetFontSize(), obj->width, 1);
-    Show_Str(x, y, obj->width, obj->height, (uint8_t*)str, strlen(str), GUI_GetFontName(),
-             GUI_GetFontSize(), 1, &isOverOnePage);
+    Show_Str(x, y, obj->width, obj->height, (uint8_t*)str, strlen(str),
+             GUI_GetFontName(), GUI_GetFontSize(), 1, &isOverOnePage);
 }
 
 bool GUI_isTarget(Obj* obj, Position* point)
@@ -124,8 +132,13 @@ bool GUI_isTarget(Obj* obj, Position* point)
     return GUI_isInArea(obj->x, obj->y, obj->width, obj->height, point);
 }
 
-bool GUI_isInArea(uint16_t x, uint16_t y, uint16_t width, uint16_t height, Position* pos) {
-    bool res = false;
+bool GUI_isInArea(uint16_t  x,
+                  uint16_t  y,
+                  uint16_t  width,
+                  uint16_t  height,
+                  Position* pos)
+{
+    bool     res  = false;
     uint16_t xMin = x;
     uint16_t xMax = x + width - 1;
     uint16_t yMin = y;
@@ -148,13 +161,32 @@ void draw_widget(Obj* obj)
 {
     switch (obj->type) {
         case Obj_Type_Button: ((Button*)obj)->DrawButton((Button*)obj); break;
+        case Obj_Type_Textarea:
+            ((Textarea*)obj)->DrawTextarea((Textarea*)obj);
+            break;
         default: break;
     }
 }
 
-void drawBorder(Obj* obj, Border* border)
+void drawBorder(Obj* obj)
 {
-    uint16_t borderColor = border->borderColor;
+    Border* border = getBorder(obj);
+    if (border != NULL) {
+        drawBorder_base(obj, border, border->borderColor);
+    }
+}
+
+void clearBorder(Obj* obj)
+{
+    Border* border = getBorder(obj);
+    if (border != NULL) {
+        drawBorder_base(obj, border, GUI_getBackColor());
+    }
+}
+
+void drawBorder_base(Obj* obj, Border* border, COLOR_DATTYPE color)
+{
+    uint16_t borderColor = color;
     uint16_t borderWidth = border->borderWidth;
     int16_t  startX, startY;
     int16_t  endX, endY;
@@ -227,6 +259,18 @@ void drawBorder(Obj* obj, Border* border)
     }
 }
 
+Border* getBorder(Obj* obj)
+{
+    Border* border = NULL;
+    switch (obj->type) {
+        case Obj_Type_Button: border = &((Button*)obj)->border; break;
+        case Obj_Type_List: border = &((List*)obj)->border; break;
+        case Obj_Type_Textarea: border = &((Textarea*)obj)->border; break;
+        default: break;
+    }
+    return border;
+}
+
 bool checkBoundary(uint16_t x,
                    uint16_t y,
                    uint16_t width,
@@ -291,4 +335,88 @@ void fillArea(u16 x, u16 y, u16 width, u16 height, COLOR_DATTYPE color)
 {
     atk_md0700_fill(x, y, x + width - 1, y + height - 1, &color,
                     SINGLE_COLOR_BLOCK);
+}
+
+void drawSelectBox(Obj*          obj,
+                   uint16_t      boxBorderWidth,
+                   uint16_t      space,
+                   COLOR_DATTYPE boxBorderColor)
+{
+    drawSelectBox_base(obj, boxBorderWidth, space, boxBorderColor);
+}
+
+void clearSelectBox(Obj* obj, uint16_t boxBorderWidth, uint16_t space)
+{
+    drawSelectBox_base(obj, boxBorderWidth, space, GUI_getBackColor());
+}
+
+void drawSelectBox_base(Obj*          obj,
+                        uint16_t      boxBorderWidth,
+                        uint16_t      space,
+                        COLOR_DATTYPE boxBorderColor)
+{
+    int16_t  startX = 0, endX = 0;
+    int16_t  startY = 0, endY = 0;
+    int16_t  x = obj->x, y = obj->y;
+    uint16_t width  = obj->width;
+    uint16_t height = obj->height;
+    if (GUI_GetBorderFlag(obj, BORDER_TOP) ||
+        GUI_GetBorderFlag(obj, BORDER_LEFT) ||
+        GUI_GetBorderFlag(obj, BORDER_RIGHT) ||
+        GUI_GetBorderFlag(obj, BORDER_BOTTOM)) {
+        uint16_t borderWidth = getBorder(obj)->borderWidth;
+        x -= borderWidth;
+        y -= borderWidth;
+        width += borderWidth * 2;
+        height += borderWidth * 2;
+    }
+    x -= space;
+    y -= space;
+    width += space * 2;
+    height += space * 2;
+    if (y > 0) {
+        startX = ((x - boxBorderWidth) >= 0) ? (x - boxBorderWidth) : 0;
+        startY = ((y - boxBorderWidth) >= 0) ? (y - boxBorderWidth) : 0;
+        endX   = ((x + width + boxBorderWidth) <= ATK_MD0700_LCD_WIDTH) ?
+                     (x + width + boxBorderWidth) :
+                     (ATK_MD0700_LCD_WIDTH - 1);
+        endY   = y - 1;
+        atk_md0700_fill(startX, startY, endX, endY, &boxBorderColor,
+                        SINGLE_COLOR_BLOCK);
+    }
+    if (x > 0) {
+        startX = ((x - boxBorderWidth) >= 0) ? (x - boxBorderWidth) : 0;
+        startY = ((y - boxBorderWidth) >= 0) ? (y - boxBorderWidth) : 0;
+        endX   = x - 1;
+        endY   = ((y + height + boxBorderWidth) <= ATK_MD0700_LCD_HEIGHT) ?
+                     ((y + height + boxBorderWidth)) :
+                     (ATK_MD0700_LCD_HEIGHT - 1);
+        atk_md0700_fill(startX, startY, endX, endY, &boxBorderColor,
+                        SINGLE_COLOR_BLOCK);
+    }
+
+    if (x + width <= ATK_MD0700_LCD_WIDTH) {
+        startX = x + width;
+        startY = ((y - boxBorderWidth) >= 0) ? (y - boxBorderWidth) : 0;
+        endX   = ((x + width + boxBorderWidth) <= ATK_MD0700_LCD_WIDTH) ?
+                     (x + width + boxBorderWidth) :
+                     (ATK_MD0700_LCD_WIDTH - 1);
+        endY   = ((y + height + boxBorderWidth) <= ATK_MD0700_LCD_HEIGHT) ?
+                     ((y + height + boxBorderWidth)) :
+                     (ATK_MD0700_LCD_HEIGHT - 1);
+        atk_md0700_fill(startX, startY, endX, endY, &boxBorderColor,
+                        SINGLE_COLOR_BLOCK);
+    }
+    if (y + height <= ATK_MD0700_LCD_HEIGHT) {
+        startX = ((x - boxBorderWidth) >= 0) ? (x - boxBorderWidth) : 0;
+        startY = y + height;
+        endX   = ((x + width + boxBorderWidth) <= ATK_MD0700_LCD_WIDTH) ?
+                     (x + width + boxBorderWidth) :
+                     (ATK_MD0700_LCD_WIDTH - 1);
+        endY   = ((y + height + boxBorderWidth) <= ATK_MD0700_LCD_HEIGHT) ?
+                     ((y + height + boxBorderWidth)) :
+                     (ATK_MD0700_LCD_HEIGHT - 1);
+        atk_md0700_fill(startX, startY, endX, endY, &boxBorderColor,
+                        SINGLE_COLOR_BLOCK);
+    }
 }
