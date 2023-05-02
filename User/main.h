@@ -75,8 +75,8 @@ typedef enum {
 /* 公共设备配置 */
 typedef struct
 {
-    uint8_t  fontNameSelect;
-    uint8_t  fontSizeSelect;
+    uint8_t  fontName;
+    uint8_t  fontSize;
     COLOR_DATTYPE foreColor;
     COLOR_DATTYPE backColor;
 } DeviceData;

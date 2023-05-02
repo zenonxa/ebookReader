@@ -6,7 +6,7 @@
 typedef struct Textarea
 {
     Obj   obj;
-    char* str;
+    const char* str;
     void (*DrawTextarea)(struct Textarea*);
     void (*OnClicked)(struct Textarea*);
     Border        border;

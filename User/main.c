@@ -13,10 +13,10 @@ extern FILINFO fileinfo;   // file information
 extern DIR     dir;        // directory
 
 DeviceData g_deviceData = {
-    .fontNameSelect = Font_SimSun,
-    .fontSizeSelect = PX32,
-    .foreColor      = RGB888toRGB565(0x000000),
-    .backColor      = RGB888toRGB565(0xffffff),
+    .fontName  = Font_SimSun,
+    .fontSize  = PX32,
+    .foreColor = RGB888toRGB565(0x000000),
+    .backColor = RGB888toRGB565(0xffffff),
 };
 
 EbookData g_ebookData = {
@@ -62,17 +62,30 @@ const uint16_t selectBoxBorderColor    = RGB888toRGB565(0xcccccc);
 const uint8_t  settingMenuForeColorCnt = 5;
 const uint8_t  settingMenuBackColorCnt = 5;
 const uint8_t  settingMenuOperationCnt = 2;
-Button*        fontNameBtn[Font_Name_Cnt];     /* SimSun KaiTi SimHei */
-Button*        fontSizeBtn[Font_Size_Cnt - 1]; /* PX16 PX24 PX32*/
+Textarea*      fontNameTa[Font_Name_Cnt];     /* SimSun KaiTi SimHei */
+Textarea*      fontSizeTa[Font_Size_Cnt - 1]; /* PX16 PX24 PX32*/
 char           fontSizeStr[3][6];
 Textarea*      foreColorTa[settingMenuForeColorCnt];
 Textarea*      backColorTa[settingMenuForeColorCnt];
-COLOR_DATTYPE  foreColor[settingMenuForeColorCnt] = {
+COLOR_DATTYPE  fontNameTaBackColor[Font_Name_Cnt] = {
+    RGB565_WHITE,
+    RGB565_WHITE,
+    RGB565_WHITE,
+};
+COLOR_DATTYPE fontSizeTaBackColor[Font_Size_Cnt - 1] = {
+    RGB565_WHITE,
+    RGB565_WHITE,
+    RGB565_WHITE,
+};
+COLOR_DATTYPE foreColor[settingMenuForeColorCnt] = {
     RGB565_BLACK, RGB565_RED, RGB565_GREEN, RGB565_BLUE, RGB565_WHITE,
 };
 COLOR_DATTYPE backColor[settingMenuBackColorCnt] = {
-    RGB565_BLACK, RGB565_RED, RGB565_GREEN, RGB565_BLUE, RGB565_WHITE,
+    RGB565_WHITE, RGB565_BLUE, RGB565_GREEN, RGB565_RED, RGB565_BLACK,
 };
+/* 操作按钮
+ *  0：应用
+ *  1：取消 */
 Button* operationBtn[settingMenuOperationCnt];
 char    operationStr[settingMenuOperationCnt][6];
 /* 阅读区域 */
@@ -203,8 +216,8 @@ int main(void)
         ((Obj*)readingArea)->x + ((Obj*)readingArea)->width - 1;
     uint16_t preRenderYLimit =
         ((Obj*)readingArea)->y + ((Obj*)readingArea)->height - 1;
-    fontNameSelect  = g_deviceData.fontNameSelect;
-    fontSizeSelect  = g_deviceData.fontSizeSelect;
+    fontNameSelect  = g_deviceData.fontName;
+    fontSizeSelect  = g_deviceData.fontSize;
     foreColorSelect = g_deviceData.foreColor;
     backColorSelect = g_deviceData.backColor;
 
@@ -712,21 +725,27 @@ void createSettingMenu(void)
     AppendSubListItem(settingMenu, 2, (Obj*)foreColorTA);
     AppendSubListItem(settingMenu, 3, (Obj*)backColorTA);
     /* 创建设置菜单按钮 */
-    createSettingMenuBtn(fontNameBtn, Font_Name_Cnt, startX, restWidth,
-                         btnWidth, btnHeight, 0);
+    createSettingMenuTa(fontNameTa, Font_Name_Cnt, fontNameTaBackColor, startX,
+                        restWidth, btnWidth, btnHeight, 0);
+    // createSettingMenuBtn(fontNameTa, Font_Name_Cnt, startX, restWidth,
+    // btnWidth,
+    //                      btnHeight, 0);
     for (uint8_t i = Font_Name_Min; i < Font_Name_Cnt; ++i) {
-        fontNameBtn[i]->str = fontNameStr[i];
+        fontNameTa[i]->str = (const char*)fontNameStr[i];
     }
-    createSettingMenuBtn(fontSizeBtn, Font_Size_Cnt - 1, startX, restWidth,
-                         btnWidth, btnHeight, 1);
+
+    // createSettingMenuBtn(fontSizeTa, Font_Size_Cnt - 1, startX, restWidth,
+    //                      btnWidth, btnHeight, 1);
+    createSettingMenuTa(fontSizeTa, Font_Size_Cnt - 1, fontSizeTaBackColor,
+                        startX, restWidth, btnWidth, btnHeight, 1);
     for (uint8_t i = PX16 - 1; i < Font_Size_Cnt - 1; ++i) {
         sprintf(fontSizeStr[i], "%d%s", getSize(i + 1), fontSizeStr_HAO);
-        fontSizeBtn[i]->str = fontSizeStr[i];
+        fontSizeTa[i]->str = fontSizeStr[i];
     }
     createSettingMenuTa(foreColorTa, settingMenuForeColorCnt, foreColor, startX,
                         restWidth, btnWidth * 9 / 10, (btnHeight - 5) * 9 / 10,
                         2);
-    createSettingMenuTa(backColorTa, settingMenuForeColorCnt, foreColor, startX,
+    createSettingMenuTa(backColorTa, settingMenuForeColorCnt, backColor, startX,
                         restWidth, btnWidth * 9 / 10, (btnHeight - 5) * 9 / 10,
                         3);
     // createSettingMenuBtn(foreColorTa, settingMenuForeColorCnt, startX,
@@ -867,33 +886,80 @@ void chapterBtnOnClicked(Button* button)
 void settingMenuBtnOnClicked(Button* button)
 {
     Button* curSelectBtn = NULL;
-    curSelectBtn         = fontNameBtn[fontNameSelect];
+#if 0
+    curSelectBtn         = fontNameTa[fontNameSelect];
     for (uint8_t i = Font_Name_Min; i < Font_Name_Cnt; ++i) {
-        if ((fontNameBtn[i] == button) && (curSelectBtn != button)) {
+        if ((fontNameTa[i] == button) && (curSelectBtn != button)) {
             clearSelectBox((Obj*)curSelectBtn, selectBoxBorderWidth,
                            selectBoxSpace);
-            drawSelectBox((Obj*)fontNameBtn[i], selectBoxBorderWidth,
+            drawSelectBox((Obj*)fontNameTa[i], selectBoxBorderWidth,
                           selectBoxSpace, selectBoxBorderColor);
+            log_n("Set [fontNameSelect] from %d to %d", fontNameSelect, i);
             fontNameSelect = i;
             return;
         }
     }
-    curSelectBtn = fontSizeBtn[fontSizeSelect - 1];
+    curSelectBtn = fontSizeTa[fontSizeSelect - 1];
     for (uint8_t i = PX16 - 1; i < Font_Size_Cnt - 1; ++i) {
-        if ((fontSizeBtn[i] == button) && (curSelectBtn != button)) {
+        if ((fontSizeTa[i] == button) && (curSelectBtn != button)) {
             clearSelectBox((Obj*)curSelectBtn, selectBoxBorderWidth,
                            selectBoxSpace);
-            drawSelectBox((Obj*)fontSizeBtn[i], selectBoxBorderWidth,
+            drawSelectBox((Obj*)fontSizeTa[i], selectBoxBorderWidth,
                           selectBoxSpace, selectBoxBorderColor);
+            log_n("Set [fontSizeSelect] from %d to %d", fontSizeSelect, i + 1);
             fontSizeSelect = i + 1;
             return;
         }
+    }
+#endif
+    if (button == operationBtn[0]) {
+        /* “应用”按钮 */
+        log_n("[Apply]%s", ARROW_STRING);
+        g_deviceData.fontName  = fontNameSelect;
+        g_deviceData.fontSize  = fontSizeSelect;
+        g_deviceData.foreColor = foreColorSelect;
+        g_deviceData.backColor = backColorSelect;
+        navigationBtnOnClicked(buttonSetting);
+    } else if (button == operationBtn[1]) {
+        /* “取消”按钮 */
+        log_n("[Cancel]%s", ARROW_STRING);
+        fontNameSelect  = g_deviceData.fontName;
+        fontSizeSelect  = g_deviceData.fontSize;
+        foreColorSelect = g_deviceData.foreColor;
+        backColorSelect = g_deviceData.backColor;
+        navigationBtnOnClicked(buttonSetting);
     }
 }
 
 void settingMenuTaOnClicked(Textarea* textarea)
 {
     Textarea* curSelectTa = NULL;
+    curSelectTa           = fontNameTa[fontNameSelect];
+    for (uint8_t i = Font_Name_Min; i < Font_Name_Cnt; ++i) {
+        if ((fontNameTa[i] == textarea) && (curSelectTa != textarea)) {
+            clearSelectBox((Obj*)curSelectTa, selectBoxBorderWidth,
+                           selectBoxSpace);
+            drawSelectBox((Obj*)fontNameTa[i], selectBoxBorderWidth,
+                          selectBoxSpace, selectBoxBorderColor);
+            log_n("Set [fontNameSelect] from %d to %d", fontNameSelect, i);
+            fontNameSelect = i;
+            return;
+        }
+    }
+
+    curSelectTa = fontSizeTa[fontSizeSelect - 1];
+    for (uint8_t i = PX16 - 1; i < Font_Size_Cnt - 1; ++i) {
+        if ((fontSizeTa[i] == textarea) && (curSelectTa != textarea)) {
+            clearSelectBox((Obj*)curSelectTa, selectBoxBorderWidth,
+                           selectBoxSpace);
+            drawSelectBox((Obj*)fontSizeTa[i], selectBoxBorderWidth,
+                          selectBoxSpace, selectBoxBorderColor);
+            log_n("Set [fontSizeSelect] from %d to %d", fontSizeSelect, i + 1);
+            fontSizeSelect = i + 1;
+            return;
+        }
+    }
+
     curSelectTa = foreColorTa[getColorIndex(foreColor, settingMenuForeColorCnt,
                                             foreColorSelect)];
     for (uint8_t i = 0; i < settingMenuForeColorCnt; ++i) {
@@ -902,10 +968,13 @@ void settingMenuTaOnClicked(Textarea* textarea)
                            selectBoxSpace);
             drawSelectBox((Obj*)foreColorTa[i], selectBoxBorderWidth,
                           selectBoxSpace, selectBoxBorderColor);
+            log_n("Set [foreColorSelect] from 0X%04X to 0X%04X",
+                  foreColorSelect, foreColor[i]);
             foreColorSelect = foreColor[i];
             return;
         }
     }
+
     curSelectTa = backColorTa[getColorIndex(backColor, settingMenuBackColorCnt,
                                             backColorSelect)];
     for (uint8_t i = 0; i < settingMenuBackColorCnt; ++i) {
@@ -914,6 +983,8 @@ void settingMenuTaOnClicked(Textarea* textarea)
                            selectBoxSpace);
             drawSelectBox((Obj*)backColorTa[i], selectBoxBorderWidth,
                           selectBoxSpace, selectBoxBorderColor);
+            log_n("Set [backColorSelect] from 0X%04X to 0X%04X",
+                  backColorSelect, backColor[i]);
             backColorSelect = backColor[i];
             return;
         }
@@ -1392,9 +1463,8 @@ void createReadingArea(void)
 {
     const uint16_t textAreaWidth  = ATK_MD0700_LCD_WIDTH * 4 / 5;
     const uint16_t textAreaHeight = ATK_MD0700_LCD_HEIGHT * 9 / 10 - 100;
-    setPublicFont((FontName)g_deviceData.fontNameSelect,
-                  (FontSize)g_deviceData.fontSizeSelect,
-                  g_deviceData.foreColor);
+    setPublicFont((FontName)g_deviceData.fontName,
+                  (FontSize)g_deviceData.fontSize, g_deviceData.foreColor);
     setPublicBorder(RGB888_BLACK, 3, BORDER_ALL);
     // readingArea =
     //     NewTextarea((ATK_MD0700_LCD_WIDTH - textAreaWidth) / 2,
@@ -1710,10 +1780,10 @@ void navigationBtnOnClicked(Button* button)
             // refreshBtnName(dirList, chapterBtn, chapterName,
             // DrawOption_Delay);
             settingMenu->DrawList(settingMenu);
-            drawSelectBox((Obj*)fontNameBtn[fontNameSelect],
+            drawSelectBox((Obj*)fontNameTa[fontNameSelect],
                           selectBoxBorderWidth, selectBoxSpace,
                           selectBoxBorderColor);
-            drawSelectBox((Obj*)fontSizeBtn[fontSizeSelect - 1],
+            drawSelectBox((Obj*)fontSizeTa[fontSizeSelect - 1],
                           selectBoxBorderWidth, selectBoxSpace,
                           selectBoxBorderColor);
             drawSelectBox(
