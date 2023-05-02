@@ -12,20 +12,6 @@ extern UINT    br, bw;     // the number of byte really read or written
 extern FILINFO fileinfo;   // file information
 extern DIR     dir;        // directory
 
-DeviceData g_deviceData = {
-    .fontName  = Font_SimSun,
-    .fontSize  = PX32,
-    .foreColor = RGB888toRGB565(0x000000),
-    .backColor = RGB888toRGB565(0xffffff),
-};
-
-EbookData g_ebookData = {
-    .bookmark         = 0,
-    .dirTableTail     = -1,
-    .dirTableOffset   = 0,
-    .dirTableFinished = false,
-};
-
 uint8_t       fontNameSelect  = Font_SimSun;
 uint8_t       fontSizeSelect  = PX16;
 COLOR_DATTYPE foreColorSelect = RGB565_BLACK;
@@ -78,10 +64,16 @@ COLOR_DATTYPE fontSizeTaBackColor[Font_Size_Cnt - 1] = {
     RGB565_WHITE,
 };
 COLOR_DATTYPE foreColor[settingMenuForeColorCnt] = {
+    /* 黑、红、绿、蓝、白 */
     RGB565_BLACK, RGB565_RED, RGB565_GREEN, RGB565_BLUE, RGB565_WHITE,
 };
 COLOR_DATTYPE backColor[settingMenuBackColorCnt] = {
-    RGB565_WHITE, RGB565_BLUE, RGB565_GREEN, RGB565_RED, RGB565_BLACK,
+    /* 黑、红、绿、蓝、白 */
+    RGB888toRGB565(0x222222),
+    RGB888toRGB565(0xf56c6c),
+    RGB888toRGB565(0x67c23a),
+    RGB888toRGB565(0x409eff),
+    RGB888toRGB565(0xefefef),
 };
 /* 操作按钮
  *  0：应用
@@ -162,6 +154,20 @@ char**  bookname           = NULL;
 uint16_t textAreaWidth  = ATK_MD0700_LCD_WIDTH * 4 / 5;
 uint16_t textAreaHeight = ATK_MD0700_LCD_HEIGHT * 4 / 5;
 
+DeviceData g_deviceData = {
+    .fontName  = Font_SimSun,
+    .fontSize  = PX32,
+    .foreColor = RGB888toRGB565(0x000000),
+    .backColor = RGB888toRGB565(0xffffff),
+};
+
+EbookData g_ebookData = {
+    .bookmark         = 0,
+    .dirTableTail     = -1,
+    .dirTableOffset   = 0,
+    .dirTableFinished = false,
+};
+
 #define STRING_SIZE 60
 
 #if 0
@@ -216,6 +222,8 @@ int main(void)
         ((Obj*)readingArea)->x + ((Obj*)readingArea)->width - 1;
     uint16_t preRenderYLimit =
         ((Obj*)readingArea)->y + ((Obj*)readingArea)->height - 1;
+    g_deviceData.foreColor = foreColor[0];
+    g_deviceData.backColor = backColor[0];
     fontNameSelect  = g_deviceData.fontName;
     fontSizeSelect  = g_deviceData.fontSize;
     foreColorSelect = g_deviceData.foreColor;
@@ -338,51 +346,13 @@ int main(void)
                             /* 阅读界面：下一页 */
                             /* 在本章页码表生成完成后，并且电子书尚未读完时，才允许向下翻页
                              */
-                            if ((curOffset < f_size(main_file)) &&
-                                (generateCurChapterPageTableFinished == true)) {
-                                ++curChapterPageTableIndex;
-                                if (curChapterPageTableIndex >
-                                    curChapterPageTableTail) {
-                                    ++dirTableIndex; /* 下一章 */
-                                    passChapterPageTableFromCurToPrev();
-                                    curOffset = dirTable[dirTableIndex];
-                                }
-                                log_n("Before paging down. Tail offset of the "
-                                      "page: %d",
-                                      curOffset);
-                                renderText(curOffset);
-                                log_n("After paging down. Tail offset of the "
-                                      "page: %d",
-                                      curOffset);
-                            }
+                            readingNextPage();
                         }
                     } else if (slideDirestion == Slide_To_Right) {
                         /* 阅读界面：上一页 */
                         if (curTouchQueryQueue == &readingTouchQueryQueue) {
                             /* 是否在本章的第一页？ */
-                            if (curChapterPageTableIndex > 0) {
-                                curOffset = curChapterPageTable
-                                    [--curChapterPageTableIndex];
-                                renderText(curOffset);
-                            } else {
-                                /* 上一章页码表已生成，且不在首章首章页？ */
-                                if ((generatePrevChapterPageTableFinished ==
-                                     true) &&
-                                    !((dirTableIndex == dirTableHead) &&
-                                      (curChapterPageTableIndex == 0))) {
-                                    --dirTableIndex;
-                                    passChapterPageTableFromPrevToCur();
-                                    curOffset = curChapterPageTable
-                                        [curChapterPageTableTail];
-                                    log_n("Before paging up. Head offset of "
-                                          "the page: %d",
-                                          curHeadOffset);
-                                    renderText(curOffset);
-                                    log_n("After paging up. Head offset of the "
-                                          "page: %d",
-                                          curHeadOffset);
-                                }
-                            }
+                            readingPrevPage();
                         }
                     }
                 } else if ((touchEvent == Touch_Event_ShortPress) ||
@@ -407,14 +377,7 @@ int main(void)
                 clearTouchFlag(&flag);
                 touchState   = Touch_State_None;
                 noTouchEvent = true;
-#    if 1
-                /* 查看当前dir指针偏移 */
-                char buf[30] = {0};
-                sprintf(buf, "%2d", getDirTableIndex());
-                fillArea(0, 0, 50, 30, RGB888toRGB565(0xffffff));
-                Show_Str(0, 0, 50, 30, (uint8_t*)buf, strlen(buf), Font_SimSun,
-                         PX24, 0, &isOverOnePage);
-#    endif
+                showIndex(true);
             } else if (touchState == TouchState_OnPress) {
                 /* 查询控件队列，落点是否位于某个具体的控件上 */
                 cur_target =
@@ -731,7 +694,7 @@ void createSettingMenu(void)
     // btnWidth,
     //                      btnHeight, 0);
     for (uint8_t i = Font_Name_Min; i < Font_Name_Cnt; ++i) {
-        fontNameTa[i]->str = (const char*)fontNameStr[i];
+        fontNameTa[i]->str = fontNameStr[i];
     }
 
     // createSettingMenuBtn(fontSizeTa, Font_Size_Cnt - 1, startX, restWidth,
@@ -919,6 +882,35 @@ void settingMenuBtnOnClicked(Button* button)
         g_deviceData.fontSize  = fontSizeSelect;
         g_deviceData.foreColor = foreColorSelect;
         g_deviceData.backColor = backColorSelect;
+        GUI_setForeColor(foreColorSelect);
+        GUI_setBackColor(backColorSelect);
+        LinkedNode* node = curTouchQueryQueue->head;
+        while (node) {
+            updateWidgetColor(node->nodeData.obj);
+            node = node->next;
+        }
+        node = readingTouchQueryQueue.head;
+        while (node) {
+            updateWidgetColor(node->nodeData.obj);
+            node = node->next;
+        }
+        // updateWidgetColor((Obj*)readingArea);
+        updateWidgetColor((Obj*)dirList);
+        readingArea->font.fontName = fontNameSelect;
+        readingArea->font.fontSize = fontSizeSelect;
+        /* 要求生成本章页码表 */
+        needGenerateCurChapterPageTable            = true;
+        firstTimeIntoGeneratingCurChapterPageTable = true;
+        generateCurChapterPageTableFinished        = false;
+        /* 要求生成上章页码表 */
+        firstTimeIntoGeneratingPrevChapterPageTable = false;
+        generatePrevChapterPageTableFinished        = false;
+        LED0(1);
+        node = navigationBarOnReading->itemList->head->nodeData.subList.head;
+        while (node) {
+            draw_widget(node->nodeData.obj);
+            node = node->next;
+        }
         navigationBtnOnClicked(buttonSetting);
     } else if (button == operationBtn[1]) {
         /* “取消”按钮 */
@@ -991,6 +983,33 @@ void settingMenuTaOnClicked(Textarea* textarea)
     }
 }
 
+void updateWidgetColor(Obj* obj)
+{
+    if (obj->type == Obj_Type_Button) {
+        Button* button             = (Button*)obj;
+        button->font.fontColor     = GUI_getForeColor();
+        button->border.borderColor = GUI_getForeColor();
+    } else if (obj->type == Obj_Type_Textarea) {
+        Textarea* textarea           = (Textarea*)obj;
+        textarea->border.borderColor = GUI_getForeColor();
+        if (textarea->str != NULL) {
+            textarea->font.fontColor = GUI_getForeColor();
+            textarea->backColor      = GUI_getBackColor();
+        }
+    } else if (obj->type == Obj_Type_List) {
+        List*       list    = (List*)obj;
+        LinkedNode* subList = list->itemList->head;
+        while (subList) {
+            LinkedNode* node = subList->nodeData.subList.head;
+            while (node) {
+                updateWidgetColor(node->nodeData.obj);
+                node = node->next;
+            }
+            subList = subList->next;
+        }
+    }
+}
+
 /**
  * @description:
  * @return {void}
@@ -1034,6 +1053,28 @@ void passChapterPageTableFromCurToPrev(void)
     firstTimeIntoGeneratingCurChapterPageTable = true;
     generateCurChapterPageTableFinished        = false;
     LED0(1);
+}
+
+void showIndex(bool showFlag)
+{
+#if 1
+    /* 查看当前dir指针偏移 */
+    char           buf[30]     = {0};
+    const uint16_t indexWidth  = 150;
+    const uint16_t indexHeight = 30;
+    fillArea(0, 0, indexWidth, indexHeight, GUI_getBackColor());
+    fillArea(ATK_MD0700_LCD_WIDTH - indexWidth, 0, indexWidth, indexHeight,
+             GUI_getBackColor());
+    if (showFlag == true) {
+        sprintf(buf, "Chapter: %2d", getDirTableIndex());
+        Show_Str(0, 0, indexWidth, indexHeight, (uint8_t*)buf, strlen(buf),
+                 Font_SimSun, PX24, 1, &isOverOnePage);
+        sprintf(buf, "Page: %2d", getCurPageIndex());
+        Show_Str(ATK_MD0700_LCD_WIDTH - indexWidth, 0, indexWidth, indexHeight,
+                 (uint8_t*)buf, strlen(buf), Font_SimSun, PX24, 1,
+                 &isOverOnePage);
+    }
+#endif
 }
 
 void LED_Toggle(void)
@@ -1118,7 +1159,7 @@ void show_logo(uint8_t* logoPicture, uint16_t delayTime_ms)
 void fillMainArea(COLOR_DATTYPE color)
 {
     fillArea(0, 0, ATK_MD0700_LCD_WIDTH,
-             ATK_MD0700_LCD_HEIGHT - 1 - ((Obj*)buttonHome)->height -
+             ATK_MD0700_LCD_HEIGHT - ((Obj*)buttonHome)->height -
                  buttonHome->border.borderWidth,
              color);
 }
@@ -1454,7 +1495,7 @@ void copyChapterName(void)
 void renderHomePage(void)
 {
     /* 刷新主界面书架、导航栏 */
-    atk_md0700_clear(BACKGROUND_COLOR);
+    atk_md0700_clear(GUI_getBackColor());
     bookshelf->DrawList(bookshelf);
     navigationBarAtHome->DrawList(navigationBarAtHome);
 }
@@ -1463,6 +1504,7 @@ void createReadingArea(void)
 {
     const uint16_t textAreaWidth  = ATK_MD0700_LCD_WIDTH * 4 / 5;
     const uint16_t textAreaHeight = ATK_MD0700_LCD_HEIGHT * 9 / 10 - 100;
+    init_LinkedList(&readingTouchQueryQueue, NodeDataType_Obj);
     setPublicFont((FontName)g_deviceData.fontName,
                   (FontSize)g_deviceData.fontSize, g_deviceData.foreColor);
     setPublicBorder(RGB888_BLACK, 3, BORDER_ALL);
@@ -1475,8 +1517,10 @@ void createReadingArea(void)
     readingArea = NewTextarea(
         (ATK_MD0700_LCD_WIDTH - textAreaWidth) / 2, 80, textAreaWidth,
         textAreaHeight, LocateType_Absolute, &publicAlignType, &publicFont,
-        &publicBorder, RGB888toRGB565(0xffffff), NULL);
-    readingArea->str = NULL;
+        &publicBorder, GUI_getBackColor(), NULL);
+    readingArea->str   = page_buffer[0];
+    publicElemData.obj = (Obj*)readingArea;
+    push_tail(&readingTouchQueryQueue, &publicElemData);
     /* 建立阅读界面的导航栏 */
     setPublicBorder(RGB888toRGB565(0x000000), 3, BORDER_NULL);
     navigationBarOnReading =
@@ -1494,7 +1538,6 @@ void createReadingArea(void)
     AppendSubListItem(navigationBarOnReading, 0, (Obj*)buttonHome);
     AppendSubListItem(navigationBarOnReading, 0, (Obj*)buttonSetting);
     /* 把阅读界面导航栏加入阅读界面 */
-    init_LinkedList(&readingTouchQueryQueue, NodeDataType_Obj);
     publicElemData.obj = (Obj*)navigationBarOnReading;
     push_tail(&readingTouchQueryQueue, &publicElemData);
     COLUMN_LIMIT_PX16 = textAreaWidth / (getSize(PX16) / 2);
@@ -1672,9 +1715,9 @@ void renderText(uint32_t offset)
     uint16_t       chapter      = 0;
     uint32_t       textLenLimit = 4096;
     uint16_t       foreColor    = GUI_getForeColor();
-    uint16_t       backColor    = GUI_getBackColor();
+    // uint16_t       backColor    = GUI_getBackColor();
     // char*          buf      = mymalloc(SRAMEX, BUF_SIZE * sizeof(uint16_t));
-    char* buf = page_buffer[0];
+    char* buf = readingArea->str;
     f_lseek(main_file, offset);
     res = f_read(main_file, buf, BUF_SIZE, &br);
     if (br != BUF_SIZE) {
@@ -1693,14 +1736,14 @@ void renderText(uint32_t offset)
     }
     GUI_setForeColor(readingArea->font.fontColor);
     // GUI_setBackColor(RGB888toRGB565(0x000000));
-    fillMainArea(GUI_getBackColor());
+    // fillMainArea(GUI_getBackColor());
     str = Show_Str(((Obj*)readingArea)->x, ((Obj*)readingArea)->y,
                    ((Obj*)readingArea)->width, ((Obj*)readingArea)->height,
-                   page_buffer[0], textLenLimit,
+                   (uint8_t*)readingArea->str, textLenLimit,
                    (FontName)readingArea->font.fontName,
                    (FontSize)readingArea->font.fontSize, 1, &isOverOnePage);
     GUI_setForeColor(foreColor);
-    GUI_setBackColor(backColor);
+    // GUI_setBackColor(backColor);
     curHeadOffset = curOffset;
     curOffset += (str - buf);
 }
@@ -1719,6 +1762,20 @@ uint16_t getDirTableIndex(void)
         }
     }
     return chapter;
+}
+
+uint16_t getCurPageIndex(void)
+{
+    uint16_t retIndex = 0;
+    if (generateCurChapterPageTableFinished == true) {
+        for (uint16_t i = 0; i <= curChapterPageTableTail; ++i) {
+            if (curChapterPageTable[i] > curHeadOffset) {
+                retIndex = i - 1;
+                break;
+            }
+        }
+    }
+    return retIndex;
 }
 
 /**
@@ -1809,6 +1866,50 @@ void navigationBtnOnClicked(Button* button)
 
 void ShieldHomePageWidget(void) {}
 
+void readingNextPage(void)
+{
+    if ((curOffset < f_size(main_file)) &&
+        (generateCurChapterPageTableFinished == true)) {
+        ++curChapterPageTableIndex;
+        if (curChapterPageTableIndex > curChapterPageTableTail) {
+            ++dirTableIndex; /* 下一章 */
+            passChapterPageTableFromCurToPrev();
+            curOffset = dirTable[dirTableIndex];
+        }
+        log_n("Before paging down. Tail offset of the "
+              "page: %d",
+              curOffset);
+        renderText(curOffset);
+        log_n("After paging down. Tail offset of the "
+              "page: %d",
+              curOffset);
+    }
+}
+
+void readingPrevPage(void)
+{
+    if (curChapterPageTableIndex > 0) {
+        curOffset = curChapterPageTable[--curChapterPageTableIndex];
+        renderText(curOffset);
+    } else {
+        /* 上一章页码表已生成，且不在首章首章页？ */
+        if ((generatePrevChapterPageTableFinished == true) &&
+            !((dirTableIndex == dirTableHead) &&
+              (curChapterPageTableIndex == 0))) {
+            --dirTableIndex;
+            passChapterPageTableFromPrevToCur();
+            curOffset = curChapterPageTable[curChapterPageTableTail];
+            log_n("Before paging up. Head offset of "
+                  "the page: %d",
+                  curHeadOffset);
+            renderText(curOffset);
+            log_n("After paging up. Head offset of the "
+                  "page: %d",
+                  curHeadOffset);
+        }
+    }
+}
+
 void handleGenerationOfCurChapterPageTable(void)
 {
     static uint16_t x                                   = 0;
@@ -1833,11 +1934,14 @@ void handleGenerationOfCurChapterPageTable(void)
     }
     /* 本章页码表生成完成后，若上章页码表未生成完成，且此时不在首章，则设置需要生成上章页码表的信号
      */
-    if ((generateCurChapterPageTableFinished == true) &&
-        (generatePrevChapterPageTableFinished == false) &&
-        (dirTableIndex != dirTableHead)
-        /*&& (needGeneratePrevChapterPageTable == false)*/) {
-        needGeneratePrevChapterPageTable = true;
+    curChapterPageTableIndex = getCurPageIndex();
+    if (generateCurChapterPageTableFinished == true) {
+        showIndex(true);
+        if ((generatePrevChapterPageTableFinished == false) &&
+            (dirTableIndex != dirTableHead)
+            /*&& (needGeneratePrevChapterPageTable == false)*/) {
+            needGeneratePrevChapterPageTable = true;
+        }
     }
 }
 
@@ -1906,6 +2010,7 @@ void handleGenerationOfChapterPageTable(uint16_t* x,
     if (f_eof(main_file) || (*pOffset >= offsetLimit)) {
         /* 若文件已读完，或偏移等于下一章的首字节偏移，则表示读完了 */
         *finishedFlag = true;
+        /* 若加载的是本章 */
         LED0(0);
 #if LOG_handleGenerationOfChapterPageTable
         if (pageTable == curChapterPageTable) {
@@ -1937,7 +2042,7 @@ void handleGenerationOfChapterPageTable(uint16_t* x,
             isHz = (preRenderChOffset != 0) ? true : false;
             if (isHz == true) { /* 汉字？ */
                 *x += size;
-            } else { /* ASCII */
+            } else {            /* ASCII */
                 isCR = (preRenderCh[0] == '\r') ? true : false;
                 if (isCR == true) {
                     /* 回车？*/

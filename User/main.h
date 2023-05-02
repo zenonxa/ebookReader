@@ -189,6 +189,11 @@ void createSettingMenuTa(Textarea**     taArr,
                          uint16_t       taHeight,
                          uint16_t       lineIndex);
 void settingMenuTaOnClicked(Textarea* textarea);
+void updateWidgetColor(Obj* obj);
+void readingNextPage(void);
+void readingPrevPage(void);
+uint16_t getCurPageIndex(void);
+void showIndex(bool showFlag);
 #if ACTION_ONCE
 void excuteCommand(void);
 #endif
