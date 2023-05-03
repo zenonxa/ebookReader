@@ -69,10 +69,8 @@ COLOR_DATTYPE foreColor[settingMenuForeColorCnt] = {
 };
 COLOR_DATTYPE backColor[settingMenuBackColorCnt] = {
     /* 黑、红、绿、蓝、白 */
-    RGB888toRGB565(0x222222),
-    RGB888toRGB565(0xf56c6c),
-    RGB888toRGB565(0x67c23a),
-    RGB888toRGB565(0x409eff),
+    RGB888toRGB565(0x222222), RGB888toRGB565(0xf56c6c),
+    RGB888toRGB565(0x67c23a), RGB888toRGB565(0x409eff),
     RGB888toRGB565(0xefefef),
 };
 /* 操作按钮
@@ -224,10 +222,10 @@ int main(void)
         ((Obj*)readingArea)->y + ((Obj*)readingArea)->height - 1;
     g_deviceData.foreColor = foreColor[0];
     g_deviceData.backColor = backColor[0];
-    fontNameSelect  = g_deviceData.fontName;
-    fontSizeSelect  = g_deviceData.fontSize;
-    foreColorSelect = g_deviceData.foreColor;
-    backColorSelect = g_deviceData.backColor;
+    fontNameSelect         = g_deviceData.fontName;
+    fontSizeSelect         = g_deviceData.fontSize;
+    foreColorSelect        = g_deviceData.foreColor;
+    backColorSelect        = g_deviceData.backColor;
 
     /* 展示开机Logo */
     show_logo(NULL, 500);
@@ -275,6 +273,18 @@ int main(void)
     // renderText(16375);
     // while (1)
     //     ;
+    // char tmpPath[30];
+    // strcpy(tmpPath, "0:BOOK/11111111111111111111121111111111111.txt");
+    // f_stat(tmpPath, &fileinfo);
+    // check_value_equal(res, FR_OK, "Fail to stat file [%s]", tmpPath);
+    // log_n("%s%s", tmpPath, ARROW_STRING);
+    // log_n("[altname]: %s [fname]: %s", fileinfo.altname, fileinfo.fname);
+    // strcpy(tmpPath, "0:BOOK/11111111111111111111131111111111111.txt");
+    // f_stat(tmpPath, &fileinfo);
+    // check_value_equal(res, FR_OK, "Fail to stat file [%s]", tmpPath);
+    // log_n("%s%s", tmpPath, ARROW_STRING);
+    // log_n("[altname]: %s [fname]: %s", fileinfo.altname, fileinfo.fname);
+    // while(1);
     while (1) {
         if (noTouchEvent == false) {
             /* 状态机设计：
@@ -876,42 +886,69 @@ void settingMenuBtnOnClicked(Button* button)
     }
 #endif
     if (button == operationBtn[0]) {
+        LinkedNode* node = NULL;
+        bool        isFontNameChanged =
+            (g_deviceData.fontName != fontNameSelect) ? true : false;
+        bool isFontSizeChanged =
+            (g_deviceData.fontSize != fontSizeSelect) ? true : false;
+        bool isColorChanged = ((g_deviceData.foreColor != foreColorSelect) ||
+                               (g_deviceData.backColor != backColorSelect)) ?
+                                  true :
+                                  false;
         /* “应用”按钮 */
         log_n("[Apply]%s", ARROW_STRING);
-        g_deviceData.fontName  = fontNameSelect;
-        g_deviceData.fontSize  = fontSizeSelect;
-        g_deviceData.foreColor = foreColorSelect;
-        g_deviceData.backColor = backColorSelect;
-        GUI_setForeColor(foreColorSelect);
-        GUI_setBackColor(backColorSelect);
-        LinkedNode* node = curTouchQueryQueue->head;
-        while (node) {
-            updateWidgetColor(node->nodeData.obj);
-            node = node->next;
+        if (isFontNameChanged == true) {
+            g_deviceData.fontName      = fontNameSelect;
+            readingArea->font.fontName = fontNameSelect;
         }
-        node = readingTouchQueryQueue.head;
-        while (node) {
-            updateWidgetColor(node->nodeData.obj);
-            node = node->next;
+        /* 若字号发生了修改，则需要重新生成本章、上章页码表 */
+        if (isFontSizeChanged == true) {
+            g_deviceData.fontSize = fontSizeSelect;
+            /* 要求生成本章页码表 */
+            needGenerateCurChapterPageTable            = true;
+            firstTimeIntoGeneratingCurChapterPageTable = true;
+            generateCurChapterPageTableFinished        = false;
+            /* 要求生成上章页码表 */
+            firstTimeIntoGeneratingPrevChapterPageTable = false;
+            generatePrevChapterPageTableFinished        = false;
+            readingArea->font.fontSize                  = fontSizeSelect;
+            LED0(1);
         }
-        // updateWidgetColor((Obj*)readingArea);
-        updateWidgetColor((Obj*)dirList);
-        readingArea->font.fontName = fontNameSelect;
-        readingArea->font.fontSize = fontSizeSelect;
-        /* 要求生成本章页码表 */
-        needGenerateCurChapterPageTable            = true;
-        firstTimeIntoGeneratingCurChapterPageTable = true;
-        generateCurChapterPageTableFinished        = false;
-        /* 要求生成上章页码表 */
-        firstTimeIntoGeneratingPrevChapterPageTable = false;
-        generatePrevChapterPageTableFinished        = false;
-        LED0(1);
-        node = navigationBarOnReading->itemList->head->nodeData.subList.head;
-        while (node) {
-            draw_widget(node->nodeData.obj);
-            node = node->next;
+        if (isColorChanged == true) {
+            g_deviceData.foreColor = foreColorSelect;
+            g_deviceData.backColor = backColorSelect;
+            GUI_setForeColor(foreColorSelect);
+            GUI_setBackColor(backColorSelect);
+            /* 更新阅读界面队列中的控件的前景色、背景色 */
+            node = curTouchQueryQueue->head;
+            while (node) {
+                updateWidgetColor(node->nodeData.obj);
+                node = node->next;
+            }
+            /* 更新阅读界面队列中的控件的前景色、背景色 */
+            node = readingTouchQueryQueue.head;
+            while (node) {
+                updateWidgetColor(node->nodeData.obj);
+                node = node->next;
+            }
+            // updateWidgetColor((Obj*)readingArea);
+            updateWidgetColor((Obj*)dirList);
+            /* 阅读界面下重绘底部导航栏 */
+            // if (curTouchQueryQueue == &readingTouchQueryQueue) {
+            //     node =
+            //     navigationBarOnReading->itemList->head->nodeData.subList
+            //                .head;
+            //     while (node) {
+            //         draw_widget(node->nodeData.obj);
+            //         node = node->next;
+            //     }
+            // }
         }
         navigationBtnOnClicked(buttonSetting);
+        if ((isColorChanged == true) &&
+            (curTouchQueryQueue == &readingTouchQueryQueue)) {
+            draw_widget((Obj*)navigationBarOnReading);
+        }
     } else if (button == operationBtn[1]) {
         /* “取消”按钮 */
         log_n("[Cancel]%s", ARROW_STRING);
