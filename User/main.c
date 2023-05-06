@@ -154,7 +154,7 @@ uint16_t textAreaHeight = ATK_MD0700_LCD_HEIGHT * 4 / 5;
 
 DeviceData g_deviceData = {
     .fontName  = Font_SimSun,
-    .fontSize  = PX32,
+    .fontSize  = PX16,
     .foreColor = RGB888toRGB565(0x000000),
     .backColor = RGB888toRGB565(0xffffff),
 };
@@ -1094,7 +1094,7 @@ void passChapterPageTableFromCurToPrev(void)
 
 void showIndex(bool showFlag)
 {
-#if 1
+#if 0
     /* 查看当前dir指针偏移 */
     char           buf[30]     = {0};
     const uint16_t indexWidth  = 150;
@@ -1177,13 +1177,16 @@ void mount_SD_Card(void)
  */
 void show_logo(uint8_t* logoPicture, uint16_t delayTime_ms)
 {
-    uint16_t time = 0;
-    uint8_t  size = 32;
+    uint16_t time    = 0;
+    uint8_t  size    = 32;
+    char     str[20] = "EbookReader";
+    uint16_t len     = strlen(str);
     /* Show Logo */
     if (logoPicture == NULL) {
-        atk_md0700_show_string(
-            (ATK_MD0700_LCD_WIDTH - size) / 2, (ATK_MD0700_LCD_HEIGHT) / 2,
-            size * 2, size, "LOGO", mapping_font_size(size), ATK_MD0700_WHITE);
+        atk_md0700_show_string((ATK_MD0700_LCD_WIDTH - size / 2 * len) / 2,
+                               (ATK_MD0700_LCD_HEIGHT - size) / 2, size * len,
+                               size, str, mapping_font_size(size),
+                               ATK_MD0700_WHITE);
     }
     /* Delay for Logo */
     delay_ms(delayTime_ms);

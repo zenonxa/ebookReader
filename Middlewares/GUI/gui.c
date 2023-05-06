@@ -164,6 +164,7 @@ void draw_widget(Obj* obj)
         case Obj_Type_Textarea:
             ((Textarea*)obj)->DrawTextarea((Textarea*)obj);
             break;
+        case Obj_Type_List: ((List*)obj)->DrawList((List*)obj); break;
         default: break;
     }
 }
