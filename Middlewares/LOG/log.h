@@ -62,6 +62,7 @@ extern LogParam logParam;
                 ##__VA_ARGS__);                                                \
     } while (0)
 
+#define CHECK_VALUE_ENABLE 1
 #define TIME_SPAN_IN_INFINITE_LOOP 1000 /* ms */
 #define infinite_throw(format, ...)                                            \
     do {                                                                       \
@@ -71,16 +72,20 @@ extern LogParam logParam;
 
 #define check_value_not_equal(actual, unexpected, log_format, ...)             \
     do {                                                                       \
-        if ((actual) == (unexpected)) {                                        \
-            infinite_throw(log_format, ##__VA_ARGS__);                         \
+        if (CHECK_VALUE_ENABLE) {                                              \
+            if ((actual) == (unexpected)) {                                    \
+                infinite_throw(log_format, ##__VA_ARGS__);                     \
+            }                                                                  \
         }                                                                      \
     } while (0)
 
 /* Check the value */
 #define check_value_equal(actual, expected, log_format, ...)                   \
     do {                                                                       \
-        if (!((actual) == (expected))) {                                       \
-            infinite_throw(log_format, ##__VA_ARGS__);                         \
+        if (CHECK_VALUE_ENABLE) {                                              \
+            if (!((actual) == (expected))) {                                   \
+                infinite_throw(log_format, ##__VA_ARGS__);                     \
+            }                                                                  \
         }                                                                      \
     } while (0)
 

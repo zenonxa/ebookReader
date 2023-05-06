@@ -4,7 +4,7 @@
 
 void DrawTextareaDefault(Textarea* textarea);
 void drawText(Textarea* textarea);
-void TextareaOnClickedDefault(void);
+void TextareaOnClickedDefault(Textarea* textarea);
 
 Textarea* NewTextarea(uint16_t      x,
                       uint16_t      y,
@@ -87,7 +87,7 @@ void drawText(Textarea* textarea)
     GUI_setBackColor(foreColor);
 }
 
-void TextareaOnClickedDefault(void)
+void TextareaOnClickedDefault(Textarea* textarea)
 {
     ;
 }

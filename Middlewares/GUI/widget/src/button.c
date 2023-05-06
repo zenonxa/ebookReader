@@ -17,7 +17,7 @@ void Obj_Skin_base(Obj* obj, COLOR_DATTYPE color);
 void draw_ButtonBorder(Button* button);
 void BtDefaultText(Button* button);
 void BtText(Button* button);
-void ButtonOnClickedDefault(void);
+void ButtonOnClickedDefault(Button* button);
 
 Button* NewButton(u16        xpos,
                   u16        ypos,
@@ -125,8 +125,8 @@ void BtText(Button* button)
         // (uint8_t*)(button->str),
         //              GUI_GetFontType(), GUI_GetFontSize(),
         //              ((Obj*)button)->width, 1);
-        setPublicAlignType(button->alignType.horizonal,
-                           button->alignType.vertical);
+        setPublicAlignType((AlignHorizonalType)button->alignType.horizonal,
+                           (AlignVerticalType)button->alignType.vertical);
         GUI_DrawStr(&button->obj, button->str, &publicAlignType);
         // CUIGUI_DrawStr(((Obj*)button)->x + (((Obj*)button)->width - length) /
         // 2,
@@ -165,7 +165,7 @@ void ButtonSetStr(Button* button, const char* str)
     button->DrawButton(button);
 }
 
-void ButtonOnClickedDefault(void)
+void ButtonOnClickedDefault(Button* button)
 {
     ;
 }

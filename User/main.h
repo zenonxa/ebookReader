@@ -86,9 +86,9 @@ typedef struct
 {
     uint32_t bookmark; /* 书签位置 */
     // uint32_t* dirTable; /* 目录表 */
-    uint32_t dirTableTail;
+    int32_t dirTableTail;
     uint32_t dirTableOffset;
-    uint32_t dirTableFinished;
+    bool dirTableFinished;
 } EbookData;
 /********************************************************/
 
@@ -163,7 +163,7 @@ void     handleGenerationOfChapterPageTable(uint16_t* x,
                                             uint32_t  offsetLimit,
                                             bool*     finishedFlag,
                                             uint32_t* pageTable,
-                                            uint32_t* pageTableIndex);
+                                            int32_t* pageTableIndex);
 void     handleGenerationOfDirTable(void);
 void     createDirList(void);
 void     chapterBtnOnClicked(Button* button);

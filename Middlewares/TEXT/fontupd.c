@@ -150,10 +150,12 @@ uint8_t update_font(void)
         check_value_equal(res, FR_OK,
                           "Fail to load font library[%s:%s] to flash.\r\n",
                           FontNameStr[i], FontSizeStr[j]);
+#if !CHECK_VALUE_ENABLE
         if (res) {
             infinite_throw("update_fontx() ==> pname free error\r\n");
             return 4;
         }
+#endif
         /* Succeed to update font. Prepare FontHeader OK */
         fontHeader.fontok = FLAG_OK;
         fontHeader.ugbkok = FLAG_OK;

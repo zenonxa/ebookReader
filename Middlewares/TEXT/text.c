@@ -50,7 +50,6 @@ void Get_HzMat(unsigned char* code,
                FontSize       fontSize)
 {
     unsigned char qh, ql;
-    unsigned char i;
     unsigned long foffset;
     uint32_t      address;
     uint8_t       size;
@@ -61,6 +60,7 @@ void Get_HzMat(unsigned char* code,
     qh = *code;
     ql = *(++code);
 #if defined(USE_DZK_GBK)
+	unsigned char i;
     if (qh < 0x81 || ql < 0x40 || ql == 0xff || qh == 0xff)  // 非 常用汉字
     {
         for (i = 0; i < csize; i++)
@@ -198,15 +198,15 @@ uint8_t* Show_Str(uint16_t x,
 {
     uint16_t x0        = x;
     uint16_t y0        = y;
-    uint8_t  bHz       = 0; /* 0: ASCII, 1: non-ASCII */
     uint8_t  size      = getSize(fontSize);
     uint8_t  lineSpace = getLineSpace(fontSize);
-    uint16_t ls_y; /* line space start position */
     /* Do while block when the character is not '\0', and there is space left on
      * the screen for unrendered text. */
-    return renderString(x0, y0, width, height, &x, &y, str, lenLimit, fontName,
-                        fontSize, mode, true, &isOverOnePage);
+    return (uint8_t*)renderString(x0, y0, width, height, &x, &y, (char*)str, lenLimit, (FontName)fontName,
+                        (FontSize)fontSize, mode, true, &isOverOnePage);
 #if 0
+	uint8_t  bHz       = 0; /* 0: ASCII, 1: non-ASCII */
+	uint16_t ls_y; /* line space start position */
     while (*str != 0) {
         if (!bHz) {            /* 处理第一个字符 */
             if (*str & 0x80) { /* 第一个字符是汉字？ */
@@ -270,7 +270,7 @@ char* renderString(uint16_t  startX,
                    bool      drawOption,
                    bool* isOverPage)
 {
-    static int runCnt = 0;
+    // static int runCnt = 0;
     // log_n("=================================> Time: %d", runCnt++);
     uint8_t bHz       = 0; /* 0: ASCII字符, 1: 汉字字符 */
     uint8_t size      = getSize(fontSize);
@@ -344,14 +344,13 @@ char* renderString(uint16_t  startX,
                 break;  // 越界返回
             }
             if (drawOption) {
-                Show_Font(*curX, *curY, str, fontName, fontSize,
+                Show_Font(*curX, *curY, (uint8_t*)str, (FontName)fontName, (FontSize)fontSize,
                           mode);  // 显示这个汉字,空心显示
             }
             str += 2;
             *curX += size;  // 下一个汉字偏移
         }
     }
-    // log_n("cur_x: %d, cur_y: %d", *curX, *curY);
     return str;
 }
 // 在指定宽度的中间显示字符串

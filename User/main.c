@@ -185,17 +185,11 @@ char  gb2312_string[STRING_SIZE * 2];
 
 int main(void)
 {
-    bool onceTag = true;
-
     uint8_t    res;
     uint8_t    i = 0;
-    uint8_t    tmp_buf[PAGE_SIZE];
     FontHeader fontHeader = {FLAG_OK, FLAG_OK};
-    uint16_t   color      = ATK_MD0700_BLACK;
-    uint16_t   startX;
-    uint16_t   startY;
-    uint16_t   size      = getSize(fontSizeSelect);
-    uint16_t   lineSpace = getLineSpace(fontSizeSelect);
+    uint16_t   size      = getSize((FontSize)fontSizeSelect);
+    uint16_t   lineSpace = getLineSpace((FontSize)fontSizeSelect);
 
     // page_buffer[0] = tmp_buf;
     /* 执行必要的初始化操作 */
@@ -209,17 +203,9 @@ int main(void)
     uint8_t flag;
     uint8_t slideDirestion;
     uint8_t touchEvent;
-    int16_t dx, dy;
     Obj*    cur_target  = NULL;
     Obj*    prev_target = NULL;
     uint8_t listItemLimit;
-
-    uint16_t preRenderX = ((Obj*)readingArea)->x;
-    uint16_t preRenderY = ((Obj*)readingArea)->y;
-    uint16_t preRenderXLimit =
-        ((Obj*)readingArea)->x + ((Obj*)readingArea)->width - 1;
-    uint16_t preRenderYLimit =
-        ((Obj*)readingArea)->y + ((Obj*)readingArea)->height - 1;
     g_deviceData.foreColor = foreColor[0];
     g_deviceData.backColor = backColor[0];
     fontNameSelect         = g_deviceData.fontName;
@@ -651,17 +637,12 @@ void createSettingMenu(void)
     const uint16_t btnWidth          = 50;
     const uint16_t btnHeight         = 40;
     uint16_t       restWidth         = settingMenuWidth - taWidth - 30;
-    uint16_t       btnCnt            = 0;
-    uint16_t       space             = 0;
     uint16_t       startX            = taWidth + 30;
-    uint16_t       x                 = 0;
-    uint16_t       listItemLimit;
     uint16_t       posY = ((Obj*)navigationBarOnReading)->y - 1 -
                     buttonDir->border.borderWidth - settingMenuHeight;
     setPublicBorder(RGB888toRGB565(0x000000), 3, BORDER_FLAG(BORDER_TOP));
     settingMenu   = NewList(0, posY, settingMenuWidth, settingMenuHeight,
                             &publicBorder, 70, btnHeight + 20, NULL, 0);
-    listItemLimit = settingMenu->itemList->size;
     /* 创建目录列表标题栏中的文本域 */
     setPublicFont(Font_SimSun, PX24, RGB888toRGB565(0x000000));
     setPublicBorder(RGB888toRGB565(0x000000), 0, BORDER_NULL);
@@ -711,8 +692,8 @@ void createSettingMenu(void)
     //                      btnWidth, btnHeight, 1);
     createSettingMenuTa(fontSizeTa, Font_Size_Cnt - 1, fontSizeTaBackColor,
                         startX, restWidth, btnWidth, btnHeight, 1);
-    for (uint8_t i = PX16 - 1; i < Font_Size_Cnt - 1; ++i) {
-        sprintf(fontSizeStr[i], "%d%s", getSize(i + 1), fontSizeStr_HAO);
+    for (uint8_t i = (uint8_t)(PX16 - 1); (FontSize)i < Font_Size_Cnt - 1; ++i) {
+        sprintf(fontSizeStr[i], "%d%s", getSize((FontSize)(i + 1)), fontSizeStr_HAO);
         fontSizeTa[i]->str = fontSizeStr[i];
     }
     createSettingMenuTa(foreColorTa, settingMenuForeColorCnt, foreColor, startX,
@@ -858,8 +839,8 @@ void chapterBtnOnClicked(Button* button)
 
 void settingMenuBtnOnClicked(Button* button)
 {
-    Button* curSelectBtn = NULL;
 #if 0
+	Button* curSelectBtn = NULL;
     curSelectBtn         = fontNameTa[fontNameSelect];
     for (uint8_t i = Font_Name_Min; i < Font_Name_Cnt; ++i) {
         if ((fontNameTa[i] == button) && (curSelectBtn != button)) {
@@ -1148,7 +1129,7 @@ void waiting_for_SD_Card(void)
     while (SD_Init()) {
         if (onceFlag == true) {
             Show_Str_Mid(0, 0, ATK_MD0700_LCD_WIDTH - 1,
-                         ATK_MD0700_LCD_HEIGHT - 1, SDCardDetectErrorHint,
+                         ATK_MD0700_LCD_HEIGHT - 1, (uint8_t*)SDCardDetectErrorHint,
                          Font_SimSun, PX24, 16, 0);
             onceFlag = false;
         }
@@ -1177,7 +1158,6 @@ void mount_SD_Card(void)
  */
 void show_logo(uint8_t* logoPicture, uint16_t delayTime_ms)
 {
-    uint16_t time    = 0;
     uint8_t  size    = 32;
     char     str[20] = "EbookReader";
     uint16_t len     = strlen(str);
@@ -1276,7 +1256,6 @@ Obj* touchSubQuery(LinkedList* querySubQueue, Position* pos)
 Obj* touchQueryForWidget(LinkedList* touchQueryQueue, Position* pos)
 {
     Obj*    obj        = NULL;
-    uint8_t BT_pressed = UNPRESSED;
     obj                = touchQuery(touchQueryQueue, pos);
     if (obj && (obj->type == Obj_Type_List)) {
         obj = touchSubQuery(((List*)obj)->itemList, pos);
@@ -1487,7 +1466,6 @@ void copyChapterName(void)
             break;
         }
         /* 读章节名 */
-        uint16_t pos = 0;
         f_lseek(main_file, dirTable[chapterNameIndex + dirTableHead]);
         f_read(main_file, chapterName[i], chapterNameLen, &br);
         bool     isHz  = false;
@@ -1558,7 +1536,7 @@ void createReadingArea(void)
         (ATK_MD0700_LCD_WIDTH - textAreaWidth) / 2, 80, textAreaWidth,
         textAreaHeight, LocateType_Absolute, &publicAlignType, &publicFont,
         &publicBorder, GUI_getBackColor(), NULL);
-    readingArea->str   = page_buffer[0];
+    readingArea->str   = (char*)page_buffer[0];
     publicElemData.obj = (Obj*)readingArea;
     push_tail(&readingTouchQueryQueue, &publicElemData);
     /* 建立阅读界面的导航栏 */
@@ -1604,6 +1582,7 @@ void createReadingArea(void)
     //       ROW_LIMIT_PX32 * COLUMN_LIMIT_PX32);
 }
 
+#if 0
 /* 要做到上一页，需要知道页起始字节在文件中的偏移，然后移动指针至此偏移，再刷新
  * 开始渲染文本内容时，open一本书，从头开始读。每次读取一个page_buffer，大小为PAGE_SIZE。
  * 之后渲染一页内容，记录下一页的起始文本在page_buffer中的偏移，即可得知page_buffer中还剩余多少个字节
@@ -1622,8 +1601,8 @@ void CreatePageIndex(char* filePath)
     uint16_t    curX             = startX;
     uint16_t    curY             = startY;
     uint8_t     bHz              = 0; /* 0: ASCII字符, 1: 汉字字符 */
-    uint8_t     size             = getSize(fontSizeSelect);
-    uint8_t     lineSpace        = getLineSpace(fontSizeSelect);
+    uint8_t     size             = getSize((FontSize)fontSizeSelect);
+    uint8_t     lineSpace        = getLineSpace((FontSize)fontSizeSelect);
     const int   bufferSize       = 4096;
     static char strBuffer[bufferSize];
     char*       str            = strBuffer;
@@ -1698,6 +1677,7 @@ void CreatePageIndex(char* filePath)
         log_n("pageNum[%d]: %d", i, pageNumTBL[i]);
     }
 }
+#endif
 
 void preRender(void) {}
 
@@ -1728,7 +1708,8 @@ void bookshelfBtnOnClicked(Button* bookBtn)
     log_n("Rerender LCD panel.");
     navigationBarOnReading->DrawList(navigationBarOnReading);
     renderText(curOffset);
-    if (dirTableTail < 0) { /* 暂时设置为每次打开都需要读取目录 */
+    if (dirTableTail <= 0) {
+		/* 暂时设置为每次打开都需要读取目录 */
         needGenerateDirTable     = true;
         generateDirTableFinished = false;
         /* 进入后设置为需要读取本章，且为首次进入，读取未完成 */
@@ -1749,10 +1730,9 @@ void bookshelfBtnOnClicked(Button* bookBtn)
 
 void renderText(uint32_t offset)
 {
-    uint8_t        res;
+	uint8_t res;
     char*          str;
     const uint16_t BUF_SIZE     = 1700;
-    uint16_t       chapter      = 0;
     uint32_t       textLenLimit = 4096;
     uint16_t       foreColor    = GUI_getForeColor();
     // uint16_t       backColor    = GUI_getBackColor();
@@ -1760,6 +1740,7 @@ void renderText(uint32_t offset)
     char* buf = readingArea->str;
     f_lseek(main_file, offset);
     res = f_read(main_file, buf, BUF_SIZE, &br);
+	check_value_equal(res, FR_OK, "%s%sFail to read file", __FUNCTION__, ARROW_STRING);
     if (br != BUF_SIZE) {
         buf[br] = 0;
     } else {
@@ -1777,7 +1758,7 @@ void renderText(uint32_t offset)
     GUI_setForeColor(readingArea->font.fontColor);
     // GUI_setBackColor(RGB888toRGB565(0x000000));
     // fillMainArea(GUI_getBackColor());
-    str = Show_Str(((Obj*)readingArea)->x, ((Obj*)readingArea)->y,
+    str = (char*)Show_Str(((Obj*)readingArea)->x, ((Obj*)readingArea)->y,
                    ((Obj*)readingArea)->width, ((Obj*)readingArea)->height,
                    (uint8_t*)readingArea->str, textLenLimit,
                    (FontName)readingArea->font.fontName,
@@ -2028,17 +2009,15 @@ void handleGenerationOfChapterPageTable(uint16_t* x,
                                         uint32_t  offsetLimit,
                                         bool*     finishedFlag,
                                         uint32_t* pageTable,
-                                        uint32_t* pageTableIndex)
+                                        int32_t* pageTableIndex)
 {
     uint8_t        res;
     static char    preRenderCh[2];
     static uint8_t preRenderChOffset = 0;
     static bool    isCompleteChar    = true;
-    uint16_t       width             = ((Obj*)readingArea)->width;
-    uint16_t       height            = ((Obj*)readingArea)->height;
     uint32_t       tmpOffset = f_tell(main_file); /* 保存当前偏移 */
-    uint8_t        size      = getSize(readingArea->font.fontSize);
-    uint8_t        lineSpace = getLineSpace(readingArea->font.fontSize);
+    uint8_t        size      = getSize((FontSize)readingArea->font.fontSize);
+    uint8_t        lineSpace = getLineSpace((FontSize)readingArea->font.fontSize);
     uint16_t       startX    = ((Obj*)readingArea)->x;
     uint16_t       startY    = ((Obj*)readingArea)->y;
     uint16_t       limitX = ((Obj*)readingArea)->x + ((Obj*)readingArea)->width;

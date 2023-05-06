@@ -56,7 +56,6 @@ void DrawList(List* list)
 
 void DrawListDefault(List* list)
 {
-    uint16_t    i       = 0;
     uint16_t    x       = ((Obj*)list)->x;
     uint16_t    y       = ((Obj*)list)->y;
     LinkedNode* subList = list->itemList->head;
