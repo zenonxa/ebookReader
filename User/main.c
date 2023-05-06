@@ -239,8 +239,8 @@ int main(void)
     /* 若检查 ex-flash 失败，则更新BMP转换表及所有字库文件 */
     if (res) {
         res = update_font();
-        check_value_not_equal(
-            res, 0, "Fail to load UNIGBK.BIN and font library to falsh.");
+        check_value_equal(res, 0,
+                          "Fail to load UNIGBK.BIN and font library to falsh.");
         fontHeader.fontok = FLAG_OK;
         fontHeader.ugbkok = FLAG_OK;
         W25QXX_Write((uint8_t*)&fontHeader, FONT_HEADER_ADDR,
