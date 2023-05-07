@@ -178,6 +178,7 @@ void drawDividingLine(List* list, uint16_t* pX, uint16_t* pY, uint8_t height)
     if (list->dividingLineHeight > 0) {
         // uint16_t color = RGB888toRGB565(0x325543);
         uint16_t color = RGB565_WHITE - GUI_getBackColor();
+        color = GUI_getForeColor();
         atk_md0700_fill(*pX, *pY, *pX + ((Obj*)list)->width - 1,
                         *pY + list->dividingLineHeight - 1, &color,
                         SINGLE_COLOR_BLOCK);

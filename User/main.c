@@ -1,5 +1,31 @@
 #include "main.h"
 
+#define BOOK_NUM_LIMIT 1000     /* 图书数量限制 */
+#define CHAPTER_NUM_LIMIT 500   /* 章节数量限制 */
+#define BOOK_NAME_LEN_LIMIT 255 /* 书名长度限制 */
+/* FLASH存储空间大小分配 */
+#define DEVICE_DATA_SIZE (256)                     /* 256  B */
+#define BOOK_VALID_FLAG_TABLE_SIZE (1 * 1024)      /*   1 KB */
+#define BOOK_NAME_TABLE_SIZE (256 * 1024)          /* 256 KB */
+#define BOOK_SIZE_TABLE_SIZE (4 * 1024)            /*   4 KB */
+#define BOOKMARK_TABLE_SIZE (4 * 1024)             /*   4 KB */
+#define CHAPTER_TABLE_OFFSET_TABLE_SIZE (4 * 1024) /*   4 KB */
+#define CHAPTER_TABLE_TAIL_TABLE_SIZE (2 * 1024)   /*   2 KB */
+#define CHAPTER_TABLE_TABLE_SIZE (2 * 1024 * 1024) /*   2 MB */
+/* FLASH存储空间起始地址分配 */
+#define DEVICE_DATA_ADDR (0x00)
+#define BOOK_VALID_FLAG_TABLE_ADDR ((DEVICE_DATA_ADDR) + (DEVICE_DATA_SIZE))
+#define BOOK_NAME_TABLE_ADDR                                                   \
+    ((BOOK_VALID_FLAG_TABLE_ADDR) + (BOOK_VALID_FLAG_TABLE_SIZE))
+#define BOOK_SIZE_TABLE_ADDR ((BOOK_NAME_TABLE_ADDR) + (BOOK_NAME_TABLE_SIZE))
+#define BOOKMARK_TABLE_ADDR ((BOOK_SIZE_TABLE_ADDR) + (BOOK_SIZE_TABLE_SIZE))
+#define CHAPTER_TABLE_OFFSET_TABLE_ADDR                                        \
+    ((BOOKMARK_TABLE_ADDR) + (BOOKMARK_TABLE_SIZE))
+#define CHAPTER_TABLE_TAIL_TABLE_ADDR                                          \
+    ((CHAPTER_TABLE_OFFSET_TABLE_ADDR) + (CHAPTER_TABLE_OFFSET_TABLE_SIZE))
+#define CHAPTER_TABLE_TABLE_ADDR                                               \
+    ((CHAPTER_TABLE_TAIL_TABLE_ADDR) + (CHAPTER_TABLE_TAIL_TABLE_SIZE))
+
 uint8_t*     lcd_buffer;
 uint8_t*     page_buffer[PAGE_NUM];
 unsigned int page_buffer_len[PAGE_NUM];
@@ -186,10 +212,10 @@ char  gb2312_string[STRING_SIZE * 2];
 int main(void)
 {
     uint8_t    res;
-    uint8_t    i = 0;
+    uint8_t    i          = 0;
     FontHeader fontHeader = {FLAG_OK, FLAG_OK};
-    uint16_t   size      = getSize((FontSize)fontSizeSelect);
-    uint16_t   lineSpace = getLineSpace((FontSize)fontSizeSelect);
+    uint16_t   size       = getSize((FontSize)fontSizeSelect);
+    uint16_t   lineSpace  = getLineSpace((FontSize)fontSizeSelect);
 
     // page_buffer[0] = tmp_buf;
     /* 执行必要的初始化操作 */
@@ -206,12 +232,22 @@ int main(void)
     Obj*    cur_target  = NULL;
     Obj*    prev_target = NULL;
     uint8_t listItemLimit;
-    g_deviceData.foreColor = foreColor[0];
-    g_deviceData.backColor = backColor[0];
-    fontNameSelect         = g_deviceData.fontName;
-    fontSizeSelect         = g_deviceData.fontSize;
-    foreColorSelect        = g_deviceData.foreColor;
-    backColorSelect        = g_deviceData.backColor;
+    // g_deviceData.foreColor = foreColor[0];
+    // g_deviceData.backColor = backColor[settingMenuForeColorCnt - 1];
+    W25QXX_Read((uint8_t*)&g_deviceData, DEVICE_DATA_ADDR,
+                sizeof(g_deviceData));  // 读出设备的设置项数据
+    fontNameSelect  = g_deviceData.fontName;
+    fontSizeSelect  = g_deviceData.fontSize;
+    foreColorSelect = g_deviceData.foreColor;
+    backColorSelect = g_deviceData.backColor;
+    GUI_setForeColor(foreColorSelect);
+    GUI_setBackColor(backColorSelect);
+    for (uint8_t i = 0; (FontName)i < Font_Name_Cnt; ++i) {
+        fontNameTaBackColor[i] = GUI_getBackColor();
+    }
+    for (uint8_t i = 0; (FontSize)i < (FontSize)(Font_Size_Cnt-1); ++i) {
+        fontSizeTaBackColor[i] = GUI_getBackColor();
+    }
 
     /* 展示开机Logo */
     show_logo(NULL, 500);
@@ -465,7 +501,7 @@ void InitForMain(void)
 void createNavigationBar(void)
 {
     /* 创建导航栏 */
-    setPublicBorder(RGB888toRGB565(0x000000), 3, BORDER_NULL);
+    setPublicBorder(GUI_getForeColor(), 3, BORDER_NULL);
     navigationBarAtHome =
         NewList(0, ATK_MD0700_LCD_HEIGHT / 10 * 9, ATK_MD0700_LCD_WIDTH,
                 ATK_MD0700_LCD_HEIGHT / 10, &publicBorder, 0,
@@ -473,8 +509,8 @@ void createNavigationBar(void)
     publicElemData.obj = (Obj*)navigationBarAtHome;
     push_tail(curTouchQueryQueue, &publicElemData);
     /* 创建导航栏中的按钮 */
-    setPublicFont(Font_SimSun, PX24, RGB888toRGB565(0x000000));
-    setPublicBorder(RGB888toRGB565(0x000000), 5, BORDER_FLAG(BORDER_TOP));
+    setPublicFont(Font_SimSun, PX24, GUI_getForeColor());
+    setPublicBorder(GUI_getForeColor(), 5, BORDER_FLAG(BORDER_TOP));
     setPublicAlignType(AlignHorizonalType_CENTER, AlignVerticalType_MIDDLE);
     buttonBack         = NewButton(0, 0, 160, navigationBarAtHome->itemHeight,
                                    LocateType_Relative, &publicFont, &publicBorder,
@@ -503,7 +539,7 @@ void createBookshelf(void)
     const uint16_t menuWidth_1  = 400;
     const uint16_t menuHeight_1 = 600;
     uint16_t       listItemLimit;
-    setPublicBorder(RGB888toRGB565(0x000000), 3,
+    setPublicBorder(GUI_getForeColor(), 3,
                     BORDER_FLAG(BORDER_TOP) | BORDER_FLAG(BORDER_BOTTOM));
     bookshelf =
         NewList((ATK_MD0700_LCD_WIDTH - menuWidth_1) / 2,
@@ -515,8 +551,8 @@ void createBookshelf(void)
     publicElemData.obj = (Obj*)bookshelf;
     push_tail(curTouchQueryQueue, &publicElemData);
     /* 创建书架标题栏中的文本域 */
-    setPublicFont(Font_SimSun, PX24, RGB888toRGB565(0x000000));
-    setPublicBorder(RGB888toRGB565(0x000000), 3, BORDER_NULL);
+    setPublicFont(Font_SimSun, PX24, GUI_getForeColor());
+    setPublicBorder(GUI_getForeColor(), 3, BORDER_NULL);
     setPublicAlignType(AlignHorizonalType_CENTER, AlignVerticalType_MIDDLE);
     Textarea* bookshelfHeadlineTA =
         NewTextarea(0, 0, ((Obj*)bookshelf)->width, bookshelf->headlineHeight,
@@ -535,8 +571,8 @@ void createBookshelf(void)
     }
     memset(booknameBtn, 0, sizeof(Button*) * listItemLimit);
     setPublicAlignType(AlignHorizonalType_LEFT, AlignVerticalType_MIDDLE);
-    setPublicBorder(RGB888toRGB565(0x000000), 3, BORDER_NULL);
-    setPublicFont(Font_SimSun, PX24, RGB888toRGB565(0x000000));
+    setPublicBorder(GUI_getForeColor(), 3, BORDER_NULL);
+    setPublicFont(Font_SimSun, PX24, GUI_getForeColor());
     for (uint16_t i = 0; i < listItemLimit; ++i) {
         booknameBtn[i] =
             NewButton(0, 0, ((Obj*)bookshelf)->width, bookshelf->itemHeight,
@@ -589,15 +625,15 @@ void createDirList(void)
     uint16_t       listItemLimit;
     uint16_t       posY = ((Obj*)navigationBarOnReading)->y - 1 -
                     buttonDir->border.borderWidth - dirListHeight - 3 - 5;
-    setPublicBorder(RGB888toRGB565(0x000000), 3,
+    setPublicBorder(GUI_getForeColor(), 3,
                     BORDER_FLAG(BORDER_TOP) | BORDER_FLAG(BORDER_BOTTOM) |
                         BORDER_FLAG(BORDER_RIGHT));
     dirList = NewList(0, posY, dirListWidth, dirListHeight, &publicBorder, 70,
                       50, NULL, 1);
     listItemLimit = dirList->itemList->size;
     /* 创建目录列表标题栏中的文本域 */
-    setPublicFont(Font_SimSun, PX24, RGB888toRGB565(0x000000));
-    setPublicBorder(RGB888toRGB565(0x000000), 0, BORDER_NULL);
+    setPublicFont(Font_SimSun, PX24, GUI_getForeColor());
+    setPublicBorder(GUI_getForeColor(), 0, BORDER_NULL);
     setPublicAlignType(AlignHorizonalType_CENTER, AlignVerticalType_MIDDLE);
     Textarea* dirListHeadlineTA =
         NewTextarea(0, 0, ((Obj*)dirList)->width, dirList->headlineHeight,
@@ -615,8 +651,8 @@ void createDirList(void)
     }
     /* 创建章节按钮，添加至目录列表中 */
     setPublicAlignType(AlignHorizonalType_LEFT, AlignVerticalType_MIDDLE);
-    setPublicBorder(RGB888toRGB565(0x000000), 0, BORDER_NULL);
-    setPublicFont(Font_SimSun, PX16, RGB888toRGB565(0x000000));
+    setPublicBorder(GUI_getForeColor(), 0, BORDER_NULL);
+    setPublicFont(Font_SimSun, PX16, GUI_getForeColor());
     chapterBtn = mymalloc(GUI_MALLOC_SOURCE, sizeof(Button*) * listItemLimit);
     check_value_not_equal(chapterBtn, NULL, "Failed to malloc for chapterBtn");
     memset(chapterBtn, 0, sizeof(Button*) * listItemLimit);
@@ -638,14 +674,14 @@ void createSettingMenu(void)
     const uint16_t btnHeight         = 40;
     uint16_t       restWidth         = settingMenuWidth - taWidth - 30;
     uint16_t       startX            = taWidth + 30;
-    uint16_t       posY = ((Obj*)navigationBarOnReading)->y - 1 -
+    uint16_t       posY              = ((Obj*)navigationBarOnReading)->y - 1 -
                     buttonDir->border.borderWidth - settingMenuHeight;
-    setPublicBorder(RGB888toRGB565(0x000000), 3, BORDER_FLAG(BORDER_TOP));
-    settingMenu   = NewList(0, posY, settingMenuWidth, settingMenuHeight,
-                            &publicBorder, 70, btnHeight + 20, NULL, 0);
+    setPublicBorder(GUI_getForeColor(), 3, BORDER_FLAG(BORDER_TOP));
+    settingMenu = NewList(0, posY, settingMenuWidth, settingMenuHeight,
+                          &publicBorder, 70, btnHeight + 20, NULL, 0);
     /* 创建目录列表标题栏中的文本域 */
-    setPublicFont(Font_SimSun, PX24, RGB888toRGB565(0x000000));
-    setPublicBorder(RGB888toRGB565(0x000000), 0, BORDER_NULL);
+    setPublicFont(Font_SimSun, PX24, GUI_getForeColor());
+    setPublicBorder(GUI_getForeColor(), 0, BORDER_NULL);
     setPublicAlignType(AlignHorizonalType_CENTER, AlignVerticalType_MIDDLE);
     Textarea* settingMenuHeadlineTA = NewTextarea(
         0, 0, ((Obj*)settingMenu)->width, settingMenu->headlineHeight,
@@ -655,8 +691,8 @@ void createSettingMenu(void)
     SetListHeadlineTextarea(settingMenu, settingMenuHeadlineTA,
                             DrawOption_Delay);
     /* 创建设置菜单文本域 */
-    setPublicFont(Font_SimSun, PX16, RGB888toRGB565(0x000000));
-    setPublicBorder(RGB888toRGB565(0x000000), 1, BORDER_NULL);
+    setPublicFont(Font_SimSun, PX16, GUI_getForeColor());
+    setPublicBorder(GUI_getForeColor(), 1, BORDER_NULL);
     setPublicAlignType(AlignHorizonalType_CENTER, AlignVerticalType_MIDDLE);
     fontNameTA  = NewTextarea(0, 0, taWidth, settingMenu->itemHeight,
                               LocateType_Relative, &publicAlignType, &publicFont,
@@ -692,8 +728,10 @@ void createSettingMenu(void)
     //                      btnWidth, btnHeight, 1);
     createSettingMenuTa(fontSizeTa, Font_Size_Cnt - 1, fontSizeTaBackColor,
                         startX, restWidth, btnWidth, btnHeight, 1);
-    for (uint8_t i = (uint8_t)(PX16 - 1); (FontSize)i < Font_Size_Cnt - 1; ++i) {
-        sprintf(fontSizeStr[i], "%d%s", getSize((FontSize)(i + 1)), fontSizeStr_HAO);
+    for (uint8_t i = (uint8_t)(PX16 - 1); (FontSize)i < Font_Size_Cnt - 1;
+         ++i) {
+        sprintf(fontSizeStr[i], "%d%s", getSize((FontSize)(i + 1)),
+                fontSizeStr_HAO);
         fontSizeTa[i]->str = fontSizeStr[i];
     }
     createSettingMenuTa(foreColorTa, settingMenuForeColorCnt, foreColor, startX,
@@ -925,6 +963,11 @@ void settingMenuBtnOnClicked(Button* button)
             //     }
             // }
         }
+        if ((isFontNameChanged == true) || (isFontSizeChanged == true) ||
+            (isColorChanged == true)) {
+            W25QXX_Write((uint8_t*)&g_deviceData, DEVICE_DATA_ADDR,
+                         sizeof(g_deviceData));
+        }
         navigationBtnOnClicked(buttonSetting);
         if ((isColorChanged == true) &&
             (curTouchQueryQueue == &readingTouchQueryQueue)) {
@@ -1017,6 +1060,7 @@ void updateWidgetColor(Obj* obj)
     } else if (obj->type == Obj_Type_List) {
         List*       list    = (List*)obj;
         LinkedNode* subList = list->itemList->head;
+        ((List*)obj)->border.borderColor = GUI_getForeColor();
         while (subList) {
             LinkedNode* node = subList->nodeData.subList.head;
             while (node) {
@@ -1128,15 +1172,15 @@ void waiting_for_SD_Card(void)
     uint8_t onceFlag = true;
     while (SD_Init()) {
         if (onceFlag == true) {
-            Show_Str_Mid(0, 0, ATK_MD0700_LCD_WIDTH - 1,
-                         ATK_MD0700_LCD_HEIGHT - 1, (uint8_t*)SDCardDetectErrorHint,
-                         Font_SimSun, PX24, 16, 0);
+            Show_Str_Mid(
+                0, 0, ATK_MD0700_LCD_WIDTH - 1, ATK_MD0700_LCD_HEIGHT - 1,
+                (uint8_t*)SDCardDetectErrorHint, Font_SimSun, PX24, 16, 0);
             onceFlag = false;
         }
         log_n("SD Card Error! Please check!");
         HAL_Delay(500);
     }
-    atk_md0700_clear(ATK_MD0700_WHITE);
+    // atk_md0700_clear(GUI_getBackColor());
 }
 
 /**
@@ -1255,8 +1299,8 @@ Obj* touchSubQuery(LinkedList* querySubQueue, Position* pos)
  */
 Obj* touchQueryForWidget(LinkedList* touchQueryQueue, Position* pos)
 {
-    Obj*    obj        = NULL;
-    obj                = touchQuery(touchQueryQueue, pos);
+    Obj* obj = NULL;
+    obj      = touchQuery(touchQueryQueue, pos);
     if (obj && (obj->type == Obj_Type_List)) {
         obj = touchSubQuery(((List*)obj)->itemList, pos);
     }
@@ -1540,13 +1584,13 @@ void createReadingArea(void)
     publicElemData.obj = (Obj*)readingArea;
     push_tail(&readingTouchQueryQueue, &publicElemData);
     /* 建立阅读界面的导航栏 */
-    setPublicBorder(RGB888toRGB565(0x000000), 3, BORDER_NULL);
+    setPublicBorder(GUI_getForeColor(), 3, BORDER_NULL);
     navigationBarOnReading =
         NewList(0, ATK_MD0700_LCD_HEIGHT / 10 * 9, ATK_MD0700_LCD_WIDTH,
                 ATK_MD0700_LCD_HEIGHT / 10, &publicBorder, 0,
                 ATK_MD0700_LCD_HEIGHT / 10, NULL, 0);
-    setPublicFont(Font_SimSun, PX24, RGB888toRGB565(0x000000));
-    setPublicBorder(RGB888toRGB565(0x000000), 5, BORDER_FLAG(BORDER_TOP));
+    setPublicFont(Font_SimSun, PX24, GUI_getForeColor());
+    setPublicBorder(GUI_getForeColor(), 5, BORDER_FLAG(BORDER_TOP));
     setPublicAlignType(AlignHorizonalType_CENTER, AlignVerticalType_MIDDLE);
     buttonDir      = NewButton(0, 0, 160, navigationBarOnReading->itemHeight,
                                LocateType_Relative, &publicFont, &publicBorder,
@@ -1627,7 +1671,7 @@ void CreatePageIndex(char* filePath)
         /* 每次读一段 */
         ;
     }
-#if 0
+#    if 0
     while (1) {
         if (needClearPanel == true) {
             atk_md0700_clear(ATK_MD0700_WHITE);
@@ -1671,7 +1715,7 @@ void CreatePageIndex(char* filePath)
             break;
         }
     }
-#endif
+#    endif
     log_n("%sRead file [%s] finish.", ARROW_STRING, filePath);
     for (int i = 0; i < pageNumTBL_Index; ++i) {
         log_n("pageNum[%d]: %d", i, pageNumTBL[i]);
@@ -1709,7 +1753,7 @@ void bookshelfBtnOnClicked(Button* bookBtn)
     navigationBarOnReading->DrawList(navigationBarOnReading);
     renderText(curOffset);
     if (dirTableTail <= 0) {
-		/* 暂时设置为每次打开都需要读取目录 */
+        /* 暂时设置为每次打开都需要读取目录 */
         needGenerateDirTable     = true;
         generateDirTableFinished = false;
         /* 进入后设置为需要读取本章，且为首次进入，读取未完成 */
@@ -1730,7 +1774,7 @@ void bookshelfBtnOnClicked(Button* bookBtn)
 
 void renderText(uint32_t offset)
 {
-	uint8_t res;
+    uint8_t        res;
     char*          str;
     const uint16_t BUF_SIZE     = 1700;
     uint32_t       textLenLimit = 4096;
@@ -1740,7 +1784,8 @@ void renderText(uint32_t offset)
     char* buf = readingArea->str;
     f_lseek(main_file, offset);
     res = f_read(main_file, buf, BUF_SIZE, &br);
-	check_value_equal(res, FR_OK, "%s%sFail to read file", __FUNCTION__, ARROW_STRING);
+    check_value_equal(res, FR_OK, "%s%sFail to read file", __FUNCTION__,
+                      ARROW_STRING);
     if (br != BUF_SIZE) {
         buf[br] = 0;
     } else {
@@ -1758,11 +1803,12 @@ void renderText(uint32_t offset)
     GUI_setForeColor(readingArea->font.fontColor);
     // GUI_setBackColor(RGB888toRGB565(0x000000));
     // fillMainArea(GUI_getBackColor());
-    str = (char*)Show_Str(((Obj*)readingArea)->x, ((Obj*)readingArea)->y,
-                   ((Obj*)readingArea)->width, ((Obj*)readingArea)->height,
-                   (uint8_t*)readingArea->str, textLenLimit,
-                   (FontName)readingArea->font.fontName,
-                   (FontSize)readingArea->font.fontSize, 1, &isOverOnePage);
+    str = (char*)Show_Str(
+        ((Obj*)readingArea)->x, ((Obj*)readingArea)->y,
+        ((Obj*)readingArea)->width, ((Obj*)readingArea)->height,
+        (uint8_t*)readingArea->str, textLenLimit,
+        (FontName)readingArea->font.fontName,
+        (FontSize)readingArea->font.fontSize, 1, &isOverOnePage);
     GUI_setForeColor(foreColor);
     // GUI_setBackColor(backColor);
     curHeadOffset = curOffset;
@@ -2009,7 +2055,7 @@ void handleGenerationOfChapterPageTable(uint16_t* x,
                                         uint32_t  offsetLimit,
                                         bool*     finishedFlag,
                                         uint32_t* pageTable,
-                                        int32_t* pageTableIndex)
+                                        int32_t*  pageTableIndex)
 {
     uint8_t        res;
     static char    preRenderCh[2];
@@ -2017,13 +2063,13 @@ void handleGenerationOfChapterPageTable(uint16_t* x,
     static bool    isCompleteChar    = true;
     uint32_t       tmpOffset = f_tell(main_file); /* 保存当前偏移 */
     uint8_t        size      = getSize((FontSize)readingArea->font.fontSize);
-    uint8_t        lineSpace = getLineSpace((FontSize)readingArea->font.fontSize);
-    uint16_t       startX    = ((Obj*)readingArea)->x;
-    uint16_t       startY    = ((Obj*)readingArea)->y;
-    uint16_t       limitX = ((Obj*)readingArea)->x + ((Obj*)readingArea)->width;
-    uint16_t limitY = ((Obj*)readingArea)->y + ((Obj*)readingArea)->height;
-    bool     isHz   = false; /* 是否是汉字？ */
-    bool     isCR   = false; /* 是否为回车？ */
+    uint8_t  lineSpace = getLineSpace((FontSize)readingArea->font.fontSize);
+    uint16_t startX    = ((Obj*)readingArea)->x;
+    uint16_t startY    = ((Obj*)readingArea)->y;
+    uint16_t limitX    = ((Obj*)readingArea)->x + ((Obj*)readingArea)->width;
+    uint16_t limitY    = ((Obj*)readingArea)->y + ((Obj*)readingArea)->height;
+    bool     isHz      = false; /* 是否是汉字？ */
+    bool     isCR      = false; /* 是否为回车？ */
 
     f_lseek(main_file, *pOffset);
     if (f_eof(main_file) || (*pOffset >= offsetLimit)) {
