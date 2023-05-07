@@ -245,7 +245,7 @@ int main(void)
     for (uint8_t i = 0; (FontName)i < Font_Name_Cnt; ++i) {
         fontNameTaBackColor[i] = GUI_getBackColor();
     }
-    for (uint8_t i = 0; (FontSize)i < (FontSize)(Font_Size_Cnt-1); ++i) {
+    for (uint8_t i = 0; (FontSize)i < (FontSize)(Font_Size_Cnt - 1); ++i) {
         fontSizeTaBackColor[i] = GUI_getBackColor();
     }
 
@@ -383,7 +383,6 @@ int main(void)
                     } else if (slideDirestion == Slide_To_Right) {
                         /* 阅读界面：上一页 */
                         if (curTouchQueryQueue == &readingTouchQueryQueue) {
-                            /* 是否在本章的第一页？ */
                             readingPrevPage();
                         }
                     }
@@ -828,7 +827,8 @@ void chapterBtnOnClicked(Button* button)
         deleteNode(curTouchQueryQueue, find_data(curTouchQueryQueue, &data));
         fillMainArea(GUI_getBackColor());
         log_n("Chapter jump. chapterNum: %d", chapterNum);
-        curOffset = dirTable[chapterNum + dirTableHead];
+        dirTableIndex = chapterNum + dirTableHead;
+        curOffset     = dirTable[dirTableIndex];
         LED0(1);
         renderText(curOffset);
         /* 根据原来的章节序号，确定是否需要更新本章页码表以及上一章页码表 */
@@ -1058,8 +1058,8 @@ void updateWidgetColor(Obj* obj)
             textarea->backColor      = GUI_getBackColor();
         }
     } else if (obj->type == Obj_Type_List) {
-        List*       list    = (List*)obj;
-        LinkedNode* subList = list->itemList->head;
+        List*       list                 = (List*)obj;
+        LinkedNode* subList              = list->itemList->head;
         ((List*)obj)->border.borderColor = GUI_getForeColor();
         while (subList) {
             LinkedNode* node = subList->nodeData.subList.head;
@@ -1955,6 +1955,7 @@ void readingNextPage(void)
 
 void readingPrevPage(void)
 {
+    /* 不在本章的第一页？ */
     if (curChapterPageTableIndex > 0) {
         curOffset = curChapterPageTable[--curChapterPageTableIndex];
         renderText(curOffset);
