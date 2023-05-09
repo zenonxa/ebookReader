@@ -118,7 +118,7 @@ uint8_t update_font(void)
             Progress_Update(i);
             print_log(Flash_Erase_Log);
             W25QXX_Read((uint8_t*)flash_buffer,
-                        ((FONT_OCCUPY_ALL / 4096) + i) * 4096,
+                        ((FONT_BASE_ADDR / 4096) + i) * 4096,
                         FLASH_BUFFER_SIZE);  // 读出整个扇区的内容
             for (j = 0; j < 1024; j++)       // 校验数据
             {
@@ -157,14 +157,14 @@ uint8_t update_font(void)
         }
 #endif
         /* Succeed to update font. Prepare FontHeader OK */
-        fontHeader.fontok = FLAG_OK;
-        fontHeader.ugbkok = FLAG_OK;
+        fontHeader.fontok = FONT_FLAG_OK;
+        fontHeader.ugbkok = FONT_FLAG_OK;
 
         W25QXX_Write((uint8_t*)&fontHeader, FONT_HEADER_ADDR,
                      sizeof(fontHeader));  // 保存字库信息
         log_n("Write fontHeader to flash ==> \r\n\
-		fontHeader.fontok = FLAG_OK, \r\n\b\
-		fontHeader.ugbkok = FLAG_OK");
+		fontHeader.fontok = FONT_FLAG_OK, \r\n\b\
+		fontHeader.ugbkok = FONT_FLAG_OK");
     }
     return res; /* Success */
 }

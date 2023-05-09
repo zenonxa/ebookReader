@@ -6,6 +6,8 @@
 #include "float.h"
 #include "math.h"
 
+#define FLAG_OK 0xAA
+
 #define isFloatEqual(a, b) (fabs((a) - (b)) < FLT_EPSILON)
 #define isFloatZero(a) (fabs(a) < FLT_EPSILON)
 

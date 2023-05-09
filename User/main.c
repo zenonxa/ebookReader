@@ -1,30 +1,49 @@
 #include "main.h"
 
-#define BOOK_NUM_LIMIT 1000     /* 图书数量限制 */
-#define CHAPTER_NUM_LIMIT 500   /* 章节数量限制 */
-#define BOOK_NAME_LEN_LIMIT 255 /* 书名长度限制 */
+#define HASH_LOAD_FACTOR (0.75)
+#define HASH_OCCUPY(size) ((uint32_t)((size) / HASH_LOAD_FACTOR))
+
+#define BOOK_NUM_LIMIT HASH_OCCUPY(1000) /* 图书数量限制 */
+#define CHAPTER_NUM_LIMIT 500            /* 章节数量限制 */
+#define BOOK_NAME_LEN_LIMIT 255          /* 书名长度限制 */
+// #define HASH_TABLE_SIZE (BOOK_NUM_LIMIT / 0.7); /* 对哈希表扩容 */
 /* FLASH存储空间大小分配 */
-#define DEVICE_DATA_SIZE (256)                     /* 256  B */
-#define BOOK_VALID_FLAG_TABLE_SIZE (1 * 1024)      /*   1 KB */
-#define BOOK_NAME_TABLE_SIZE (256 * 1024)          /* 256 KB */
-#define BOOK_SIZE_TABLE_SIZE (4 * 1024)            /*   4 KB */
-#define BOOKMARK_TABLE_SIZE (4 * 1024)             /*   4 KB */
-#define CHAPTER_TABLE_OFFSET_TABLE_SIZE (4 * 1024) /*   4 KB */
-#define CHAPTER_TABLE_TAIL_TABLE_SIZE (2 * 1024)   /*   2 KB */
-#define CHAPTER_TABLE_TABLE_SIZE (2 * 1024 * 1024) /*   2 MB */
+#define DEVICE_DATA_SIZE (256)                                /* 256  B */
+#define BOOK_DATA_HEADER_SIZE (64)
+#define BOOK_VALID_FLAG_TABLE_SIZE HASH_OCCUPY(1024)          /* 1.5 KB */
+#define BOOK_NAME_TABLE_SIZE HASH_OCCUPY(256 * 1024)          /* 384 KB */
+#define BOOK_SIZE_TABLE_SIZE HASH_OCCUPY(4 * 1024)            /*   6 KB */
+#define BOOKMARK_TABLE_SIZE HASH_OCCUPY(4 * 1024)             /*   6 KB */
+#define CHAPTER_TABLE_OFFSET_TABLE_SIZE HASH_OCCUPY(4 * 1024) /*   6 KB */
+#define CHAPTER_TABLE_HEAD_TABLE_SIZE HASH_OCCUPY(2 * 1024)
+#define CHAPTER_TABLE_TAIL_TABLE_SIZE HASH_OCCUPY(2 * 1024)   /*   3 KB */
+#define CHAPTER_TABLE_TABLE_SIZE HASH_OCCUPY(2 * 1024 * 1024) /*   3 MB */
 /* FLASH存储空间起始地址分配 */
 #define DEVICE_DATA_ADDR (0x00)
-#define BOOK_VALID_FLAG_TABLE_ADDR ((DEVICE_DATA_ADDR) + (DEVICE_DATA_SIZE))
+#define EBOOK_DATA_ADDR (1 * 4096)
+#define BOOK_DATA_HEADER_ADDR EBOOK_DATA_ADDR
+#define BOOK_VALID_FLAG_TABLE_ADDR (EBOOK_DATA_ADDR + BOOK_DATA_HEADER_SIZE)
 #define BOOK_NAME_TABLE_ADDR                                                   \
     ((BOOK_VALID_FLAG_TABLE_ADDR) + (BOOK_VALID_FLAG_TABLE_SIZE))
 #define BOOK_SIZE_TABLE_ADDR ((BOOK_NAME_TABLE_ADDR) + (BOOK_NAME_TABLE_SIZE))
 #define BOOKMARK_TABLE_ADDR ((BOOK_SIZE_TABLE_ADDR) + (BOOK_SIZE_TABLE_SIZE))
 #define CHAPTER_TABLE_OFFSET_TABLE_ADDR                                        \
     ((BOOKMARK_TABLE_ADDR) + (BOOKMARK_TABLE_SIZE))
-#define CHAPTER_TABLE_TAIL_TABLE_ADDR                                          \
+#define CHAPTER_TABLE_HEAD_TABLE_ADDR                                          \
     ((CHAPTER_TABLE_OFFSET_TABLE_ADDR) + (CHAPTER_TABLE_OFFSET_TABLE_SIZE))
+#define CHAPTER_TABLE_TAIL_TABLE_ADDR                                          \
+    ((CHAPTER_TABLE_HEAD_TABLE_ADDR) + (CHAPTER_TABLE_HEAD_TABLE_SIZE))
 #define CHAPTER_TABLE_TABLE_ADDR                                               \
     ((CHAPTER_TABLE_TAIL_TABLE_ADDR) + (CHAPTER_TABLE_TAIL_TABLE_SIZE))
+
+const uint32_t EBOOK_DATA_OCCUPY_ALL =
+    DEVICE_DATA_SIZE + BOOK_VALID_FLAG_TABLE_SIZE + BOOK_NAME_TABLE_SIZE +
+    BOOK_SIZE_TABLE_SIZE + BOOKMARK_TABLE_SIZE +
+    CHAPTER_TABLE_OFFSET_TABLE_SIZE + CHAPTER_TABLE_TAIL_TABLE_SIZE +
+    CHAPTER_TABLE_TABLE_SIZE;
+const uint32_t EBOOK_DATA_SECSIZE =
+    EBOOK_DATA_OCCUPY_ALL / ONE_SECTOR_SIZE +
+    ((EBOOK_DATA_OCCUPY_ALL % ONE_SECTOR_SIZE) ? 1 : 0);
 
 uint8_t*     lcd_buffer;
 uint8_t*     page_buffer[PAGE_NUM];
@@ -119,8 +138,8 @@ uint16_t COLUMN_LIMIT_PX16;
 uint16_t COLUMN_LIMIT_PX24;
 uint16_t COLUMN_LIMIT_PX32;
 
-/* 目录表的最大长度： 10000个章节 */
-const uint32_t DIR_TABLE_MAX_SIZE = 100;
+/* 目录表的最大长度： 500 */
+const uint32_t DIR_TABLE_MAX_SIZE = 500;
 uint32_t*      dirTable           = NULL;
 uint16_t       dirTableIndex      = 0; /* 目录表的索引指针 */
 uint16_t       dirTableHead       = 0; /* 第一章 */
@@ -171,6 +190,7 @@ int16_t booknameBufferHead = -1;
 int16_t booknameBufferTail = -1;
 int16_t booknameBufferCur  = -1;
 char**  bookname           = NULL;
+char    curBookname[BOOK_NAME_LEN_LIMIT + 1];
 #define nextBookNameBufferIndex(index) (((index) + 1) % (BOOKNAME_Buffer_Size))
 #define prevBookNameBufferIndex(index)                                         \
     ((((index)-1) >= 0) ? ((index)-1) : (BOOKNAME_Buffer_Size - 1))
@@ -186,10 +206,8 @@ DeviceData g_deviceData = {
 };
 
 EbookData g_ebookData = {
-    .bookmark         = 0,
-    .dirTableTail     = -1,
-    .dirTableOffset   = 0,
-    .dirTableFinished = false,
+    .chapterTableOffset = 0,
+    .chapterTail        = -1,
 };
 
 #define STRING_SIZE 60
@@ -213,7 +231,7 @@ int main(void)
 {
     uint8_t    res;
     uint8_t    i          = 0;
-    FontHeader fontHeader = {FLAG_OK, FLAG_OK};
+    FontHeader fontHeader = {FONT_FLAG_OK, FONT_FLAG_OK};
     uint16_t   size       = getSize((FontSize)fontSizeSelect);
     uint16_t   lineSpace  = getLineSpace((FontSize)fontSizeSelect);
 
@@ -263,8 +281,8 @@ int main(void)
         res = update_font();
         check_value_equal(res, 0,
                           "Fail to load UNIGBK.BIN and font library to falsh.");
-        fontHeader.fontok = FLAG_OK;
-        fontHeader.ugbkok = FLAG_OK;
+        fontHeader.fontok = FONT_FLAG_OK;
+        fontHeader.ugbkok = FONT_FLAG_OK;
         W25QXX_Write((uint8_t*)&fontHeader, FONT_HEADER_ADDR,
                      sizeof(fontHeader));
     }
@@ -491,6 +509,7 @@ void InitForMain(void)
     }
     check_value_equal(res, 0, "Fail to do exfuns_init()");
     LogParam_Init();
+    g_ebookData.chpterTable = dirTable;
 }
 
 /**
@@ -1119,7 +1138,7 @@ void passChapterPageTableFromCurToPrev(void)
 
 void showIndex(bool showFlag)
 {
-#if 0
+#if 1
     /* 查看当前dir指针偏移 */
     char           buf[30]     = {0};
     const uint16_t indexWidth  = 150;
@@ -1131,7 +1150,8 @@ void showIndex(bool showFlag)
         sprintf(buf, "Chapter: %2d", getDirTableIndex());
         Show_Str(0, 0, indexWidth, indexHeight, (uint8_t*)buf, strlen(buf),
                  Font_SimSun, PX24, 1, &isOverOnePage);
-        sprintf(buf, "Page: %2d", getCurPageIndex());
+        // sprintf(buf, "Page: %2d", getCurPageIndex());
+        sprintf(buf, "DirTail: %2d", dirTableTail);
         Show_Str(ATK_MD0700_LCD_WIDTH - indexWidth, 0, indexWidth, indexHeight,
                  (uint8_t*)buf, strlen(buf), Font_SimSun, PX24, 1,
                  &isOverOnePage);
@@ -1727,15 +1747,65 @@ void preRender(void) {}
 
 void bookshelfBtnOnClicked(Button* bookBtn)
 {
-    char    path[30];
-    uint8_t res;
-
-    curTouchQueryQueue = &readingTouchQueryQueue;
+    char     path[100];
+    uint8_t  res;
+    uint16_t len = strlen(bookBtn->str);
+    memcpy(curBookname, bookBtn->str, len);
+    curBookname[len] = 0;
     strcpy(path, bookDirPath_GBK);
     strcat(path, bookBtn->str);
     res = f_open(main_file, path, FA_READ);
     check_value_equal(res, FR_OK, "Failed to open file [%s], res [%d]", path,
                       res);
+    /* 从flash中读出图书相关信息到 g_ebookData */
+    bool foundFlag = false;
+    int  id        = findBookID(curBookname, &foundFlag);
+    log_n("Bookname: %s", curBookname);
+    if ((id < 0) || (id >= BOOK_NUM_LIMIT)) {
+        return;
+    }
+    if (foundFlag == true) {
+        /* 找到了 */
+        log_n("Found record. ID: %d", id);
+        readEbookData(id);
+        curChapterPageTableIndex                    = 0;
+        curChapterPageTableTail                     = -1;
+        prevChapterPageTableIndex                   = 0;
+        prevChapterPageTableTail                    = -1;
+        needGenerateCurChapterPageTable             = true;
+        firstTimeIntoGeneratingCurChapterPageTable  = true;
+        generateCurChapterPageTableFinished         = false;
+        firstTimeIntoGeneratingPrevChapterPageTable = true;
+        generatePrevChapterPageTableFinished        = false;
+        // dirTableIndex = getDirTableIndex();
+    } else {
+        /* 未找到，初始化记录 */
+        uint8_t  bookValidFlag = FLAG_OK;
+        uint32_t bookSize      = f_size(main_file);
+        curHeadOffset = curOffset = g_ebookData.bookmark = 0;
+        generatingDirTableOffset = g_ebookData.chapterTableOffset = 0;
+        dirTableHead = g_ebookData.chapterHead = 0;
+        dirTableTail = g_ebookData.chapterTail = 0;
+        log_n("Init record. ID: %d", id);
+        loadBookData(ReadWriteType_Write, EbookDataType_BookValidFlag, id,
+                     &bookValidFlag);
+        loadBookData(ReadWriteType_Write, EbookDataType_BookName, id,
+                     (uint8_t*)curBookname);
+        loadBookData(ReadWriteType_Write, EbookDataType_BookSize, id,
+                     (uint8_t*)&bookSize);
+        loadBookData(ReadWriteType_Write, EbookDataType_Bookmark, id,
+                     (uint8_t*)&g_ebookData.bookmark);
+        loadBookData(ReadWriteType_Write, EbookDataType_ChapterTableOffset, id,
+                     (uint8_t*)&g_ebookData.chapterTableOffset);
+        loadBookData(ReadWriteType_Write, EbookDataType_ChapterTableHead, id,
+                     (uint8_t*)&g_ebookData.chapterHead);
+        loadBookData(ReadWriteType_Write, EbookDataType_ChapterTableTail, id,
+                     (uint8_t*)&g_ebookData.chapterTail);
+    }
+    if (generatingDirTableOffset == f_size(main_file)) {
+        generateDirTableFinished = true;
+    }
+
     // curOffset = 0; /* 读取书签位置，暂定为0 */
     // res = f_read(main_file, page_buffer[0], PAGE_SIZE, &br);
     // check_value_equal(res, FR_OK, "Failed to read from file [%s]", path);
@@ -1746,6 +1816,7 @@ void bookshelfBtnOnClicked(Button* bookBtn)
     // prevChapterPageTableIndex = 0;  /* 上一章页码表的索引指针 */
     // prevChapterPageTableTail  = -1; /* 上一章的最后一页 */
     // dirTableIndex = dirTableHead;
+    curTouchQueryQueue = &readingTouchQueryQueue;
     fillArea(((Obj*)bookshelf)->x - 10, ((Obj*)bookshelf)->y - 10,
              ((Obj*)bookshelf)->width + 20, ((Obj*)bookshelf)->height + 20,
              GUI_getBackColor());
@@ -1824,6 +1895,7 @@ uint16_t getDirTableIndex(void)
     uint16_t chapter = 0;
     for (uint16_t i = 0; i <= dirTableTail; ++i) {
         if (dirTable[i] > curHeadOffset) {
+            log_n("dirTable[%u]: %u", i, dirTable[i]);
             chapter = i - 1;
             break;
         }
@@ -1876,11 +1948,17 @@ void navigationBtnOnClicked(Button* button)
         LinkedNode*    res_node = NULL;
         LED0(1);
         if (curTouchQueryQueue == &readingTouchQueryQueue) {
+            bool foundFlag = false;
+            log_n("Bookname: %s", curBookname);
+            int id = findBookID(curBookname, &foundFlag);
+            log_n("Exit Reading. ID: %d", id);
             /* 检查阅读界面下的目录列表组件的出队 */
             data.obj = (Obj*)dirList;
             if ((res_node = find_data(curTouchQueryQueue, &data)) != NULL) {
                 deleteNode(curTouchQueryQueue, res_node);
             }
+            writeEbookData(id);
+            // delay_ms(2000);
         }
         /* 主界面和阅读界面都有打开设置菜单的通道，都需要检查组件出队 */
         data.obj = (Obj*)settingMenu;
@@ -2207,6 +2285,8 @@ void handleGenerationOfDirTable(void)
                     charCnt     = 0;
                     f_lseek(main_file, tmpSeek);
                     dirTable[++dirTableTail] = offset_DI;
+                    log_n("Inc dirTableTail%s%s: %d ++> %d", ARROW_STRING,
+                          __FUNCTION__, __LINE__, dirTableTail);
                     /* 如果是第一章 */
                     if ((strncmp(chapter, Chapter_Str_First_1,
                                  strlen(Chapter_Str_First_1)) == 0) ||
@@ -2249,6 +2329,9 @@ void handleGenerationOfDirTable(void)
     } else {
         dirTable[++dirTableTail] =
             f_tell(main_file); /* 目录表项的最大一项表示文件的最大偏移+1 */
+        log_n("Generate Dir End.");
+        log_n("Inc dirTableTail%s%s: %d ++> %d", ARROW_STRING, __FUNCTION__,
+              __LINE__, dirTableTail);
         generateDirTableFinished = true;
     }
 END_OF_HANDLE_GENERATION_OF_DIR_TABLE:
@@ -2267,6 +2350,236 @@ getColorIndex(COLOR_DATTYPE* colorArr, uint16_t colorCnt, uint16_t color)
     }
     return index;
 }
+
+void eraseEbookData(void)
+{
+    uint32_t i, j;
+    log_n("%sErase E-book data Start.", ARROW_STRING);
+    for (i = 0; i < EBOOK_DATA_SECSIZE; i++)  // 先擦除字库区域,提高写入速度
+    {
+        // 读出整个扇区的内容
+        W25QXX_Read((uint8_t*)flash_buffer,
+                    ((EBOOK_DATA_ADDR / 4096) + i) * 4096, FLASH_BUFFER_SIZE);
+        // 校验数据
+        for (j = 0; j < 1024; j++) {
+            if (*((uint32_t*)flash_buffer + j) != 0XFFFFFFFF) {
+                break;  // 需要擦除
+            }
+        }
+        if (j != 1024) {
+            // 需要擦除的扇区
+            log_n("[Erase] E-book data %s sector: %d", ARROW_STRING,
+                  (EBOOK_DATA_ADDR / 4096) + i);
+            W25QXX_Erase_Sector((EBOOK_DATA_ADDR / 4096) + i);
+        }
+    }
+    log_n("%sErase E-book data finished.", ARROW_STRING);
+}
+
+int getBookHashIndex(const char* bookname)
+{
+    return hash(bookname) % BOOK_NUM_LIMIT;
+}
+
+int findBookID(const char* bookname, bool* foundFlag)
+{
+    int hashID = getBookHashIndex(bookname);
+    int id     = hashID;
+    while (1) {
+        /* 如果下标大于哈希表的索引值最大下标，则未查找到目标 */
+        if (id >= BOOK_NUM_LIMIT) {
+            if (foundFlag != NULL) {
+                *foundFlag = false;
+            }
+            break;
+        }
+        loadBookData(ReadWriteType_Read, EbookDataType_BookValidFlag, id,
+                     flash_buffer);
+        if (*((uint8_t*)flash_buffer) != FLAG_OK) {
+            if (id != hashID) {
+                /* 如果是表后的第一个空记录项，表示未找到该图书，此位置的ID作为可插入位置返回
+                 */
+                if (foundFlag != NULL) {
+                    *foundFlag = false;
+                }
+                break;
+            }
+            ++id;
+            continue;
+        }
+        loadBookData(ReadWriteType_Read, EbookDataType_BookName, id,
+                     flash_buffer);
+        if (strncmp((char*)bookname, (char*)flash_buffer,
+                    BOOK_NAME_LEN_LIMIT) != 0) {
+            /* 记录有效，则匹配书名，若匹配失败，则进行下一条记录的查询 */
+            ++id;
+            continue;
+        }
+        /* 记录有效，并且书名匹配，则表示表中存在相关记录 */
+        if (foundFlag != NULL) {
+            *foundFlag = true;
+        }
+        break;
+    }
+    return id;
+}
+
+uint32_t hash(const char* key)
+{
+    return BKDR_hash(key);
+}
+
+unsigned int BKDR_hash(const char* key)
+{
+    const char* str = key;
+
+    unsigned int seed = 31;  // 31 131 1313 13131 131313 etc.. 37
+    unsigned int hash = 0;
+    // int          cnt  = 0;
+    while (*str) {
+        hash = hash * seed + (*str++);
+        // printf("[%3d] hash: %10u\n", ++cnt, hash);
+    }
+    return hash;
+}
+
+/* 读取指定ID的图书信息 */
+void loadBookData(ReadWriteType rw_type,
+                  EbookDataType ebookDataType,
+                  uint32_t      id,
+                  uint8_t*      buff)
+{
+    if (id > BOOK_NUM_LIMIT) {
+        return;
+    }
+    uint32_t dataBaseAddr = 0;
+    uint32_t dataSize     = 0;
+    switch (ebookDataType) {
+        case EbookDataType_BookValidFlag:
+            dataBaseAddr = BOOK_VALID_FLAG_TABLE_ADDR;
+            dataSize     = sizeof(uint8_t);
+            break;
+        case EbookDataType_BookName:
+            dataBaseAddr = BOOK_NAME_TABLE_ADDR;
+            dataSize     = BOOK_NAME_LEN_LIMIT + 1;
+            break;
+        case EbookDataType_BookSize:
+            dataBaseAddr = BOOK_SIZE_TABLE_ADDR;
+            dataSize     = sizeof(uint32_t);
+            break;
+        case EbookDataType_Bookmark:
+            dataBaseAddr = BOOKMARK_TABLE_ADDR;
+            dataSize     = sizeof(uint32_t);
+            break;
+        case EbookDataType_ChapterTableOffset:
+            dataBaseAddr = CHAPTER_TABLE_OFFSET_TABLE_ADDR;
+            dataSize     = sizeof(uint32_t);
+            break;
+        case EbookDataType_ChapterTableHead:
+            dataBaseAddr = CHAPTER_TABLE_HEAD_TABLE_ADDR;
+            dataSize     = sizeof(uint16_t);
+            break;
+        case EbookDataType_ChapterTableTail:
+            dataBaseAddr = CHAPTER_TABLE_TAIL_TABLE_ADDR;
+            dataSize     = sizeof(uint16_t);
+            break;
+        case EbookDataType_ChapterTable:
+            dataBaseAddr = CHAPTER_TABLE_TABLE_ADDR;
+            dataSize     = sizeof(uint32_t) * CHAPTER_NUM_LIMIT;
+            break;
+        default: return; break;
+    }
+    switch (rw_type) {
+        case ReadWriteType_Read:
+            W25QXX_Read(buff, dataBaseAddr + dataSize * id, dataSize);
+            break;
+        case ReadWriteType_Write:
+            W25QXX_Write(buff, dataBaseAddr + dataSize * id, dataSize);
+            break;
+        default: log_n("Error ReadWriteType."); break;
+    }
+}
+
+void readEbookData(int id)
+{
+    loadBookData(ReadWriteType_Read, EbookDataType_Bookmark, id,
+                 (uint8_t*)&g_ebookData.bookmark);
+    loadBookData(ReadWriteType_Read, EbookDataType_ChapterTableOffset, id,
+                 (uint8_t*)&g_ebookData.chapterTableOffset);
+    loadBookData(ReadWriteType_Read, EbookDataType_ChapterTableHead, id,
+                 (uint8_t*)&g_ebookData.chapterHead);
+    loadBookData(ReadWriteType_Read, EbookDataType_ChapterTableTail, id,
+                 (uint8_t*)&g_ebookData.chapterTail);
+    loadBookData(ReadWriteType_Read, EbookDataType_ChapterTable, id,
+                 (uint8_t*)g_ebookData.chpterTable);
+    /* 将数据更新至内存 */
+    curOffset                = g_ebookData.bookmark;
+    dirTableHead             = g_ebookData.chapterHead;
+    dirTableTail             = g_ebookData.chapterTail;
+    generatingDirTableOffset = g_ebookData.chapterTableOffset;
+    log_n("curOffset: %d", curOffset);
+    log_n("dirTableHead: %d", dirTableHead);
+    log_n("dirTableTail: %d", dirTableTail);
+    log_n("generatingDirTableOffset: %d", generatingDirTableOffset);
+}
+
+void writeEbookData(int id)
+{
+    /* 更新书签位置 */
+    if (g_ebookData.bookmark != curHeadOffset) {
+        loadBookData(ReadWriteType_Write, EbookDataType_Bookmark, id,
+                     (uint8_t*)&curHeadOffset);
+    }
+    /* 更新chapterTableOffset */
+    // if (g_ebookData.chapterTableOffset != generatingDirTableOffset) {
+    loadBookData(ReadWriteType_Write, EbookDataType_ChapterTableOffset, id,
+                 (uint8_t*)&generatingDirTableOffset);
+    // }
+    /* 更新chapterHead */
+    if (g_ebookData.chapterHead != dirTableHead) {
+        loadBookData(ReadWriteType_Write, EbookDataType_ChapterTableHead, id,
+                     (uint8_t*)&dirTableHead);
+    }
+    /* 更新chapterTail 和 chapterTable */
+    if (g_ebookData.chapterTail != dirTableTail) {
+        loadBookData(ReadWriteType_Write, EbookDataType_ChapterTableTail, id,
+                     (uint8_t*)&dirTableTail);
+        loadBookData(ReadWriteType_Write, EbookDataType_ChapterTable, id,
+                     (uint8_t*)dirTable);
+    }
+}
+
+#if 0
+void getBookValidFlagFromFlash(uint32_t id, uint8_t* buff)
+{
+    if (id > BOOK_NUM_LIMIT) {
+        return;
+    }
+    const uint32_t BOOK_VALID_FLAG_SIZE = sizeof(uint8_t);
+    W25QXX_Read(buff, BOOK_VALID_FLAG_TABLE_ADDR + BOOK_VALID_FLAG_SIZE * id,
+                BOOK_VALID_FLAG_SIZE);
+}
+
+void getBookNameFromFlash(uint32_t id, uint8_t* buff)
+{
+    if (id > BOOK_NUM_LIMIT) {
+        return;
+    }
+    const uint32_t BOOK_NAME_SIZE = (BOOK_NAME_LEN_LIMIT + 1) * sizeof(char);
+    W25QXX_Read(buff, BOOK_NAME_TABLE_ADDR + BOOK_NAME_SIZE * id,
+                BOOK_NAME_SIZE);
+}
+
+void getBookSizeFromFlash(uint32_t id, uint8_t* buff)
+{
+    if (id > BOOK_NUM_LIMIT) {
+        return;
+    }
+    const uint32_t BOOK_SIZE_SIZE = sizeof(uint32_t);
+    W25QXX_Read(buff, BOOK_NAME_TABLE_ADDR + BOOK_NAME_SIZE * id,
+                BOOK_NAME_SIZE);
+}
+#endif
 
 #if 0
 WCHAR* convert_GB2312_to_Unicode(WCHAR* pUnicode, char* pGB2312)
@@ -2325,8 +2638,8 @@ void excuteCommand(void)
     ActionCommand actionCommand = ACTION_COMMAND;
     switch (actionCommand) {
         case WriteFontHeader:
-            fontHeader.ugbkok = FLAG_OK;
-            fontHeader.fontok = FLAG_OK;
+            fontHeader.ugbkok = FONT_FLAG_OK;
+            fontHeader.fontok = FONT_FLAG_OK;
             res               = write_font_header(&fontHeader, 10);
             infinite_throw("Write FontHeader done.");
             break;
@@ -2366,6 +2679,7 @@ void excuteCommand(void)
             break;
         }
         case SingleTest: {
+#    if 0
             uint8_t i, j;
             char    font_update_log_buf[100];
             char    filePath[32];
@@ -2376,6 +2690,15 @@ void excuteCommand(void)
                           getFontAddr(i, j));
                     delay_ms(10);
                 }
+            }
+#    endif
+            // eraseEbookData();
+            {
+                uint8_t flag = 0;
+                int     id   = 974;
+                loadBookData(ReadWriteType_Write, EbookDataType_BookValidFlag,
+                             id, &flag);
+                log_n("Erase recrod of ID %d", id);
             }
             break;
         }

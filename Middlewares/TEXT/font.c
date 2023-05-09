@@ -5,7 +5,9 @@
 #include "string.h"
 
 /* The size of one sector in ex-flash (Byte) */
-#define ONE_SECTOR_SIZE (4 * 1024)
+#ifndef ONE_SECTOR_SIZE
+#    define ONE_SECTOR_SIZE (4 * 1024)
+#endif
 
 /* All the file concerning font, including FONT_HEADER, UNIGBK mapping table, 12
  * default font libraries */
@@ -145,7 +147,7 @@ uint8_t check_font_header_once(void)
     FontHeader fontHeader;
     W25QXX_Read((uint8_t*)&fontHeader, FONT_HEADER_ADDR,
                 sizeof(fontHeader));  // 读出FontHeader结构体数据
-    if (!(fontHeader.fontok == FLAG_OK) || !(fontHeader.ugbkok == FLAG_OK)) {
+    if (!(fontHeader.fontok == FONT_FLAG_OK) || !(fontHeader.ugbkok == FONT_FLAG_OK)) {
         res = 1;
     }
     return res;
@@ -191,7 +193,7 @@ uint8_t write_font_header(FontHeader* pFontHeader, uint8_t tryTimes)
     if (tryTimes < 1) {
         tryTimes = 1;
     }
-    if ((pFontHeader->fontok == FLAG_OK) && (pFontHeader->ugbkok == FLAG_OK)) {
+    if ((pFontHeader->fontok == FONT_FLAG_OK) && (pFontHeader->ugbkok == FONT_FLAG_OK)) {
         ref_res_val =
             0; /* Check operation would succeed after HontHeader writing. */
         res = 1;

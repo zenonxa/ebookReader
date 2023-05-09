@@ -55,7 +55,7 @@
 /*					Action command						*/
 /********************************************************/
 #define ACTION_ONCE 0
-#define ACTION_COMMAND WriteFontLib
+#define ACTION_COMMAND SingleTest
 typedef enum {
     WriteFontHeader = 1, /* write FontHeader to Flash */
     EraseFontHeader,     /* write OK flags of FontHeader in Flash */
@@ -72,11 +72,42 @@ typedef enum {
     FAT_DRV_SDCARD = 0,
 } FatfsLogicDriverNumber;
 
+typedef enum {
+    ReadWriteType_Read,
+    ReadWriteType_Write,
+    ReadWriteType_Min     = ReadWriteType_Read,
+    ReadWriteType_Max     = ReadWriteType_Write,
+    ReadWriteType_Default = ReadWriteType_Min,
+    ReadWriteType_Cnt     = ReadWriteType_Max + 1,
+    ReadWriteType_None    = ReadWriteType_Cnt,
+} ReadWriteType;
+
+typedef struct
+{
+    uint8_t data;
+} EbookDataHeader;
+
+typedef enum {
+    EbookDataType_BookValidFlag = 0,
+    EbookDataType_BookName,
+    EbookDataType_BookSize,
+    EbookDataType_Bookmark,
+    EbookDataType_ChapterTableOffset,
+    EbookDataType_ChapterTableHead,
+    EbookDataType_ChapterTableTail,
+    EbookDataType_ChapterTable,
+    EbookDataType_Min     = EbookDataType_BookValidFlag,
+    EbookDataType_Max     = EbookDataType_ChapterTable,
+    EbookDataType_Default = EbookDataType_Min,
+    EbookDataType_Cnt     = EbookDataType_Max + 1,
+    EbookDataType_None    = EbookDataType_Cnt,
+} EbookDataType;
+
 /* 公共设备配置 */
 typedef struct
 {
-    uint8_t  fontName;
-    uint8_t  fontSize;
+    uint8_t       fontName;
+    uint8_t       fontSize;
     COLOR_DATTYPE foreColor;
     COLOR_DATTYPE backColor;
 } DeviceData;
@@ -84,11 +115,14 @@ typedef struct
 /* 图书配置 */
 typedef struct
 {
-    uint32_t bookmark; /* 书签位置 */
-    // uint32_t* dirTable; /* 目录表 */
-    int32_t dirTableTail;
-    uint32_t dirTableOffset;
-    bool dirTableFinished;
+    uint8_t   bookVaildFlag;
+    char*     bookname;
+    uint32_t  bookSize;
+    uint32_t  bookmark;
+    uint32_t  chapterTableOffset;
+    uint16_t  chapterHead;
+    uint16_t  chapterTail;
+    uint32_t* chpterTable;
 } EbookData;
 /********************************************************/
 
@@ -163,7 +197,7 @@ void     handleGenerationOfChapterPageTable(uint16_t* x,
                                             uint32_t  offsetLimit,
                                             bool*     finishedFlag,
                                             uint32_t* pageTable,
-                                            int32_t* pageTableIndex);
+                                            int32_t*  pageTableIndex);
 void     handleGenerationOfDirTable(void);
 void     createDirList(void);
 void     chapterBtnOnClicked(Button* button);
@@ -171,15 +205,16 @@ void     copyChapterName(void);
 void     passChapterPageTableFromPrevToCur(void);
 void     passChapterPageTableFromCurToPrev(void);
 uint16_t getDirTableIndex(void);
-void settingMenuBtnOnClicked(Button* button);
-void createSettingMenuBtn(Button** btnArr,
-                          uint16_t btnCnt,
-                          uint16_t startX,
-                          uint16_t restWidth,
-                          uint16_t btnWidth,
-                          uint16_t btnHeight,
-                          uint16_t lineIndex);
-uint16_t getColorIndex(COLOR_DATTYPE* colorArr, uint16_t colorCnt, uint16_t color);
+void     settingMenuBtnOnClicked(Button* button);
+void     createSettingMenuBtn(Button** btnArr,
+                              uint16_t btnCnt,
+                              uint16_t startX,
+                              uint16_t restWidth,
+                              uint16_t btnWidth,
+                              uint16_t btnHeight,
+                              uint16_t lineIndex);
+uint16_t
+     getColorIndex(COLOR_DATTYPE* colorArr, uint16_t colorCnt, uint16_t color);
 void createSettingMenuTa(Textarea**     taArr,
                          uint16_t       taCnt,
                          COLOR_DATTYPE* colorArr,
@@ -192,8 +227,17 @@ void settingMenuTaOnClicked(Textarea* textarea);
 void updateWidgetColor(Obj* obj);
 void readingNextPage(void);
 void readingPrevPage(void);
-uint16_t getCurPageIndex(void);
-void showIndex(bool showFlag);
+uint16_t     getCurPageIndex(void);
+void         showIndex(bool showFlag);
+uint32_t     hash(const char* key);
+unsigned int BKDR_hash(const char* key);
+int          findBookID(const char* bookname, bool* foundFlag);
+void         loadBookData(ReadWriteType rw_type,
+                          EbookDataType ebookDataType,
+                          uint32_t      id,
+                          uint8_t*      buff);
+void         readEbookData(int id);
+void         writeEbookData(int id);
 #if ACTION_ONCE
 void excuteCommand(void);
 #endif

@@ -2,6 +2,7 @@
 #define __FONT_H__
 
 #include "SYSTEM/sys/sys.h"
+#include "UTIL/util.h"
 
 /* The type of the font name */
 typedef enum {
@@ -83,7 +84,7 @@ __packed typedef struct
     uint8_t fontok;
 } FontHeader;
 
-#define FLAG_OK 0xAA
+#define FONT_FLAG_OK FLAG_OK
 
 /* The encoding of the font library (.dzk), in which GBK is preferred */
 #define USE_DZK_GBK2312
