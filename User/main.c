@@ -1138,7 +1138,7 @@ void passChapterPageTableFromCurToPrev(void)
 
 void showIndex(bool showFlag)
 {
-#if 1
+#if 0
     /* 查看当前dir指针偏移 */
     char           buf[30]     = {0};
     const uint16_t indexWidth  = 150;
