@@ -268,7 +268,7 @@ int main(void)
     }
 
     /* 展示开机Logo */
-    show_logo(NULL, 500);
+    show_logo(NULL, 1500);
     atk_md0700_clear(BACKGROUND_COLOR);
     /* 阻塞等待SD卡插入 */
     waiting_for_SD_Card();
@@ -957,14 +957,19 @@ void settingMenuBtnOnClicked(Button* button)
             g_deviceData.backColor = backColorSelect;
             GUI_setForeColor(foreColorSelect);
             GUI_setBackColor(backColorSelect);
+            // /* 更新阅读界面队列中的控件的前景色、背景色 */
+            // node = curTouchQueryQueue->head;
+            // while (node) {
+            //     updateWidgetColor(node->nodeData.obj);
+            //     node = node->next;
+            // }
             /* 更新阅读界面队列中的控件的前景色、背景色 */
-            node = curTouchQueryQueue->head;
+            node = readingTouchQueryQueue.head;
             while (node) {
                 updateWidgetColor(node->nodeData.obj);
                 node = node->next;
             }
-            /* 更新阅读界面队列中的控件的前景色、背景色 */
-            node = readingTouchQueryQueue.head;
+            node = homeTouchQueryQueue.head;
             while (node) {
                 updateWidgetColor(node->nodeData.obj);
                 node = node->next;

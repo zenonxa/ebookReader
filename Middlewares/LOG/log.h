@@ -50,8 +50,8 @@ extern LogParam logParam;
 /* print the log to USART interface end with line break */
 #define log_n(format, ...)                                                     \
     do {                                                                       \
-        log(format, ##__VA_ARGS__);                                            \
-        printf("\r\n");                                                        \
+        /*log(format, ##__VA_ARGS__);                                            \
+        printf("\r\n")*/;                                                        \
     } while (0)
 
 /* Append the log to the tail of the log buffer, which need to send a line break

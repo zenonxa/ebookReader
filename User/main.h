@@ -55,7 +55,7 @@
 /*					Action command						*/
 /********************************************************/
 #define ACTION_ONCE 0
-#define ACTION_COMMAND SingleTest
+#define ACTION_COMMAND WriteFontLib
 typedef enum {
     WriteFontHeader = 1, /* write FontHeader to Flash */
     EraseFontHeader,     /* write OK flags of FontHeader in Flash */
@@ -130,6 +130,7 @@ typedef struct
 /*									Macro
  */
 /********************************************************************************************/
+#define NEED_LOG 0
 #define PAGE_NUM 1      // the number of cache page
 #define PAGE_SIZE 1700  // the size of one cache page
 
