@@ -309,22 +309,6 @@ int main(void)
     createDirList();
     createSettingMenu();
 
-    // f_open(main_file, "0:BOOK/1.TXT", FA_READ);
-    // renderText(16375);
-    // while (1)
-    //     ;
-    // char tmpPath[30];
-    // strcpy(tmpPath, "0:BOOK/11111111111111111111121111111111111.txt");
-    // f_stat(tmpPath, &fileinfo);
-    // check_value_equal(res, FR_OK, "Fail to stat file [%s]", tmpPath);
-    // log_n("%s%s", tmpPath, ARROW_STRING);
-    // log_n("[altname]: %s [fname]: %s", fileinfo.altname, fileinfo.fname);
-    // strcpy(tmpPath, "0:BOOK/11111111111111111111131111111111111.txt");
-    // f_stat(tmpPath, &fileinfo);
-    // check_value_equal(res, FR_OK, "Fail to stat file [%s]", tmpPath);
-    // log_n("%s%s", tmpPath, ARROW_STRING);
-    // log_n("[altname]: %s [fname]: %s", fileinfo.altname, fileinfo.fname);
-    // while(1);
     while (1) {
         if (noTouchEvent == false) {
             /* 状态机设计：
@@ -447,7 +431,6 @@ int main(void)
             /* 无触摸时，只在阅读界面进行后台加载 */
             if (curTouchQueryQueue ==
                 &readingTouchQueryQueue) { /* 在阅读界面？ */
-                /* 上一章章节页码表 */
                 if ((needGeneratePrevChapterPageTable == true) &&
                     (generatePrevChapterPageTableFinished == false)) {
                     /* 上一章页码表 */
@@ -1934,7 +1917,13 @@ void navigationBtnOnClicked(Button* button)
         data.obj             = (Obj*)dirList;
         LinkedNode* node_res = NULL;
         if ((node_res = find_data(curTouchQueryQueue, &data)) == NULL) {
+            /* 若目录列表未展开，则绘制目录列表 */
             push_head(curTouchQueryQueue, &data);
+            /* 如果设置菜单已展开，则将设置菜单出队 */
+            data.obj = (Obj*)settingMenu;
+            if ((node_res = find_data(curTouchQueryQueue, &data)) != NULL) {
+                deleteNode(curTouchQueryQueue, node_res);
+            }
             chapterNameIndex = 0;
             fillArea(((Obj*)dirList)->x, ((Obj*)dirList)->y,
                      ((Obj*)dirList)->width, ((Obj*)dirList)->height,
@@ -1979,6 +1968,11 @@ void navigationBtnOnClicked(Button* button)
         LinkedNode* node_res = NULL;
         if ((node_res = find_data(curTouchQueryQueue, &data)) == NULL) {
             push_head(curTouchQueryQueue, &data);
+            /* 如果目录菜单已展开，则将目录菜单出队 */
+            data.obj = (Obj*)dirList;
+            if ((node_res = find_data(curTouchQueryQueue, &data)) != NULL) {
+                deleteNode(curTouchQueryQueue, node_res);
+            }
             chapterNameIndex = 0;
             fillArea(((Obj*)settingMenu)->x, ((Obj*)settingMenu)->y,
                      ((Obj*)settingMenu)->width, ((Obj*)settingMenu)->height,
@@ -2422,7 +2416,18 @@ int findBookID(const char* bookname, bool* foundFlag)
         }
         /* 记录有效，并且书名匹配，则表示表中存在相关记录 */
         if (foundFlag != NULL) {
-            *foundFlag = true;
+            loadBookData(ReadWriteType_Read, EbookDataType_BookSize, id,
+                         flash_buffer);
+            /* 如果图书大小发生变更，则说明现有记录已有效，需要重新生成 */
+            if (*((uint32_t*)flash_buffer) != f_size(main_file)) {
+                *foundFlag                = false; /* 标志为未找到 */
+                *((uint8_t*)flash_buffer) = 0x00;
+                /* 把ID对应的validFlag擦除 */
+                loadBookData(ReadWriteType_Write, EbookDataType_BookValidFlag,
+                             id, flash_buffer);
+            } else {
+                *foundFlag = true;
+            }
         }
         break;
     }
@@ -2507,6 +2512,7 @@ void loadBookData(ReadWriteType rw_type,
 
 void readEbookData(int id)
 {
+    // loadBookData(ReadWriteType_Read, EbookDataType_BookSize, )
     loadBookData(ReadWriteType_Read, EbookDataType_Bookmark, id,
                  (uint8_t*)&g_ebookData.bookmark);
     loadBookData(ReadWriteType_Read, EbookDataType_ChapterTableOffset, id,

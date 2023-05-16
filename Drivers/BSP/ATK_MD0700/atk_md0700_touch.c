@@ -326,7 +326,7 @@ SlideDirection flip_vertically(uint8_t* pSlideDirection)
  * @description: Update the state of the touch event
  * @param {uint8_t*} pState: the current state of the touch event lifetime
  * @param {uint8_t*} pFlag: the flag relate to the touchState
- * @return {*}
+ * @return {TouchState}
  */
 TouchState touchEventUpdate(uint8_t* pState, uint8_t* pFlag)
 {
